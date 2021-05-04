@@ -36,31 +36,34 @@ app.post('/whatsapp', async (req, res) => {
   console.log('TODA INFO: ',req.body);
 
 
-  //const sql = `SELECT * FROM conversacion where waId = '${req.body.WaId}'`;
-    const sql = `SELECT * FROM encuesta where waId = '${req.body.WaId}'`;
+  consultaConversacion(req.body.WaId);
+    
 
-  
+  function consultaConversacion(whatsappID){ 
+
+    const sql = `SELECT * FROM encuesta where waId = '${whatsappID}'`;
+
     
   connection.query(sql, (error,results)=>{
 
-    console.log('RESULTS DE BUSCAR CONVERSACION: ', results);
       if (error) throw error;
 
       if (results.length > 0){
 
+        console.log('CONVERSACION EXISTE: ', results[0]);
         var $conversation = results[0];
 
         conversacion($conversation);
       }else{
-
+        console.log('CONVERSACION NO EXISTE: ');
         //console.log('RESULTS QUERY SELECT: ', results);
         nuevaConversacion();
 
       }
     });
+  }
 
   function nuevaConversacion(){
-    //const sqlnuevo = 'INSERT INTO conversacion SET ?';
     const sqlnuevo = 'INSERT INTO encuesta SET ?';
 
     console.log('PARAMS NUEVA CONVERSA: ', req.body);
@@ -70,6 +73,7 @@ app.post('/whatsapp', async (req, res) => {
     const nuevaconversacion = {
       waId: params.WaId,
       profileName: params.ProfileName,
+      conversation_start: false,
       //encuesta: true,
       encuesta: false,
       //actualizar: false,
@@ -82,8 +86,9 @@ app.post('/whatsapp', async (req, res) => {
     connection.query(sqlnuevo, nuevaconversacion, (error,results)=>{
       if (error) throw error;
 
-      //console.log('RESULTS QUERY NUEVO: ', results);
-      conversacion(nuevaconversacion);
+      console.log('RESULTS QUERY NUEVO: ', results);
+      //conversacion(nuevaconversacion,results.insertId);
+      consultaConversacion(nuevaconversacion.waId);
 
     });
   }
@@ -103,10 +108,10 @@ app.post('/whatsapp', async (req, res) => {
     console.log('CONVERSA EN CREAR ENCUESTA: ', $conversa);
 
   
-    const sqlCreaEncuesta = `UPDATE conversacion SET encuesta = ${$conversa.encuesta}, paso = ${$conversa.paso}, pregunta = ${$conversa.pregunta},
+    const sqlCreaEncuesta = `UPDATE encuesta SET conversation_start = ${$conversa.conversation_start}, encuesta = ${$conversa.encuesta}, paso = ${$conversa.paso}, pregunta = ${$conversa.pregunta},
     como_llego_al_formulario = '${$conversa.como_llego_al_formulario}', donde_encontro_formulario = '${$conversa.donde_encontro_formulario}', fecha_llegada = '${$conversa.fecha_llegada}',
-    estar_dentro_colombia = ${$conversa.estar_dentro_colombia}, id_departamento_destino_final = '${$conversa.id_departamento_destino_final}',
-    id_municipio_destino_final = '${$conversa.id_municipio_destino_final}',
+    estar_dentro_colombia = ${$conversa.estar_dentro_colombia}, id_departamento_destino_final = ${$conversa.id_departamento_destino_final},
+    id_municipio_destino_final = ${$conversa.id_municipio_destino_final},
      razon_elegir_destino_final = '${$conversa.razon_elegir_destino_final}', otra_razon_elegir_destino_final = '${$conversa.otra_razon_elegir_destino_final}',
      recibe_transporte_humanitario = '${$conversa.recibe_transporte_humanitario}',
      pais_destino_fuera_colombia = '${$conversa.pais_destino_fuera_colombia}',
@@ -173,9 +178,15 @@ app.post('/whatsapp', async (req, res) => {
     }*/
 
 
-  function conversacion(conversation){
+  function conversacion(conversation, idencuesta){
 
-    if(conversation.encuesta == true){
+    mensajeRespuesta = '';
+
+    if(conversation.conversation_start == true){
+
+      console.log('ENTRA A cONVERSATION START == TRUE');
+
+      if(conversation.encuesta == true){
 
         switch(req.body.Body){
 
@@ -187,80 +198,140 @@ app.post('/whatsapp', async (req, res) => {
             case '2':
                 //Rechazaron
                 conversation.encuesta = false;
+                //conversation.conversation_start = false;
                 mensajeRespuesta = 'Gracias por participar';
+                crearEncuesta(conversation);
 
                 break;
             default:
 
-            
+              mensajeRespuesta =  'Envía el número *1* sí:\n'+
+              '- Aceptas el tratamiento de tus datos personales al programa #VenEsperanza, como responsable de tu información y para autorizar el tratamiento de tus datos personales, conforme a lo informado previamente.\n'+
+              '- Entiendes y aceptas los términos y condiciones establecidos para participar en el programa.\n\n'+
+              'Envía el número *2* sí NO estás de acuerdo';
+              
 
         }
 
-        
+      }else if(conversation.actualizar == true){
 
-    }else if(conversation.actualizar == true){
+      }else if(conversation.reportar == true){
 
-    }else if(conversation.reportar == true){
-
-    }else if(conversation.encuesta == false && conversation.actualizar == false && conversation.reportar == false){
-    
-        
-            mensajeRespuesta = 'Venesperanza es un programa de asistencia humanitaria financiado por USAID. Esta plataforma, es un mecanismo de registro para hogares de personas que recién llegan a Colombia como migrantes. Este proceso es gratuito.'+
-                        'Por favor, continúa sólo si:'+
-                        '- Eres parte de una familia migrante venezolana o colombiano retornado que llegó a Colombia.'+
-                        '- Llevas tres meses o menos en Colombia.'+
-                        '- No te has registrado previamente ni tu, ni ningún miembro de tu familia.'+
-                        'Tu participación es voluntaria. Puedes decidir no participar o retirarte en cualquier momento del proceso.'+
-                        'Para continuar una de las siguientes opciones:'+
-                        '*1*: Llenar formulario'+
-                        '*2*: Actualizar datos'+
-                        '*3*: Reportar llegada';
-        
-    }else if(conversation.encuesta == false && conversation.actualizar == false && conversation.reportar == false
-        && (req.body.Body == '1' || req.body.Body === '2' || req.body.Body === '3')){
-
-        switch (req.body.Body) {
-            case '1':
-
-                    mensajeRespuesta = 'Vas a Llenar un nuevo Formulario'+
-                    'Aceptar terminos y condiciones: '+
-                    '*1*: SI'+
-                    '*2*: NO';
-                    conversation.encuesta = true;
-
+      //}else if(conversation.encuesta == false //&& conversation.actualizar == false && conversation.reportar == false*/
+       //   && (req.body.Body === '1' /*|| req.body.Body === '2' || req.body.Body === '3'*/)){
+      }else if(conversation.encuesta == false && req.body.Body === '1'){
+  
+        console.log('ENCUESTA FALSE Y BODY 1', req.body.Body);
+          switch (req.body.Body) {
+              case '1':
+  
+                      mensajeRespuesta = 'Términos de participación\n'+
+                      'El objetivo de esta encuesta es valorar si es posible que seas elegido/a para ingresar a programas de asistencia humanitaria en el momento en que llegas a tu destino.\n'+
+                      'Este proceso es gratuito.\n'+
+                      
+                      'Somos un programa de atención humanitaria y no compartiremos tus datos personales con el Gobierno Colombiano, por lo que completar este formulario no tiene ningún efecto legal sobre tu condición migratoria o tu estatus legal en Colombia.\n'+
+                      
+                      'Ten presente que solo te puedes registrar una única vez en este proceso.'+
+                      'Hacer registros múltiples podría ponerte en riesgo de quedar descalificado del programa #VenEsperanza. Por favor registra en este mismo formulario a todos los miembros de tu familia que actualmente te acompañan, no hagas registros individuales pues podría resultar en registros duplicados que serían descalificados.\n'+
+                      
+                      'Tu participación es voluntaria.'+
+                      'Puedes decidir no participar o retirarte en cualquier momento del proceso.\n'+
+                      'Diligenciar este formulario te tomará aproximadamente 10 minutos.'+
+                      
+                      //'Responder a estas preguntas no quiere decir que tú y tu familia serán automáticamente seleccionados. Si eres preseleccionado, serás contactado por la organización que represente el programa #VenEsperanza para continuar con el proceso, por eso es muy importante que proporciones en este formulario todos tus datos personales de contacto, para poder localizarte en caso de resultar elegido para el programa.'+
+                      
+                      //'Tu información es confidencial, sin embargo, el programa #VenEsperanza podría tener que compartir parte de tus datos de manera segura con otras organizaciones humanitarias, nuestro donante, las Naciones Unidas y otras ONG’s nacionales e internacionales, para evitar posibles casos de atención duplicada o fraude, para referir tu hogar a servicios adicionales y para contribuir en iniciativas de investigación conjuntas de carácter humanitario.'+
+                      
+                      //'Este proceso de identificación de datos incluye preguntas sobre tu situación actual. La información que entregues será verificada por la organización.\n\n'+
+                      
+                      'Por favor responde con tus datos reales23456789012345'+
+                      '\nPara conocer la política de tratamiento de datos personales visita el enlace: https://venesperanza.immap.org/assets/politica_tratamiento_informacion_personal.pdf.\n\n'+
+                      
+                      'Envía el número *1* sí:\n'+
+                      '- Aceptas el tratamiento de tus datos personales al programa #VenEsperanza, como responsable de tu información y para autorizar el tratamiento de tus datos personales, conforme a lo informado previamente.\n'+
+                      '- Entiendes y aceptas los términos y condiciones establecidos para participar en el programa.\n\n'+
+                      'Envía el número *2* sí NO estás de acuerdo';
+                      conversation.encuesta = true;
+                      crearEncuesta(conversation);
+  
+                break;
+              
+              case '2':
+  
+                      mensajeRespuesta = 'Vas a actualizar tus datos';
+                      conversation.actualizar = true;
               break;
+  
+              case '3':
+  
+                      mensajeRespuesta = 'Vas a reportar llegada';
+                      conversation.reportar = true;
+              break;
+  
+              /*
+              case '4':
+  
+                      mensajeRespuesta = 'Envianos tu ubicación'
+              break;
+  
+              case '5':
+                      
+                      mensajeRespuesta = 'Quieres terminar el proceso. Hasta luego Gracias'
+              break;*/
             
-            case '2':
+              default:
+                mensajeRespuesta = 'Venesperanza es un programa de asistencia humanitaria financiado por USAID.\n\n'+
+                'Esta plataforma, es un mecanismo de registro para hogares de personas que recién llegan a Colombia como migrantes. Este proceso es gratuito.'+
+                                'Por favor, continúa sólo si:'+
+                                '- Eres parte de una familia migrante venezolana o colombiano retornado que llegó a Colombia.'+
+                                '- Llevas tres meses o menos en Colombia.'+
+                                '- No te has registrado previamente ni tu, ni ningún miembro de tu familia.'+
+                                'Tu participación es voluntaria. Puedes decidir no participar o retirarte en cualquier momento del proceso.\n\n'+
+                                //'\n\nPara continuar envía el número *1* para responder a las preguntas.';
+                                'Para continuar envía el número correspondiente a una de las siguientes opciones:\n'+
+                                '*1*: Llenar formulario\n'+
+                                '*2*: Actualizar datos\n'+
+                                '*3*: Reportar llegada\n';
+  
+          }
+  
+      }else{
+        mensajeRespuesta = 'Venesperanza es un programa de asistencia humanitaria financiado por USAID.\n'+
+        'Esta plataforma, es un mecanismo de registro para hogares de personas que recién llegan a Colombia como migrantes. Este proceso es gratuito.'+
+                        'Por favor, continúa sólo si:\n'+
+                        '- Eres parte de una familia migrante venezolana o colombiano retornado que llegó a Colombia.\n'+
+                        '- Llevas tres meses o menos en Colombia.\n'+
+                        '- No te has registrado previamente ni tu, ni ningún miembro de tu familia.\n'+
+                        'Tu participación es voluntaria. Puedes decidir no participar o retirarte en cualquier momento del proceso.\n\n'+
+                                //'\n\nPara continuar envía el número *1* para responder a las preguntas.';
+                                'Para continuar envía el número correspondiente a una de las siguientes opciones:\n'+
+                                '*1*: Llenar formulario\n'+
+                                '*2*: Actualizar datos\n'+
+                                '*3*: Reportar llegada\n';
+                        
 
-                    mensajeRespuesta = 'Vas a actualizar tus datos';
-                    conversation.actualizar = true;
-            break;
+      }
+      
+  }else{
+      mensajeRespuesta = 'Venesperanza es un programa de asistencia humanitaria financiado por USAID. Esta plataforma, es un mecanismo de registro para hogares de personas que recién llegan a Colombia como migrantes. Este proceso es gratuito.'+
+      'Por favor, continúa sólo si:\n'+
+      '- Eres parte de una familia migrante venezolana o colombiano retornado que llegó a Colombia.\n'+
+      '- Llevas tres meses o menos en Colombia.\n'+
+      '- No te has registrado previamente ni tu, ni ningún miembro de tu familia.\n'+
+      'Tu participación es voluntaria. Puedes decidir no participar o retirarte en cualquier momento del proceso.\n\n'+
+      //'\n\nPara continuar envía el número *1* para responder a las preguntas.';
+      'Para continuar envía el número correspondiente a una de las siguientes opciones:\n'+
+      '*1*: Llenar formulario\n'+
+      '*2*: Actualizar datos\n'+
+      '*3*: Reportar llegada\n';
 
-            case '3':
+     
 
-                    mensajeRespuesta = 'Vas a reportar llegada';
-                    conversation.reportar = true;
-            break;
-
-            /*
-            case '4':
-
-                    mensajeRespuesta = 'Envianos tu ubicación'
-            break;
-
-            case '5':
-                    
-                    mensajeRespuesta = 'Quieres terminar el proceso. Hasta luego Gracias'
-            break;*/
-          
-            default:
-
-        }
-
-       
-
-    
-    }
+                        conversation.conversation_start = true;
+                        //console.log('IDNECUESTA: ', idencuesta);
+                       
+                        crearEncuesta(conversation);
+  }
     
 /*
     var mensajeRespuesta = '';
