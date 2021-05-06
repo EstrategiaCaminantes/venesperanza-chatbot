@@ -1,6 +1,7 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const nodemon = require('nodemon');
+const moment = require('moment');
 const mysql = require('mysql');
 const { defaultWorkerPolicies } = require('twilio/lib/jwt/taskrouter/util');
 
@@ -75,7 +76,7 @@ app.post('/whatsapp', async (req, res) => {
       profileName: params.ProfileName,
       conversation_start: false,
       //encuesta: true,
-      encuesta: false,
+      encuesta_chatbot: false,
       //actualizar: false,
       //reportar: false 
       paso: null,
@@ -103,12 +104,57 @@ app.post('/whatsapp', async (req, res) => {
     });
 
   }*/
+  
+  function autorizacionTratamientoDatos($conversa){
+
+    const sqlAutorizacion = 'INSERT INTO autorizaciones SET ?';
+
+    console.log('NUEVA AUTORIZACION: ', $conversa);
+   
+    //console.log('PARAMS SON: ', params);
+    
+    const nuevaAutorizacion = {
+      id_encuesta: $conversa.id,
+      tratamiento_datos : true,
+      terminos_condiciones : true,
+      condiciones : true
+    }
+
+    connection.query(sqlAutorizacion, nuevaAutorizacion, (error,results)=>{
+      if (error) throw error;
+
+      console.log('RESULTS QUERY NUEVO: ', results);
+      //conversacion(nuevaconversacion,results.insertId);
+      //return callback(true);
+      
+
+    });
+  }
+
+  function eliminarAutorizacion($conversa){
+    const sqlEliminarAutorizacion = `DELETE autorizaciones WHERE id_encuesta = ${$conversa.id_encuesta}`;
+    
+    connection.query(sqlEliminarAutorizacion, (error,results)=>{
+      if (error) throw error;
+
+      console.log('RESULTS QUERY NUEVO: ', results);
+      //conversacion(nuevaconversacion,results.insertId);
+      
+
+    });
+
+  }
 
   function crearEncuesta($conversa){
     console.log('CONVERSA EN CREAR ENCUESTA: ', $conversa);
 
   
-    const sqlCreaEncuesta = `UPDATE encuesta SET conversation_start = ${$conversa.conversation_start}, encuesta = ${$conversa.encuesta}, paso = ${$conversa.paso}, pregunta = ${$conversa.pregunta},
+    const sqlCreaEncuesta = `UPDATE encuesta SET conversation_start = ${$conversa.conversation_start}, 
+    encuesta_chatbot = ${$conversa.encuesta_chatbot}, paso = ${$conversa.paso}, pregunta = ${$conversa.pregunta},
+    primer_nombre = '${$conversa.primer_nombre}', segundo_nombre = '${$conversa.segundo_nombre}', primer_apellido = '${$conversa.primer_apellido}', segundo_apellido = '${$conversa.segundo_apellido}',
+    sexo = '${$conversa.sexo}', fecha_nacimiento = '${$conversa.fecha_nacimiento}', codigo_encuesta = '${$conversa.codigo_encuesta}',
+    nacionalidad = '${$conversa.nacionalidad}', tipo_documento = '${$conversa.tipo_documento}', numero_documento = '${$conversa.numero_documento}',
+    compartir_foto_documento_encuestado = ${$conversa.compartir_foto_documento_encuestado},
     como_llego_al_formulario = '${$conversa.como_llego_al_formulario}', donde_encontro_formulario = '${$conversa.donde_encontro_formulario}', fecha_llegada = '${$conversa.fecha_llegada}',
     estar_dentro_colombia = ${$conversa.estar_dentro_colombia}, id_departamento_destino_final = ${$conversa.id_departamento_destino_final},
     id_municipio_destino_final = ${$conversa.id_municipio_destino_final},
@@ -128,6 +174,8 @@ app.post('/whatsapp', async (req, res) => {
 
    connection.query(sqlCreaEncuesta, (error,res)=>{
     if (error) throw error;
+
+    //return callback(true);
 
     });
   }
@@ -186,32 +234,753 @@ app.post('/whatsapp', async (req, res) => {
 
       console.log('ENTRA A cONVERSATION START == TRUE');
 
-      if(conversation.encuesta == true){
+      if(conversation.encuesta_chatbot == true){
 
-        switch(req.body.Body){
+        if(conversation.pregunta == null ){
+          switch(req.body.Body){
 
             case '1':
-                //Aceptaron
-                mensajeRespuesta= 'DATOS DEL ENCUESTADO';
+
+              try {
+                autorizacionTratamientoDatos(conversation);
+                conversation.pregunta = 11;
+                    conversation.paso = 1;
+                crearEncuesta(conversation);
+                mensajeRespuesta = "*PASO 1 - DATOS DEL ENCUESTADO, DATOS DE LLEGADA Y DESTINO:* \n\n"+
+                                            "*Primer Nombre:*";
+              } catch (error) {
+                      conversation.pregunta = null;
+                        conversation.paso = null;
+                        crearEncuesta(conversation);
+                        eliminarAutorizacion(conversation);
+                        mensajeRespuesta =  'Envía el número *1* sí:\n'+
+                        '- Aceptas el tratamiento de tus datos personales al programa #VenEsperanza, como responsable de tu información y para autorizar el tratamiento de tus datos personales, conforme a lo informado previamente.\n'+
+                        '- Entiendes y aceptas los términos y condiciones establecidos para participar en el programa.\n\n'+
+                        'Envía el número *2* sí NO estás de acuerdo';
+              }
+                
                 break;
 
             case '2':
                 //Rechazaron
-                conversation.encuesta = false;
+                conversation.encuesta_chatbot = false;
                 //conversation.conversation_start = false;
                 mensajeRespuesta = 'Gracias por participar';
                 crearEncuesta(conversation);
 
                 break;
+
             default:
 
               mensajeRespuesta =  'Envía el número *1* sí:\n'+
               '- Aceptas el tratamiento de tus datos personales al programa #VenEsperanza, como responsable de tu información y para autorizar el tratamiento de tus datos personales, conforme a lo informado previamente.\n'+
               '- Entiendes y aceptas los términos y condiciones establecidos para participar en el programa.\n\n'+
               'Envía el número *2* sí NO estás de acuerdo';
+          }
+
+        }else if(conversation.pregunta <= 27){ 
+          //Entra a preguntar cuando el numero de la pregunta sea menor que el numero de la ultima pregunta del formulario.
+          //cuando llega a la ultima pregunta ya no puede volver a preguntar y encuesta se hace false.
+
+          switch(conversation.pregunta){
+            case 11:
+                console.log('RESPUESTA PREGUNTA 1: ', req.body.Body);
+
+                try {
+                  conversation.primer_nombre = req.body.Body;
+                  conversation.pregunta += 1; //pregunta 12
+                  
+                  crearEncuesta(conversation);
+                  mensajeRespuesta = "*Segundo Nombre:* "+
+                  "(En caso de que no tenga envíe un '.' (punto))";
+                  
+                } catch (error) {
+                  conversation.pregunta = 11;
+                  crearEncuesta(conversation);
+                  mensajeRespuesta = "*Primer Nombre*";
+                }
+                
+              
+              break;
+
+            case 12:
+
+                try {
+                  conversation.segundo_nombre = req.body.Body;
+                  conversation.pregunta += 1; //pregunta 13
+                  
+                  crearEncuesta(conversation);
+                  mensajeRespuesta = "*Primer Apellido:* ";
+                  
+                } catch (error) {
+                  conversation.pregunta = 12; //vuelve a entrar a paso 12
+                  crearEncuesta(conversation);
+                  mensajeRespuesta = "*Segundo Nombre:* "+
+                  "(En caso de que no tenga envíe un '.' (punto))";
+                }
+            break;
+
+            case 13:
+
+                try {
+                  conversation.primer_apellido = req.body.Body;
+                  conversation.pregunta += 1; //pregunta 14
+                  
+                  crearEncuesta(conversation);
+                  mensajeRespuesta = "*Segundo Apellido:* "+
+                  "(En caso de que no tenga envíe un '.' (punto))";
+                  
+                } catch (error) {
+                  conversation.pregunta = 13; //vuelve a entrar a paso 13
+                  crearEncuesta(conversation);
+                  mensajeRespuesta = "*Primer Apellido:* "+
+                  "(En caso de que no tenga envíe un '.' (punto))";
+                }
+            break;
+
+            case 14:
+
+                try {
+                  console.log('PREGUNTA 14, BODY: ', req.body.Body);
+                  conversation.segundo_apellido = req.body.Body;
+                  conversation.pregunta += 1; //pregunta 15
+                  
+                  crearEncuesta(conversation);
+                  mensajeRespuesta = "*Sexo:* "+
+                  "Envía el número correspondiente a la opción\n"+
+                  "*1*: Mujer\n"+
+                  "*2*: Hombre";
+                  
+                } catch (error) {
+                  conversation.pregunta = 14; //vuelve a entrar a paso 14
+                  crearEncuesta(conversation);
+                  mensajeRespuesta = "*Segundo Apellido:* "+
+                  "(En caso de que no tenga envíe un '.' (punto))";
+                }
+            break;
+
+            case 15:
+
+                try {
+
+                  switch(req.body.Body){
+                    case '1':
+                      conversation.sexo = 'mujer';
+                      conversation.pregunta += 1; //pregunta 16
+                      crearEncuesta(conversation);
+                      mensajeRespuesta = "*Fecha de Nacimiento:* Envía la fecha en formato AAAA-MM-DD para (Año-Mes-Día. Ejemplo: 2000-10-26)";
+
+                      break;
+                    
+                    case '2':
+                      conversation.sexo = 'hombre';
+                      conversation.pregunta += 1; //pregunta 16
+                      crearEncuesta(conversation);
+                      mensajeRespuesta = "*Fecha de Nacimiento:* Envía la fecha en formato AAAA-MM-DD para (Año-Mes-Día. Ejemplo: 2000-10-26)";
+
+                      break;
+                    
+                    default:
+                      mensajeRespuesta = "*Sexo:* "+
+                      "Envía el número correspondiente a la opción\n"+
+                      "*1*: Mujer\n"+
+                      "*2*: Hombre";
+                    break;
+                  }
+                
+                  
+                } catch (error) {
+                  conversation.pregunta = 15; //vuelve a entrar a paso 15
+                  crearEncuesta(conversation);
+                  mensajeRespuesta = "*Sexo:* "+
+                  "Envía el número correspondiente a la opción\n"+
+                  "*1*: Mujer\n"+
+                  "*2*: Hombre";
+                }
+            break;
+
+            case 16:
+                
+                try {
+                      $fechavalidar = req.body.Body.split('-');
+                      if($fechavalidar.length === 3 && $fechavalidar[0].length === 4 && $fechavalidar[1].length === 2 && $fechavalidar[2].length === 2){
+                          
+                        $validarAño = parseInt($fechavalidar[0]); //Año
+                        $validarMes = parseInt($fechavalidar[1]); //Mes
+                        $validarDia = parseInt($fechavalidar[2]); //dia
+                        
+      
+                        $fechaActual = new Date();
+                        $añoActual = $fechaActual.getFullYear(); //Año actual
+                        $añoActualInteger = parseInt($añoActual);
+
+                        //console.log('AÑO ACTUAL: ', $añoActualInteger);
+                        
+                        //Valido si el valor de dia es mayor que 0 hasta 31
+                        //valido si mes es mayor que 0 hasta 12
+                        //Valido si año es mayor que 1920 y menor o igual a 2003
+                        //Debe ser mas inteligente para que haya un año limite y minimo
+                        if(($validarDia > 0 && $validarDia <=31) && ($validarMes > 0 && $validarMes <= 12) && ($validarAño >= 1920 && $validarAño <= 2003 )){
+                          //console.log('FECHA VALIDA!!');
+                          //console.log('TAMAÑO SI ES TRES: ', $fechavalidar.length);
+                          conversation.pregunta += 1; //va a pregunta 17
+                          conversation.fecha_nacimiento = $fechavalidar[0]+'-'+$fechavalidar[1]+'-'+$fechavalidar[2];
+
+                          //console.log('CONVERSATION FECHA NACIMIENTO: ', conversation.fecha_nacimiento);
+
+                           //codigo_encuesta
+                           $nombreinicial = conversation.primer_nombre.substring(0, 2); //toma 2 primeras letras de primer nombre
+                           $nombreinicial = $nombreinicial.toLocaleUpperCase(); //lo vuelve mayuscula
+                          //console.log('NOMBRE INICIAL: ', $nombreinicial);
+
+                          //reemplaza tildes para el nombre
+                          $nombreiniciales = $nombreinicial.replace("Á","A").replace("É","E").replace("Í","I").replace("Ó","O").replace("Ú","U").replace("Ñ","N").replace('Ü','U');
+                      
+
+
+                          $apellidoinicial = conversation.primer_apellido.substring(0, 2); //toma 2 primeras letras de primer apellido
+                          $apellidoinicial = $apellidoinicial.toLocaleUpperCase(); //vuelve mayuscula
+
+                          //reemplaza tildes para apellido
+                          $apellidoiniciales = $apellidoinicial.replace("Á","A").replace("É","E").replace("Í","I").replace("Ó","O").replace("Ú","U").replace("Ñ","N").replace('Ü','U');
+                    
+                        
+                          $fecha1900 = new Date('1900-01-01'); //fecha referente para calcular dias
+                          console.log('FECHA 1900', $fecha1900);
+
+                          $fecha2 = new Date(conversation.fecha_nacimiento);
+
+                          $diff= $fecha2.getTime()-$fecha1900.getTime(); //diferencia entre fecha nacimiento y inicial de sistemas
+                          $contdiasCalculo = Math.round($diff/(1000*60*60*24)); //calculo dias
+
+                          $contdias = $contdiasCalculo + 2; //suma 2 para adaptarlo a formato EXCEL
+    
+                          //console.log('DIFERENCIA: ', $diff);
+                          //console.log('DIF DIAS: ', $contdiasCalculo);
+                          //console.log('DIF DIAS EXACTO EXCEL: ', $contdias);
+
+                          $diferenciaDias = $contdias;
+
+                          $sexoinicial = conversation.sexo.substring(0, 1); //primera letra sexo
+                          $sexoinicial = $sexoinicial.toLocaleUpperCase(); //sexo mayuscula
+
+                          conversation.codigo_encuesta = $nombreiniciales+$apellidoiniciales+$diferenciaDias+$sexoinicial; //concateno para formar codigo_encuesta
+                          crearEncuesta(conversation);
+                           
+                          mensajeRespuesta = "*Nacionalidad*. Envía el número de acuerdo a la opción correspondiente:\n"+
+                          
+                          "*1*: Colombiana\n"+
+                          "*2*: Venezolana\n"+
+                          "*3*: Colombo-venezolana\n"+
+                          "*4*: Otro";
+
+                          
+                        }else{
+                          mensajeRespuesta = "*Fecha de Nacimiento:* Envía la fecha en formato AAAA-MM-DD para (Año-Mes-Día. Ejemplo: 2000-10-26)";
+      
+                        }
+      
+                      }else{
+                        mensajeRespuesta = "*Fecha de Nacimiento:* Envía la fecha en formato AAAA-MM-DD para (Año-Mes-Día. Ejemplo: 2000-10-26)";
+      
+                      }
+                  
+                } catch (error) {
+                  conversation.pregunta = 16; //vuelve a entrar a paso 16
+                  crearEncuesta(conversation);
+                  mensajeRespuesta = "*Fecha de Nacimiento:* Envía la fecha en formato AAAA-MM-DD para (Año-Mes-Día. Ejemplo: 2000-10-26)";
+
+                }
+                 
+              break;
+            
+            case 17:
+
+                try {
+
+                  switch(req.body.Body){
+
+                    case '4':
+                      conversation.nacionalidad = "Otro";
+                      conversation.pregunta += 1; //va a pregunta 18
+                      crearEncuesta(conversation);
+
+                      mensajeRespuesta = "¿Cuál? (Indicar nacionalidad, ejemplo: Peruana)";
+                    
+                    break;
+
+                    case '1':
+                      conversation.nacionalidad = "Colombiana";
+                      conversation.pregunta += 2; //va a pregunta 19
+                      crearEncuesta(conversation);
+                      mensajeRespuesta = "*Tipo de Documento*. "+
+                      "Envía el número de acuerdo a la opción correspondiente:\n"+
+                      "*1*: Acta de Nacimiento\n"+
+                      "*2*: Cédula de Identidad (venezonala)\n"+
+                      "*3*: Cédula de ciudadania (colombiana)\n"+
+                      "*4*: Pasaporte\n"+
+                      "*5*: Cédula de Extranjería\n"+
+                      "*6*: Indocumentado\n"+
+                      "*7*: Otro\n";
+                    break;
+
+                    case '2':
+                      conversation.nacionalidad = "Venezolana";
+                      conversation.pregunta += 2; //va a pregunta 19
+                      crearEncuesta(conversation);
+                      mensajeRespuesta = "*Tipo de Documento*. "+
+                      "Envía el número de acuerdo a la opción correspondiente:\n"+
+                      "*1*: Acta de Nacimiento\n"+
+                      "*2*: Cédula de Identidad (venezonala)\n"+
+                      "*3*: Cédula de ciudadania (colombiana)\n"+
+                      "*4*: Pasaporte\n"+
+                      "*5*: Cédula de Extranjería\n"+
+                      "*6*: Indocumentado\n"+
+                      "*7*: Otro\n";
+                      break;
+
+                    case '3':
+                        conversation.nacionalidad = "Colombo-venezolana";
+                        conversation.pregunta += 2; //va a pregunta 19
+                        crearEncuesta(conversation);
+                        mensajeRespuesta = "*Tipo de Documento*. "+
+                        "Envía el número de acuerdo a la opción correspondiente:\n"+
+                        "*1*: Acta de Nacimiento\n"+
+                        "*2*: Cédula de Identidad (venezonala)\n"+
+                        "*3*: Cédula de ciudadania (colombiana)\n"+
+                        "*4*: Pasaporte\n"+
+                        "*5*: Cédula de Extranjería\n"+
+                        "*6*: Indocumentado\n"+
+                        "*7*: Otro\n";
+                        break;
+
+
+                    default:
+                      mensajeRespuesta = "*Nacionalidad*. Envía el número de acuerdo a la opción correspondiente:\n"+
+                          
+                          "*1*: Colombiana\n"+
+                          "*2*: Venezolana\n"+
+                          "*3*: Colombo-venezolana\n"+
+                          "*4*: Otro";
+                      break;
+                  }
+                  
+                } catch (error) {
+                  conversation.pregunta = 17; //vuelve a entrar a paso 17
+                  crearEncuesta(conversation);
+                  mensajeRespuesta = "*Nacionalidad*. Envía el número de acuerdo a la opción correspondiente:\n"+
+                          
+                          "*2*: Colombiana\n"+
+                          "*2*: Venezolana\n"+
+                          "*3*: Colombo-venezolana\n"+
+                          "*4*: Otro";
+                }
+
+            break;
+            
+            case 18:
+
+                try {
+                  conversation.cual_otro_nacionalidad = req.body.Body;
+                  conversation.pregunta += 1; //va a pregunta 19
+                  crearEncuesta(conversation);
+                  mensajeRespuesta = "*Tipo de Documento*. "+
+                  "Envía el número de acuerdo a la opción correspondiente:\n"+
+                  "*1*: Acta de Nacimiento\n"+
+                  "*2*: Cédula de Identidad (venezonala)\n"+
+                  "*3*: Cédula de ciudadania (colombiana)\n"+
+                  "*4*: Pasaporte\n"+
+                  "*5*: Cédula de Extranjería\n"+
+                  "*6*: Indocumentado\n"+
+                  "*7*: Otro\n";
+                  
+                } catch (error) {
+                  conversation.pregunta = 18; //vuelve a entrar a paso 18
+                  crearEncuesta(conversation);
+                  mensajeRespuesta = "¿Cuál? (Indicar nacionalidad, ejemplo: Peruana)";
+                }
+                
+
+            break;
+
+
+            case 19:
+
+              try {
+
+                if(req.body.Body === '7'){
+                  conversation.tipo_documento = "Otro";
+                  conversation.pregunta += 1; // pregunta 20
+                  crearEncuesta(conversation);
+                  mensajeRespuesta = "¿Cuál? (Indicar tipo, ejemplo: pasaporte)";
+
+                }else{
+                  
+                  switch(req.body.Body){
+                    case '1':
+                      conversation.tipo_documento = "Acta de Nacimiento";
+                      conversation.pregunta += 2;// pregunta 21
+                      crearEncuesta(conversation);
+                      mensajeRespuesta = '*Número de Documento:*. Sí no sabe el númeor de documento, envíe "." (punto)';
+
+
+                      break;
+                    case '2':
+                      conversation.tipo_documento = "Cédula de Identidad (venezonala)";
+                    
+                      conversation.pregunta += 2;// pregunta 21
+                      crearEncuesta(conversation);
+                      mensajeRespuesta = '*Número de Documento:*. Sí no sabe el númeor de documento, envíe "." (punto)';
+                      break;
+
+                    case '3':
+                        conversation.tipo_documento = "Cédula de ciudadania (colombiana)";
+                      
+                        conversation.pregunta += 2;// pregunta 21
+                        crearEncuesta(conversation);
+                        mensajeRespuesta = '*Número de Documento:*. Sí no sabe el númeor de documento, envíe "." (punto)';
+                      break;
+
+                    case '4':
+                        conversation.tipo_documento = "Pasaporte";
+                      
+                        conversation.pregunta += 2;// pregunta 21
+                        crearEncuesta(conversation);
+                        mensajeRespuesta = '*Número de Documento:*. Sí no sabe el númeor de documento, envíe "." (punto)';
+                    break;
+
+                    case '5':
+                        conversation.tipo_documento = "Cédula de Extranjería";
+                      
+                        conversation.pregunta += 2;// pregunta 21
+                        crearEncuesta(conversation);
+                        mensajeRespuesta = '*Número de Documento:*. Sí no sabe el númeor de documento, envíe "." (punto)';
+                    break;
+
+                  case '6':
+                        conversation.tipo_documento = "Indocumentado";
+                      
+                        conversation.pregunta += 3;// pregunta 22. Indocumentado no se muestra numero documento
+                        crearEncuesta(conversation);
+                        mensajeRespuesta = "*¿Podrías compartir una fotografía de tu documento de identidad?*\n"+
+                        "Envía el número de acuerdo a la opción correspondiente\n"+
+                        "*1*: Sí\n"+
+                        "*2*: No";
+                  break;
+
+                    default:
+                        mensajeRespuesta = "*Tipo de Documento*. "+
+                    "Envía el número de acuerdo a la opción correspondiente:\n"+
+                    "*1*: Acta de Nacimiento\n"+
+                    "*2*: Cédula de Identidad (venezonala)\n"+
+                    "*3*: Cédula de ciudadania (colombiana)\n"+
+                    "*4*: Pasaporte\n"+
+                    "*5*: Cédula de Extranjería\n"+
+                    "*6*: Indocumentado\n"+
+                    "*7*: Otro\n";
+                      break;
+                  }
+                 
+                }
+                
+              } catch (error) {
+                conversation.pregunta = 19; //vuelve a entrar a paso 19
+                crearEncuesta(conversation);
+                mensajeRespuesta = "*Tipo de Documento*. "+
+                  "Envía el número de acuerdo a la opción correspondiente:\n"+
+                  "*1*: Acta de Nacimiento\n"+
+                  "*2*: Cédula de Identidad (venezonala)\n"+
+                  "*3*: Cédula de ciudadania (colombiana)\n"+
+                  "*4*: Pasaporte\n"+
+                  "*5*: Cédula de Extranjería\n"+
+                  "*6*: Indocumentado\n"+
+                  "*7*: Otro\n";
+              }
+                
+
+            break;
+
+            case 20:
+              try {
+                conversation.cual_otro_tipo_documento = req.body.Body;
+                conversation.pregunta += 1;// pregunta 21. 
+                crearEncuesta(conversation);
+                mensajeRespuesta = '*Número de Documento:*. Sí no sabes el número de documento, envía "." (punto)';
+                
+              } catch (error) {
+                conversation.pregunta = 20; //vuelve a entrar a paso 20
+                crearEncuesta(conversation);
+                mensajeRespuesta = "¿Cuál? (Indicar tipo, ejemplo: pasaporte)";
+
+              }
+            
+            break;
+
+          case 21:
+            try {
+              conversation.numero_documento = req.body.Body;
+                conversation.pregunta += 1;// pregunta 22. 
+                crearEncuesta(conversation);
+                mensajeRespuesta = "*¿Podrías compartir una fotografía de tu documento de identidad?*\n"+
+                        "Envía el número de acuerdo a la opción correspondiente\n"+
+                        "*1*: Sí\n"+
+                        "*2*: No";
+              
+            } catch (error) {
+              conversation.pregunta = 21; //vuelve a entrar a paso 21
+                crearEncuesta(conversation);
+              mensajeRespuesta = '*Número de Documento:*. Sí no sabes el número de documento, envía "." (punto)';
+            }
+          
+          break;
+
+          case 22:
+            try {
+              switch(req.body.Body){
+                case '1':
+                  conversation.compartir_foto_documento_encuestado = true;
+                  conversation.pregunta += 1; //pregunta 23
+                    crearEncuesta(conversation);
+                    mensajeRespuesta = "Envianos la foto de tu documento";
+                  break;
+
+                case '2':
+                    conversation.compartir_foto_documento_encuestado = false;
+                    conversation.pregunta += 2; //pregunta 24
+                    crearEncuesta(conversation);
+                        mensajeRespuesta = "¿Cómo encontraste este formulario? - Envía el número de acuerdo a la opción correspondiente:\n"+
+                    "*1*: Ví un pendón en un albergue\n"+
+                    "*2*: Recibí un volante en el albergue\n"+
+                    "*3*: Recibí una foto con la información\n"+
+                    "*4*: Recibí el enlache por chat\n"+
+                    "*5*: Encontré el enlace en Facebook\n"+
+                    "*6*: Una persona conocida me lo envió para que lo llenara\n"+
+                    "*7*: Otro\n";
+                  break;
+                
+                default:
+                  mensajeRespuesta = "*¿Podrías compartir una fotografía de tu documento de identidad?*\n"+
+                        "Envía el número de acuerdo a la opción correspondiente\n"+
+                        "*1*: Sí\n"+
+                        "*2*: No";
+                break;
+              }
+              
+            } catch (error) {
+              conversation.pregunta = 22; //vuelve a entrar a paso 21
+                crearEncuesta(conversation);
+                mensajeRespuesta = "*¿Podrías compartir una fotografía de tu documento de identidad?*\n"+
+                "Envía el número de acuerdo a la opción correspondiente\n"+
+                "*1*: Sí\n"+
+                "*2*: No";            }
+          
+          break;
+
+          case 23:
+
+              try {
+
+                conversation.url_foto_documento_encuestado = 
+                conversation.url_foto_documento_encuestado = req.body.Body;
+                conversation.pregunta += 1; //pregunta 24
+                crearEncuesta(conversation);
+                    mensajeRespuesta = "¿Cómo encontraste este formulario? - Envía el número de acuerdo a la opción correspondiente:\n"+
+                "*1*: Ví un pendón en un albergue\n"+
+                "*2*: Recibí un volante en el albergue\n"+
+                "*3*: Recibí una foto con la información\n"+
+                "*4*: Recibí el enlache por chat\n"+
+                "*5*: Encontré el enlace en Facebook\n"+
+                "*6*: Una persona conocida me lo envió para que lo llenara\n"+
+                "*7*: Otro\n";
+                
+              } catch (error) {
+
+                conversation.pregunta = 23; //vuelve a entrar a paso 23
+                crearEncuesta(conversation);
+                mensajeRespuesta = "Envianos la foto de tu documento";
+                
+              }
+
+          break;
+
+          case 24:
+
+              try {
+                switch(req.body.Body){
+                  case '1':
+                      conversation.pregunta += 2; //va a pregunta 26
+                      conversation.como_llego_al_formulario = "Ví un pendón en un albergue";
+                      conversation.donde_encontro_formulario = null;
+                      crearEncuesta(conversation);
+                      mensajeRespuesta = "Pregunta 3: ¿En qué fecha tu y tu grupo familiar llegaron al país? Escriba la fecha en formato DD-MM-AA para (Día-Mes-Año)";
+
+                    break;
+
+                  case '2':
+                    conversation.pregunta += 2; //va a pregunta 26
+                    conversation.como_llego_al_formulario = "Recibí un volante en el albergue";
+                    conversation.donde_encontro_formulario = null;
+                      crearEncuesta(conversation);
+                      mensajeRespuesta = "Pregunta 3: ¿En qué fecha tu y tu grupo familiar llegaron al país? Escriba la fecha en formato DD-MM-AA para (Día-Mes-Año)";
+
+                    break;
+                  
+                  case '3':
+                    conversation.pregunta += 2; //va a pregunta 26
+                    conversation.como_llego_al_formulario = "Recibí una foto con la información";
+                    conversation.donde_encontro_formulario = null;
+                      crearEncuesta(conversation);
+                      mensajeRespuesta = "Pregunta 3: ¿En qué fecha tu y tu grupo familiar llegaron al país? Escriba la fecha en formato DD-MM-AA para (Día-Mes-Año)";
+
+                    break;
+
+                  case '4':
+                    conversation.pregunta += 2; //va a pregunta 26
+                    conversation.como_llego_al_formulario = "Recibí el enlache por chat";
+                    conversation.donde_encontro_formulario = null;
+                      crearEncuesta(conversation);
+                      mensajeRespuesta = "Pregunta 3: ¿En qué fecha tu y tu grupo familiar llegaron al país? Escriba la fecha en formato DD-MM-AA para (Día-Mes-Año)";
+
+                    break;
+
+                  case '5':
+                    conversation.pregunta += 2; //va a pregunta 26
+                    conversation.como_llego_al_formulario = "Encontré el enlace en Facebook";
+                    conversation.donde_encontro_formulario = null;
+                      crearEncuesta(conversation);
+                      mensajeRespuesta = "Pregunta 3: ¿En qué fecha tu y tu grupo familiar llegaron al país? Escriba la fecha en formato DD-MM-AA para (Día-Mes-Año)";
+
+                    break;
+
+                    case '6':
+                      conversation.pregunta += 2; //va a pregunta 26
+                      conversation.como_llego_al_formulario = "Una persona conocida me lo envió para que lo llenara";
+                      conversation.donde_encontro_formulario = null;
+                        crearEncuesta(conversation);
+                        mensajeRespuesta = "Pregunta 3: ¿En qué fecha tu y tu grupo familiar llegaron al país? Escriba la fecha en formato DD-MM-AA para (Día-Mes-Año)";
+
+                      break;
+                  
+                    case '7':
+                        conversation.pregunta += 1; //va a pregunta 25
+                        conversation.encontro_formulario = "Otro";
+                          crearEncuesta(conversation);
+                          mensajeRespuesta = "Pregunta 2: Si tu respuesta fue otro, ¿Dónde encontraste este formulario?";
+                        break;
+                  
+                  default:
+                    mensajeRespuesta = "¿Cómo encontraste este formulario? - Selecciona entre las siguientes opciones enviando el número de la opción correspondente:\n"+
+                      "*1*: Ví un pendón en un albergue\n"+
+                      "*2*: Recibí un volante en el albergue\n"+
+                      "*3*: Recibí una foto con la información\n"+
+                      "*4*: Recibí el enlache por chat\n"+
+                      "*5*: Encontré el enlace en Facebook\n"+
+                      "*6*: Una persona conocida me lo envió para que lo llenara\n"+
+                      "*7*: Otro\n";
+                    break;
+                }
+                
+              } catch (error) {
+                conversation.pregunta = 24; //vuelve a entrar a paso 24
+                crearEncuesta(conversation);
+                mensajeRespuesta = "¿Cómo encontraste este formulario? - Selecciona entre las siguientes opciones enviando el número de la opción correspondente:\n"+
+                      "*1*: Ví un pendón en un albergue\n"+
+                      "*2*: Recibí un volante en el albergue\n"+
+                      "*3*: Recibí una foto con la información\n"+
+                      "*4*: Recibí el enlache por chat\n"+
+                      "*5*: Encontré el enlace en Facebook\n"+
+                      "*6*: Una persona conocida me lo envió para que lo llenara\n"+
+                      "*7*: Otro\n";
+                
+              }
+
+          
+          break;
+
+          case 25:
+
+              try {
+                conversation.donde_encontro_formulario = req.body.Body;
+                conversation.pregunta += 1; //va a pregunta 26
+                crearEncuesta(conversation);
+                mensajeRespuesta = "Pregunta 3: ¿En qué fecha tu y tu grupo familiar llegaron al país? Escriba la fecha en formato DD-MM-AAAA para (Día-Mes-Año. Ejemplo: 10-06-2020)";
+
+                
+              } catch (error) {
+                conversation.pregunta = 25; //vuelve a 25
+                crearEncuesta(conversation);
+                mensajeRespuesta = "Pregunta 3: ¿En qué fecha tu y tu grupo familiar llegaron al país? Escriba la fecha en formato DD-MM-AAAA para (Día-Mes-Año. Ejemplo: 10-06-2020)";
+              }
+              
               
 
+          break;
+
+        
+          case 26:
+
+              try {
+                $fechavalidar = req.body.Body.split('-');
+
+                if($fechavalidar.length === 3 && $fechavalidar[0].length === 2 && $fechavalidar[1].length === 2 && $fechavalidar[2].length === 4){
+                    
+                    $validarDia = parseInt($fechavalidar[0]);
+                    $validarMes = parseInt($fechavalidar[1]);
+                    $validarAño = parseInt($fechavalidar[2]);
+
+                    $fechaActual = new Date();
+                    $añoActual = $fechaActual.getFullYear();
+                    $añoActualInteger = parseInt($añoActual);
+
+                    console.log('AÑO ACTUAL FULL YEAR: ', $añoActual = $fechaActual.getFullYear());
+                    console.log('AÑO ACTUAL INTEGER: ', $añoActualInteger);
+
+
+                    if(($validarDia > 0 && $validarDia <=31) && ($validarMes > 0 && $validarMes <= 12) && ($validarAño >= 2010 && $validarAño <= $añoActualInteger )){
+                      console.log('FECHA VALIDA!!');
+                      console.log('TAMAÑO SI ES TRES: ', $fechavalidar.length);
+                      conversation.pregunta += 1; //va a pregunta 14
+                      conversation.fecha_llegada = req.body.Body;
+                        
+                      mensajeRespuesta = "¿En los próximos seis meses planeas estar dentro de Colombia?"+
+                      "Selecciona una de las siguientes opciones escribiendo el número correspondiente de la opción:\n"+
+                      "*1*: Sí\n"+
+                      "*2*: No\n"+
+                      "*3*: No estoy seguro";
+                      crearEncuesta(conversation);
+                    }else{
+                      mensajeRespuesta = "Pregunta 3: ¿En qué fecha tu y tu grupo familiar llegaron al país? Escriba la fecha en formato DD-MM-AAAA para (Día-Mes-Año. Ejemplo: 10-06-2020)";
+
+                    }
+
+                }else{
+                  mensajeRespuesta = "Pregunta 3: ¿En qué fecha tu y tu grupo familiar llegaron al país? Escriba la fecha en formato DD-MM-AAAA para (Día-Mes-Año. Ejemplo: 10-06-2020)";
+
+                }
+                
+              } catch (error) {
+                conversation.pregunta = 26; //vuelve a 25
+                crearEncuesta(conversation);
+                mensajeRespuesta = "Pregunta 3: ¿En qué fecha tu y tu grupo familiar llegaron al país? Escriba la fecha en formato DD-MM-AAAA para (Día-Mes-Año. Ejemplo: 10-06-2020)";
+
+              }
+              
+              
+              break;
+
+
+            case 27:
+              //Termina la encuesta
+              conversation.encuesta_chatbot = false;
+              crearEncuesta(conversation);
+              mensajeRespuesta = "terminamos!";
+            break;
+          }
+            
+            
         }
+
+        
 
       }else if(conversation.actualizar == true){
 
@@ -219,40 +988,65 @@ app.post('/whatsapp', async (req, res) => {
 
       //}else if(conversation.encuesta == false //&& conversation.actualizar == false && conversation.reportar == false*/
        //   && (req.body.Body === '1' /*|| req.body.Body === '2' || req.body.Body === '3'*/)){
-      }else if(conversation.encuesta == false && req.body.Body === '1'){
+      }else if(conversation.encuesta_chatbot == false && req.body.Body === '1'){
   
         console.log('ENCUESTA FALSE Y BODY 1', req.body.Body);
           switch (req.body.Body) {
               case '1':
   
-                      mensajeRespuesta = 'Términos de participación\n'+
-                      'El objetivo de esta encuesta es valorar si es posible que seas elegido/a para ingresar a programas de asistencia humanitaria en el momento en que llegas a tu destino.\n'+
-                      'Este proceso es gratuito.\n'+
+                      if(conversation.pregunta == null){
+
+                        try {
+                          conversation.encuesta_chatbot = true;
+                          crearEncuesta(conversation);
+                          console.log('ENTRA A TRUE EN LINEA 540???');
+                              mensajeRespuesta = 'Términos de participación\n'+
+                              'El objetivo de esta encuesta es valorar si es posible que seas elegido/a para ingresar a programas de asistencia humanitaria en el momento en que llegas a tu destino.\n'+
+                              'Este proceso es gratuito.\n'+
+                              
+                              'Somos un programa de atención humanitaria y no compartiremos tus datos personales con el Gobierno Colombiano, por lo que completar este formulario no tiene ningún efecto legal sobre tu condición migratoria o tu estatus legal en Colombia.\n'+
+                              
+                              'Ten presente que solo te puedes registrar una única vez en este proceso.'+
+                              'Hacer registros múltiples podría ponerte en riesgo de quedar descalificado del programa #VenEsperanza. Por favor registra en este mismo formulario a todos los miembros de tu familia que actualmente te acompañan, no hagas registros individuales pues podría resultar en registros duplicados que serían descalificados.\n'+
+                              
+                              'Tu participación es voluntaria.'+
+                              'Puedes decidir no participar o retirarte en cualquier momento del proceso.\n'+
+                              //'Diligenciar este formulario te tomará aproximadamente 10 minutos.'+
+                              
+                              //'Responder a estas preguntas no quiere decir que tú y tu familia serán automáticamente seleccionados. Si eres preseleccionado, serás contactado por la organización que represente el programa #VenEsperanza para continuar con el proceso, por eso es muy importante que proporciones en este formulario todos tus datos personales de contacto, para poder localizarte en caso de resultar elegido para el programa.'+
+                              
+                              //'Tu información es confidencial, sin embargo, el programa #VenEsperanza podría tener que compartir parte de tus datos de manera segura con otras organizaciones humanitarias, nuestro donante, las Naciones Unidas y otras ONG’s nacionales e internacionales, para evitar posibles casos de atención duplicada o fraude, para referir tu hogar a servicios adicionales y para contribuir en iniciativas de investigación conjuntas de carácter humanitario.'+
+                              
+                              //'Este proceso de identificación de datos incluye preguntas sobre tu situación actual. La información que entregues será verificada por la organización.\n\n'+
+                              
+                              'Por favor responde con tus datos reales'+
+                              '\nPara conocer la política de tratamiento de datos personales visita el enlace: https://venesperanza.immap.org/assets/politica_tratamiento_informacion_personal.pdf.\n\n'+
+                              
+                              'Envía el número *1* sí:\n'+
+                              '- Aceptas el tratamiento de tus datos personales al programa #VenEsperanza, como responsable de tu información y para autorizar el tratamiento de tus datos personales, conforme a lo informado previamente.\n'+
+                              '- Entiendes y aceptas los términos y condiciones establecidos para participar en el programa.\n\n'+
+                              'Envía el número *2* sí NO estás de acuerdo';
+
+                          
+                        } catch (error) {
+                          mensajeRespuesta = 'Venesperanza es un programa de asistencia humanitaria financiado por USAID.\n\n'+
+                                'Esta plataforma, es un mecanismo de registro para hogares de personas que recién llegan a Colombia como migrantes. Este proceso es gratuito.'+
+                                'Por favor, continúa sólo si:'+
+                                '- Eres parte de una familia migrante venezolana o colombiano retornado que llegó a Colombia.'+
+                                '- Llevas tres meses o menos en Colombia.'+
+                                '- No te has registrado previamente ni tu, ni ningún miembro de tu familia.'+
+                                'Tu participación es voluntaria. Puedes decidir no participar o retirarte en cualquier momento del proceso.\n\n'+
+                                //'\n\nPara continuar envía el número *1* para responder a las preguntas.';
+                                'Para continuar envía el número correspondiente a una de las siguientes opciones:\n'+
+                                '*1*: Llenar formulario\n'/*+
+                                '*2*: Actualizar datos\n'+
+                                '*3*: Reportar llegada\n'*/;
+                          
+                        }
                       
-                      'Somos un programa de atención humanitaria y no compartiremos tus datos personales con el Gobierno Colombiano, por lo que completar este formulario no tiene ningún efecto legal sobre tu condición migratoria o tu estatus legal en Colombia.\n'+
-                      
-                      'Ten presente que solo te puedes registrar una única vez en este proceso.'+
-                      'Hacer registros múltiples podría ponerte en riesgo de quedar descalificado del programa #VenEsperanza. Por favor registra en este mismo formulario a todos los miembros de tu familia que actualmente te acompañan, no hagas registros individuales pues podría resultar en registros duplicados que serían descalificados.\n'+
-                      
-                      'Tu participación es voluntaria.'+
-                      'Puedes decidir no participar o retirarte en cualquier momento del proceso.\n'+
-                      'Diligenciar este formulario te tomará aproximadamente 10 minutos.'+
-                      
-                      //'Responder a estas preguntas no quiere decir que tú y tu familia serán automáticamente seleccionados. Si eres preseleccionado, serás contactado por la organización que represente el programa #VenEsperanza para continuar con el proceso, por eso es muy importante que proporciones en este formulario todos tus datos personales de contacto, para poder localizarte en caso de resultar elegido para el programa.'+
-                      
-                      //'Tu información es confidencial, sin embargo, el programa #VenEsperanza podría tener que compartir parte de tus datos de manera segura con otras organizaciones humanitarias, nuestro donante, las Naciones Unidas y otras ONG’s nacionales e internacionales, para evitar posibles casos de atención duplicada o fraude, para referir tu hogar a servicios adicionales y para contribuir en iniciativas de investigación conjuntas de carácter humanitario.'+
-                      
-                      //'Este proceso de identificación de datos incluye preguntas sobre tu situación actual. La información que entregues será verificada por la organización.\n\n'+
-                      
-                      'Por favor responde con tus datos reales23456789012345'+
-                      '\nPara conocer la política de tratamiento de datos personales visita el enlace: https://venesperanza.immap.org/assets/politica_tratamiento_informacion_personal.pdf.\n\n'+
-                      
-                      'Envía el número *1* sí:\n'+
-                      '- Aceptas el tratamiento de tus datos personales al programa #VenEsperanza, como responsable de tu información y para autorizar el tratamiento de tus datos personales, conforme a lo informado previamente.\n'+
-                      '- Entiendes y aceptas los términos y condiciones establecidos para participar en el programa.\n\n'+
-                      'Envía el número *2* sí NO estás de acuerdo';
-                      conversation.encuesta = true;
-                      crearEncuesta(conversation);
+                      }else{
+                        mensajeRespuesta = 'Ya has respondido el formulario. Gracias';
+                      }
   
                 break;
               
@@ -267,18 +1061,7 @@ app.post('/whatsapp', async (req, res) => {
                       mensajeRespuesta = 'Vas a reportar llegada';
                       conversation.reportar = true;
               break;
-  
-              /*
-              case '4':
-  
-                      mensajeRespuesta = 'Envianos tu ubicación'
-              break;
-  
-              case '5':
-                      
-                      mensajeRespuesta = 'Quieres terminar el proceso. Hasta luego Gracias'
-              break;*/
-            
+
               default:
                 mensajeRespuesta = 'Venesperanza es un programa de asistencia humanitaria financiado por USAID.\n\n'+
                 'Esta plataforma, es un mecanismo de registro para hogares de personas que recién llegan a Colombia como migrantes. Este proceso es gratuito.'+
@@ -289,9 +1072,9 @@ app.post('/whatsapp', async (req, res) => {
                                 'Tu participación es voluntaria. Puedes decidir no participar o retirarte en cualquier momento del proceso.\n\n'+
                                 //'\n\nPara continuar envía el número *1* para responder a las preguntas.';
                                 'Para continuar envía el número correspondiente a una de las siguientes opciones:\n'+
-                                '*1*: Llenar formulario\n'+
+                                '*1*: Llenar formulario\n'/*+
                                 '*2*: Actualizar datos\n'+
-                                '*3*: Reportar llegada\n';
+                                '*3*: Reportar llegada\n'*/;
   
           }
   
@@ -305,14 +1088,20 @@ app.post('/whatsapp', async (req, res) => {
                         'Tu participación es voluntaria. Puedes decidir no participar o retirarte en cualquier momento del proceso.\n\n'+
                                 //'\n\nPara continuar envía el número *1* para responder a las preguntas.';
                                 'Para continuar envía el número correspondiente a una de las siguientes opciones:\n'+
-                                '*1*: Llenar formulario\n'+
+                                '*1*: Llenar formulario\n'/*+
                                 '*2*: Actualizar datos\n'+
-                                '*3*: Reportar llegada\n';
+                                '*3*: Reportar llegada\n'*/;
                         
 
       }
       
   }else{
+
+    try {
+      conversation.conversation_start = true;
+                        //console.log('IDNECUESTA: ', idencuesta);             
+     crearEncuesta(conversation);
+
       mensajeRespuesta = 'Venesperanza es un programa de asistencia humanitaria financiado por USAID. Esta plataforma, es un mecanismo de registro para hogares de personas que recién llegan a Colombia como migrantes. Este proceso es gratuito.'+
       'Por favor, continúa sólo si:\n'+
       '- Eres parte de una familia migrante venezolana o colombiano retornado que llegó a Colombia.\n'+
@@ -321,16 +1110,14 @@ app.post('/whatsapp', async (req, res) => {
       'Tu participación es voluntaria. Puedes decidir no participar o retirarte en cualquier momento del proceso.\n\n'+
       //'\n\nPara continuar envía el número *1* para responder a las preguntas.';
       'Para continuar envía el número correspondiente a una de las siguientes opciones:\n'+
-      '*1*: Llenar formulario\n'+
+      '*1*: Llenar formulario\n'/*+
       '*2*: Actualizar datos\n'+
-      '*3*: Reportar llegada\n';
-
-     
-
-                        conversation.conversation_start = true;
-                        //console.log('IDNECUESTA: ', idencuesta);
-                       
-                        crearEncuesta(conversation);
+      '*3*: Reportar llegada\n'*/;
+      
+    } catch (error) {
+      
+    }
+    
   }
     
 /*
