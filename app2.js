@@ -94,6 +94,31 @@ app.post('/whatsapp', async (req, res) => {
     });
   }
 
+  function consultarMiembroHogar($numero_miembro_hogar, $conversacion_id, call_back){
+    const sqlConsultaMiembro = `SELECT * FROM miembros_hogar where id_encuesta = ${$conversacion_id} AND numero_miembro = ${$numero_miembro_hogar} `;
+
+    
+    connection.query(sqlConsultaMiembro, (error,results)=>{
+
+        console.log('ERROR EN LLAMADOA  BD MIEMBRO: ', error);
+
+        if (error) return call_back(error);
+
+        if (results.length > 0){
+
+          console.log('MIEMRO EXISTE: ', results[0]);
+          var $miembro = results[0];
+
+          return call_back($miembro)
+          //conversacion($conversation);
+        }else{
+          console.log('MIEMBRO NO EXISTE: ');
+          //console.log('RESULTS QUERY SELECT: ', results);
+          return call_back(error)
+        }
+      });
+  }
+
   /*
   function asignarCoordenadas($editconversacion){
     const sql = `UPDATE conversacion SET longitud = '${$editconversacion.longitud}', latitud = '${$editconversacion.latitud}' where id = ${$editconversacion.id}`;
@@ -129,6 +154,19 @@ app.post('/whatsapp', async (req, res) => {
       
 
     });
+  }
+
+  function autorizacionAsignarCoordenadasUbicacion($longitud, $latitud, $conversacion){
+    const sqlUpdateAutorizacionCoordenadas = `UPDATE autorizaciones SET longitud = ${$longitud}, latitud = ${$latitud}
+     WHERE id_encuesta =  ${$conversacion}`;
+
+    connection.query(sqlUpdateAutorizacionCoordenadas, (error,res)=>{
+      if (error) throw error;
+  
+      //return callback(true);
+  
+      });
+
   }
 
   function eliminarAutorizacion($conversa){
@@ -195,11 +233,11 @@ app.post('/whatsapp', async (req, res) => {
     }else{
 
       
-      console.log('DATOS ACTUALIZAR MIEMBRO :');
+      //console.log('DATOS ACTUALIZAR MIEMBRO :');
       //console.log('CAMPO: ', $campo);
       //console.log('VALOR: ', $valor);
-      console.log('ID ENCUESTA: ', $id_encuesta);
-      console.log('NUMERO MIEMBRO: ', $numero_miembro);
+      //console.log('ID ENCUESTA: ', $id_encuesta);
+      //console.log('NUMERO MIEMBRO: ', $numero_miembro);
       const sqlUpdateMiembro = `UPDATE miembros_hogar SET ${$campo} = '${$valor}' WHERE id_encuesta = ${$id_encuesta} AND numero_miembro = ${$numero_miembro} `
       connection.query(sqlUpdateMiembro, (error,res)=>{
         if (error) throw error;
@@ -279,7 +317,7 @@ app.post('/whatsapp', async (req, res) => {
               'Envía el número *2* sí NO estás de acuerdo';
           }
 
-        }else if(conversation.pregunta <= 50){ 
+        }else if(conversation.pregunta <= 64){  //limite de preguntas
           //Entra a preguntar cuando el numero de la pregunta sea menor que el numero de la ultima pregunta del formulario.
           //cuando llega a la ultima pregunta ya no puede volver a preguntar y encuesta se hace false.
 
@@ -447,7 +485,7 @@ app.post('/whatsapp', async (req, res) => {
                     
                         
                           $fecha1900 = new Date('1900-01-01'); //fecha referente para calcular dias
-                          console.log('FECHA 1900', $fecha1900);
+                          //console.log('FECHA 1900', $fecha1900);
 
                           $fecha2 = new Date(conversation.fecha_nacimiento);
 
@@ -1835,12 +1873,21 @@ app.post('/whatsapp', async (req, res) => {
 
             case 34:
               try {
-                //al valor ingresado de miembros que acompañan al encuestado le sumo 1 que corresponde al encuestado
-                conversation.total_miembros_hogar = parseInt(req.body.Body + 1); 
-                conversation.miembro_hogar_preguntando = 1;
-                conversation.pregunta += 1; //va a pregunta 35
-                crearEncuesta(conversation);
-                mensajeRespuesta = "Envie la palabra *CONTINUAR* para responder información sobre los miembros de su hogar";
+                var valoresAceptados = /^[0-9]/;
+                if((req.body.Body.length >= 1 && req.body.Body <=2) && (req.body.Body.match(valoresAceptados))){
+                  //al valor ingresado de miembros que acompañan al encuestado le sumo 1 que corresponde al encuestado
+                  console.log('PARSE INT BODY: ', parseInt(req.body.Body));
+                  conversation.total_miembros_hogar = parseInt(req.body.Body) + 1; 
+                  console.log('TOTAL MIEMBROS HOGAR: ',conversation.total_miembros_hogar );
+                  conversation.miembro_hogar_preguntando = 1;
+                  conversation.pregunta += 1; //va a pregunta 35
+                  crearEncuesta(conversation);
+                  mensajeRespuesta = "Envie la palabra *CONTINUAR* para responder información sobre los miembros de su hogar";
+                  
+                }else{
+                  mensajeRespuesta = "*PASO 2 - DATOS DE LOS MIEMBROS DEL HOGAR*\n"+
+                            "Cuántas personas de tu familia están contigo en este momento?";
+                }
                 
   
                 
@@ -1881,6 +1928,8 @@ app.post('/whatsapp', async (req, res) => {
               try {
                 
                 guardarInfoMiembro(req.body.Body, 'primer_nombre_miembro', conversation.miembro_hogar_preguntando, conversation.id);
+                guardarInfoMiembro(1, 'fuente', conversation.miembro_hogar_preguntando, conversation.id);
+
                 conversation.pregunta += 1; //va a pregunta 36
                 crearEncuesta(conversation);
                 
@@ -2002,15 +2051,114 @@ app.post('/whatsapp', async (req, res) => {
 
                 try {
                   //validacion fecha nacimiento
-                  guardarInfoMiembro(req.body.Body, 'fecha_nacimiento', conversation.miembro_hogar_preguntando, conversation.id);
-                  conversation.pregunta += 1; //va a pregunta 42
-                  crearEncuesta(conversation);
-                  mensajeRespuesta = "*Nacionalidad:* (miembro #"+conversation.miembro_hogar_preguntando+")."+
-                  "Envíe el número de acuerdo a la opción correspondiente:\n"+
-                  "*1*: Colombiana\n"+
-                  "*2*: Venezolana\n"+
-                  "*3*: Colombo-venezolana\n"+
-                  "*4*: Otro";
+                      $fechavalidarMiembro = req.body.Body.split('-');
+                      if($fechavalidarMiembro.length === 3 && $fechavalidarMiembro[0].length === 4 && $fechavalidarMiembro[1].length === 2 && $fechavalidarMiembro[2].length === 2){
+                          
+                        $validarAño = parseInt($fechavalidarMiembro[0]); //Año
+                        $validarMes = parseInt($fechavalidarMiembro[1]); //Mes
+                        $validarDia = parseInt($fechavalidarMiembro[2]); //dia
+                        
+      
+                        $fechaActual = new Date();
+                        $añoActual = $fechaActual.getFullYear(); //Año actual
+                        $añoActualInteger = parseInt($añoActual);
+
+                        //console.log('AÑO ACTUAL: ', typeof($añoActualInteger));
+                        //console.log('VALIDAR AÑO: ', typeof($validarAño));
+                        //console.log('VALIDAR MES: ', typeof($validarMes));
+                        //console.log('VALIDAR DIA: ', typeof($validarDia));
+
+                        //Valido si el valor de dia es mayor que 0 hasta 31
+                        //valido si mes es mayor que 0 hasta 12
+                        //Valido si año es mayor que 1920 y menor o igual a 2003
+                        //Debe ser mas inteligente para que haya un año limite y minimo
+                        if(($validarDia > 0 && $validarDia <=31) && ($validarMes > 0 && $validarMes <= 12) && ($validarAño >= 1920 && $validarAño <= $añoActualInteger )){
+                          
+                         // console.log('ENTRA A FORMAR FECHA DESPUES DE IF EN 2051!');
+
+                          
+                          //console.log('FECHA VALIDA!!');
+                          //console.log('TAMAÑO SI ES TRES: ', $fechavalidar.length);
+                          $fecha_nacimiento_miembro = $fechavalidarMiembro[0]+'-'+$fechavalidarMiembro[1]+'-'+$fechavalidarMiembro[2];
+                          console.log('FECHA NACIMIENTO MIEMBRO en 2054:: ',$fecha_nacimiento_miembro );
+                          guardarInfoMiembro($fecha_nacimiento_miembro, 'fecha_nacimiento', conversation.miembro_hogar_preguntando, conversation.id);
+                          
+                          
+                          consultarMiembroHogar( conversation.miembro_hogar_preguntando, conversation.id, function(response) {
+                              if(response){
+                                console.log('RESPONSE AL LLAMAR A MIEMBRO: ', response);
+                                
+                                  $miembro_hogar = response;
+                                //codigo_encuesta
+                                  $nombreinicial_miembro = $miembro_hogar.primer_nombre_miembro.substring(0, 2); //toma 2 primeras letras de primer nombre
+                                  $nombreinicial_miembro = $nombreinicial_miembro.toLocaleUpperCase(); //lo vuelve mayuscula
+                                  //console.log('NOMBRE INICIAL: ', $nombreinicial);
+  
+                                  //reemplaza tildes para el nombre
+                                  $nombreiniciales = $nombreinicial_miembro.replace("Á","A").replace("É","E").replace("Í","I").replace("Ó","O").replace("Ú","U").replace("Ñ","N").replace('Ü','U');
+                              
+  
+  
+                                  $apellidoinicial_miembro = $miembro_hogar.primer_apellido_miembro.substring(0, 2); //toma 2 primeras letras de primer apellido
+                                  $apellidoinicial_miembro = $apellidoinicial_miembro.toLocaleUpperCase(); //vuelve mayuscula
+  
+                                  //reemplaza tildes para apellido
+                                  $apellidoiniciales = $apellidoinicial_miembro.replace("Á","A").replace("É","E").replace("Í","I").replace("Ó","O").replace("Ú","U").replace("Ñ","N").replace('Ü','U');
+                            
+                                
+                                  $fecha1900 = new Date('1900-01-01'); //fecha referente para calcular dias
+                                  //console.log('FECHA 1900', $fecha1900);
+  
+                                  $fecha2 = new Date($miembro_hogar.fecha_nacimiento);
+  
+                                  $diff= $fecha2.getTime()-$fecha1900.getTime(); //diferencia entre fecha nacimiento y inicial de sistemas
+                                  $contdiasCalculo = Math.round($diff/(1000*60*60*24)); //calculo dias
+  
+                                  $contdias = $contdiasCalculo + 2; //suma 2 para adaptarlo a formato EXCEL
+            
+                                  //console.log('DIFERENCIA: ', $diff);
+                                  //console.log('DIF DIAS: ', $contdiasCalculo);
+                                  //console.log('DIF DIAS EXACTO EXCEL: ', $contdias);
+  
+                                  $diferenciaDias = $contdias;
+  
+                                  $sexoinicial_miembro = $miembro_hogar.sexo_miembro.substring(0, 1); //primera letra sexo
+                                  $sexoinicial_miembro = $sexoinicial_miembro.toLocaleUpperCase(); //sexo mayuscula
+  
+                                  $codigo_encuesta_miembro = $nombreiniciales+$apellidoiniciales+$diferenciaDias+$sexoinicial_miembro; //concateno para formar codigo_encuesta
+                                  guardarInfoMiembro($codigo_encuesta_miembro, 'codigo_encuesta', conversation.miembro_hogar_preguntando, conversation.id);
+                                  
+                                  
+                                  //conversation.pregunta += 1; //va a pregunta 42
+                                  //crearEncuesta(conversation);
+                                  /*return "*Nacionalidad:* (miembro #"+conversation.miembro_hogar_preguntando+")."+
+                                  "Envíe el número de acuerdo a la opción correspondiente:\n"+
+                                  "*1*: Colombiana\n"+
+                                  "*2*: Venezolana\n"+
+                                  "*3*: Colombo-venezolana\n"+
+                                  "*4*: Otro";*/
+                                // This is where the magic will happen
+  
+                              } else {
+                          
+                              }
+                            });
+
+                          
+                          
+                          conversation.pregunta += 1; //va a pregunta 42
+                          crearEncuesta(conversation);
+                          mensajeRespuesta = "*Nacionalidad:* (miembro #"+conversation.miembro_hogar_preguntando+")."+
+                          "Envíe el número de acuerdo a la opción correspondiente:\n"+
+                          "*1*: Colombiana\n"+
+                          "*2*: Venezolana\n"+
+                          "*3*: Colombo-venezolana\n"+
+                          "*4*: Otro";
+                        }
+                      }else{
+                        mensajeRespuesta = "*Fecha de Nacimiento*: (miembro #"+conversation.miembro_hogar_preguntando+")."+
+                          "(Envía la fecha en formato AAAA-MM-DD para (Año-Mes-Día)";
+                      }
                   
                   
                 } catch (error) {
@@ -2148,7 +2296,7 @@ app.post('/whatsapp', async (req, res) => {
 
                       conversation.pregunta += 2;// pregunta 46
                       crearEncuesta(conversation);
-                      mensajeRespuesta = '*Número de Documento:*. Sí no sabe el número de Documento, envíe "." (punto)';
+                      mensajeRespuesta = '*Número de Documento:*. (miembro #'+conversation.miembro_hogar_preguntando+'). Sí no sabe el número de Documento, envíe "." (punto)';
 
 
                       break;
@@ -2156,7 +2304,7 @@ app.post('/whatsapp', async (req, res) => {
                       guardarInfoMiembro("Cédula de Identidad (venezonala)", 'tipo_documento', conversation.miembro_hogar_preguntando, conversation.id);
                       conversation.pregunta += 2;// pregunta 46
                       crearEncuesta(conversation);
-                      mensajeRespuesta = '*Número de Documento:*. Sí no sabe el número de Documento, envíe "." (punto)';
+                      mensajeRespuesta = '*Número de Documento:*. (miembro #'+conversation.miembro_hogar_preguntando+'). Sí no sabe el número de Documento, envíe "." (punto)';
                       break;
 
                     case '3':
@@ -2164,14 +2312,14 @@ app.post('/whatsapp', async (req, res) => {
 
                         conversation.pregunta += 2;// pregunta 46
                         crearEncuesta(conversation);
-                        mensajeRespuesta = '*Número de Documento:*. Sí no sabe el número de Documento, envíe "." (punto)';
+                        mensajeRespuesta = '*Número de Documento:*. (miembro #'+conversation.miembro_hogar_preguntando+'). Sí no sabe el número de Documento, envíe "." (punto)';
                         break;
 
                     case '4':
                         guardarInfoMiembro("Pasaporte", 'tipo_documento', conversation.miembro_hogar_preguntando, conversation.id);
                         conversation.pregunta += 2;// pregunta 46
                         crearEncuesta(conversation);
-                        mensajeRespuesta = '*Número de Documento:*. Sí no sabe el número de documento, envíe "." (punto)';
+                        mensajeRespuesta = '*Número de Documento:*.  (miembro #'+conversation.miembro_hogar_preguntando+').Sí no sabe el número de documento, envíe "." (punto)';
                     break;
 
                     case '5':
@@ -2179,22 +2327,34 @@ app.post('/whatsapp', async (req, res) => {
 
                         conversation.pregunta += 2;// pregunta 46
                         crearEncuesta(conversation);
-                        mensajeRespuesta = '*Número de Documento:*. Sí no sabe el número de documento, envíe "." (punto)';
+                        mensajeRespuesta = '*Número de Documento:*. (miembro #'+conversation.miembro_hogar_preguntando+'). Sí no sabe el número de documento, envíe "." (punto)';
                     break;
 
                   case '6':
                         guardarInfoMiembro("Indocumentado", 'tipo_documento', conversation.miembro_hogar_preguntando, conversation.id);
 
-                        conversation.pregunta += 3;// pregunta 47. Indocumentado no se muestra numero documento
-                        crearEncuesta(conversation);
-                        mensajeRespuesta = "*¿Podrías compartir una fotografía de tu documento de identidad?*\n"+
-                        "Envía el número de acuerdo a la opción correspondiente\n"+
-                        "*1*: Sí\n"+
-                        "*2*: No";
+                        $contadorMiembrosHogar = conversation.miembro_hogar_preguntando +1; //siguiente miembro hogar
+    
+                        if($contadorMiembrosHogar <= conversation.total_miembros_hogar-1){
+                          conversation.miembro_hogar_preguntando +=1;
+                          conversation.pregunta = 36; //empieza a preguntar a siguiente miembro hogar
+                          mensajeRespuesta = "A continuación responda las preguntas para miembro #"+conversation.miembro_hogar_preguntando+"\n"+
+                        "*Primer Nombre*";
+                          crearEncuesta(conversation);
+                        }else{
+                          conversation.pregunta += 5; //Va a pregunta 49
+                          crearEncuesta(conversation);
+                          mensajeRespuesta = "*PASO 3 - DATOS DE CONTACTO*. "+
+                          "Recuerda: es muy importante que proporciones TODOS tus datos personales de contacto, para poder localizarte en caso de resultar elegido para el programa.\n"+
+                          "Por favor compartenos tu ubicación para poder localizarte de una forma más fácil";
+                          //"¿En qué Municipio te encuentras en este momento?. Envía el nombre del municipio:\n"+
+                          //"BOCHALEMA, BERLÍN, BUCARAMANGA, CÚCUTA, PAMPLONA, BOGOTÁ, CALI, PASTO, MEDELLÍN"*/
+                         
+                        }
                   break;
 
                     default:
-                        mensajeRespuesta = "*Tipo de Documento*. "+
+                        mensajeRespuesta = "*Tipo de Documento*. (miembro #"+conversation.miembro_hogar_preguntando+")."+
                     "Envía el número de acuerdo a la opción correspondiente:\n"+
                     "*1*: Acta de Nacimiento\n"+
                     "*2*: Cédula de Identidad (venezonala)\n"+
@@ -2231,7 +2391,8 @@ app.post('/whatsapp', async (req, res) => {
                   guardarInfoMiembro(req.body.Body, 'cual_otro_tipo_documento', conversation.miembro_hogar_preguntando, conversation.id);
                   conversation.pregunta += 1; // pregunta 46
                   crearEncuesta(conversation);
-                  mensajeRespuesta = "*Número de documento* (miembro #"+conversation.miembro_hogar_preguntando+").";
+                  mensajeRespuesta = '*Número de Documento:*. (miembro #'+conversation.miembro_hogar_preguntando+'). Sí no sabe el número de Documento, envíe "." (punto)';
+
                 } catch (error) {
                   conversation.pregunta = 45;
                   crearEncuesta(conversation);
@@ -2271,7 +2432,7 @@ app.post('/whatsapp', async (req, res) => {
                         guardarInfoMiembro('1', 'compartir_foto_documento', conversation.miembro_hogar_preguntando, conversation.id);
                         conversation.pregunta += 1; // pregunta 48
                         crearEncuesta(conversation);
-                        mensajeRespuesta = "Por favor carga una fotografía de tu documento aquí";
+                        mensajeRespuesta = "Por favor carga una fotografía del documento del miembro #"+conversation.miembro_hogar_preguntando+") aquí:";
                       break;
                       
                       case '2':
@@ -2279,9 +2440,9 @@ app.post('/whatsapp', async (req, res) => {
                         
                         $contadorMiembrosHogar = conversation.miembro_hogar_preguntando + 1;
 
-                        if($contadorMiembrosHogar <= conversation.total_miembros_hogar){
+                        if($contadorMiembrosHogar <= conversation.total_miembros_hogar-1){
                           conversation.miembro_hogar_preguntando +=1;
-                          conversation.pregunta = 37; //empieza a preguntar a siguiente miembro hogar
+                          conversation.pregunta = 36; //empieza a preguntar a siguiente miembro hogar
                           crearEncuesta(conversation);
                           mensajeRespuesta = "A continuación responda las preguntas para miembro #"+conversation.miembro_hogar_preguntando+"\n"+
                         "*Primer Nombre*";
@@ -2289,8 +2450,11 @@ app.post('/whatsapp', async (req, res) => {
                         }else{
                           conversation.pregunta += 2; //Va a pregunta 49
                           crearEncuesta(conversation);
-                          mensajeRespuesta = "*PASO 3 - DATOS DE CONTACTO*\n"+"¿En qué Municipio te encuentras en este momento?"
-
+                          mensajeRespuesta = "*PASO 3 - DATOS DE CONTACTO*. "+
+                          "Recuerda: es muy importante que proporciones TODOS tus datos personales de contacto, para poder localizarte en caso de resultar elegido para el programa.\n"+
+                          "Por favor compartenos tu ubicación para poder localizarte de una forma más fácil";
+                          //"¿En qué Municipio te encuentras en este momento?. Envía el nombre del municipio:\n"+
+                          //"BOCHALEMA, BERLÍN, BUCARAMANGA, CÚCUTA, PAMPLONA, BOGOTÁ, CALI, PASTO, MEDELLÍN"*/
                         }
                       break;
 
@@ -2322,9 +2486,9 @@ app.post('/whatsapp', async (req, res) => {
                 
                     $contadorMiembrosHogar = conversation.miembro_hogar_preguntando +1; //siguiente miembro hogar
     
-                        if($contadorMiembrosHogar <= conversation.total_miembros_hogar){
+                        if($contadorMiembrosHogar <= conversation.total_miembros_hogar-1){
                           conversation.miembro_hogar_preguntando +=1;
-                          conversation.pregunta = 37; //empieza a preguntar a siguiente miembro hogar
+                          conversation.pregunta = 36; //empieza a preguntar a siguiente miembro hogar
                           mensajeRespuesta = "A continuación responda las preguntas para miembro #"+conversation.miembro_hogar_preguntando+"\n"+
                         "*Primer Nombre*";
                           crearEncuesta(conversation);
@@ -2334,8 +2498,9 @@ app.post('/whatsapp', async (req, res) => {
                           crearEncuesta(conversation);
                           mensajeRespuesta = "*PASO 3 - DATOS DE CONTACTO*. "+
                           "Recuerda: es muy importante que proporciones TODOS tus datos personales de contacto, para poder localizarte en caso de resultar elegido para el programa.\n"+
-                          "¿En qué Municipio te encuentras en este momento?. Envía el nombre del municipio:\n"+
-                          "BOCHALEMA, BERLÍN, BUCARAMANGA, CÚCUTA, PAMPLONA, BOGOTÁ, CALI, PASTO, MEDELLÍN"
+                          "Por favor compartenos tu ubicación para poder localizarte de una forma más fácil";
+                          //"¿En qué Municipio te encuentras en este momento?. Envía el nombre del municipio:\n"+
+                          //"BOCHALEMA, BERLÍN, BUCARAMANGA, CÚCUTA, PAMPLONA, BOGOTÁ, CALI, PASTO, MEDELLÍN"*/
                          
     
                         }
@@ -2352,7 +2517,28 @@ app.post('/whatsapp', async (req, res) => {
 
               case 49:
                 
+                  try {
+                    
+                      if(req.body.Latitude && req.body.Longitude){
+                          
+                          autorizacionAsignarCoordenadasUbicacion(req.body.Longitude, req.body.Latitude, conversation.id);
+                          conversation.pregunta +=1; //va a pregunta 50
+                          crearEncuesta(conversation);
+                          mensajeRespuesta = "¿El número de contacto ha sido entregado por VenEsperanza?. Responda con el número según la opción:\n"+
+                          "*1*: Sí\n"+
+                          "*2*: No";
+                      }else{
+                        mensajeRespuesta = "Por favor compartenos tu ubicación para poder localizarte de una forma más fácil";
+
+                      }
+                  } catch (error) {
+                    conversation.pregunta = 49; // pregunta 48
+                    crearEncuesta(conversation);
+                    mensajeRespuesta = "Por favor compartenos tu ubicación para poder localizarte de una forma más fácil";
+                  }
+
                 
+                /*
                     if(req.body.Body === "BOCHALEMA" || req.body.Body === "BERLÍN" || req.body.Body === "BUCARAMANGA" || req.body.Body === "CÚCUTA" || req.body.Body === "PAMPLONA" ||
                      req.body.Body === "BOGOTÁ" || req.body.Body === "CALI" || req.body.Body === "PASTO" || req.body.Body === "MEDELLÍN"){
                           conversation.pregunta += 1; //Va a pregunta 37 paso 3
@@ -2361,40 +2547,430 @@ app.post('/whatsapp', async (req, res) => {
                           mensajeRespuesta = "¿El número de contacto ha sido entregado por VenEsperanza?. Responda con el número según la opción:\n"+
                           "*1*: Sí\n"+
                           "*2*: No";
-                     }
+                     }*/
                   
                 
   
               break;
 
-              /*
-            case 35:
+              case 50:
+                
+                try {
+                  switch(req.body.Body){
+                    case '1':
+                        conversation.numero_entregado_venesperanza = true;
+                        conversation.pregunta += 1; //Va a pregunta 51
+                      
+                        crearEncuesta(conversation);
+                        mensajeRespuesta = "Ingresa el Número de Contacto VenEsperanza:";
+                    break;
 
+                    case '2':
+                        conversation.numero_entregado_venesperanza = false;
+                        conversation.pregunta += 1; //Va a pregunta 51
+
+                        crearEncuesta(conversation);
+                        mensajeRespuesta = "Ingresa el Número de Contacto principal:";
+                    break;
+
+                    default:
+                      mensajeRespuesta = "¿El número de contacto ha sido entregado por VenEsperanza?. Responda con el número según la opción:\n"+
+                          "*1*: Sí\n"+
+                          "*2*: No";
+                    break;
+                  }
+                } catch (error) {
+                  mensajeRespuesta = "¿El número de contacto ha sido entregado por VenEsperanza?. Responda con el número según la opción:\n"+
+                          "*1*: Sí\n"+
+                          "*2*: No";
+                  
+                }
+               
+              break;
+
+            case 51:
+
+                try {
+                  
+                    var valoresAceptados = /^[0-9]/;
+                    if(req.body.Body.match(valoresAceptados)){
+                      conversation.numero_contacto = req.body.Body;
+                      conversation.pregunta += 1; //Va a pregunta 52
+
+                      crearEncuesta(conversation);
+                      mensajeRespuesta = "¿Esta línea de contacto es propia?. Responda con el número según la opción:\n"+
+                    "*1*: Sí\n"+
+                    "*2*: No";
+
+                    }else{
+                      if(conversation.numero_entregado_venesperanza == true){
+    
+                        mensajeRespuesta = "Ingresa el Número de Contacto VenEsperanza:";
+    
+                      }else if(conversation.numero_entregado_venesperanza == false){
+        
+                        mensajeRespuesta = "Ingresa el Número de Contacto principal:";
+    
+                      }
+                    }
+                } catch (error) {
+                  if(conversation.numero_entregado_venesperanza == true){
+                    conversation.pregunta = 51; //Vuelve a preguntar 51
+
+                    crearEncuesta(conversation);
+                    mensajeRespuesta = "Ingresa el Número de Contacto VenEsperanza:";
+
+                  }else if(conversation.numero_entregado_venesperanza == false){
+
+                    conversation.pregunta = 51; //Vuelve a preguntar 51
+
+                    crearEncuesta(conversation);
+                    mensajeRespuesta = "Ingresa el Número de Contacto principal:";
+
+                  }
+                  
+                }
+
+            break;
+
+            case 52:
+
+                try {
+                  switch(req.body.Body){
+                    case '1':
+                        conversation.linea_contacto_propia = true;
+                        conversation.pregunta += 1; //Va a pregunta 53
+                        crearEncuesta(conversation);
+                        mensajeRespuesta = "¿Esta línea de contacto está asociada a WhatsApp?. Responda con el número según la opción:\n"+
+                        "*1*: Sí\n"+
+                        "*2*: No";
+                    
+                        break;
+
+                    case '2':
+
+                      conversation.linea_contacto_propia = false;
+                      conversation.pregunta += 1; //Va a pregunta 53
+                      //conversation.encuesta = false;
+                          
+                      crearEncuesta(conversation);
+                      mensajeRespuesta = "¿Esta línea de contacto está asociada a WhatsApp?. Responda con el número según la opción:\n"+
+                      "*1*: Sí\n"+
+                      "*2*: No";
+
+
+                        break;
+
+                    default:
+                      mensajeRespuesta = "¿Esta línea de contacto es propia?. Responda con el número según la opción:\n"+
+                    "*1*: Sí\n"+
+                    "*2*: No";
+                      break;
+                  }
+                  
+                } catch (error) {
+                  conversation.pregunta = 52; //Vuelve a preguntar 52
+
+                      crearEncuesta(conversation);
+                      mensajeRespuesta = "¿Esta línea de contacto es propia?. Responda con el número según la opción:\n"+
+                      "*1*: Sí\n"+
+                      "*2*: No";
+                        break;
+                }
+
+            break;
+
+            case 53:
               try {
-                //valida continuar
-                conversation.pregunta += 1; //va a pregunta 23
-                mensajeRespuesta = "A continuación responda las preguntas para miembro #"+conversation.miembro_hogar_preguntando+"\n"+
-                "*Primer Nombre*";
-                crearEncuesta(conversation);
+
+                  switch(req.body.Body){
+                    case '1':
+
+                      conversation.pregunta += 2; //Va a pregunta 55 paso 3
+                      conversation.linea_asociada_whatsapp = true;
+                      crearEncuesta(conversation);
+                      mensajeRespuesta = "Número de contacto alternativo:";
+                    break;
+
+                    case '2':
+                      conversation.pregunta += 1; //Va a pregunta 54 paso 3
+                      conversation.linea_asociada_whatsapp = false;
+                      crearEncuesta(conversation);
+                      mensajeRespuesta = "Por favor agrega tu número de Whatsapp:";
+                      break;
+
+                  default:
+
+                    mensajeRespuesta = "¿Esta línea de contacto está asociada a WhatsApp?. Responda con el número según la opción:\n"+
+                    "*1*: Sí\n"+
+                    "*2*: No";
+
+                    break;
+                }
                 
               } catch (error) {
-                conversation.pregunta = 35;
+                conversation.pregunta = 53; //Vuelve a preguntar 53
+
+                      crearEncuesta(conversation);
+                mensajeRespuesta = "¿Esta línea de contacto está asociada a WhatsApp?. Responda con el número según la opción:\n"+
+                      "*1*: Sí\n"+
+                      "*2*: No";
+              }
+            
+            break;
+
+
+            case 54:
+
+              conversation.pregunta += 1; //Va a pregunta 55 paso 3
+              conversation.numero_whatsapp_principal = req.body.Body;
+              crearEncuesta(conversation);
+              mensajeRespuesta = "Número de contacto alternativo:";
+
+            break;
+
+            case 55:
+
+              conversation.pregunta += 1; //Va a pregunta 56 paso 3
+              conversation.numero_alternativo = req.body.Body;
+              crearEncuesta(conversation);
+              mensajeRespuesta = "¿Esta línea de contacto es propia?. Responda con el número según la opción:\n"+
+                    "*1*: Sí\n"+
+                    "*2*: No";
+
+            break;
+
+            case 56:
+
+              if(req.body.Body === '1'){
+                
+                conversation.pregunta += 1; //Va a pregunta 57 paso 3
+                conversation.linea_contacto_alternativo = true;
                 crearEncuesta(conversation);
-                mensajeRespuesta = "Envie la palabra CONTINUAR para responder información sobre los miembros de su hogar";
+                mensajeRespuesta = "¿Esta línea de contacto está asociada a WhatsApp?. Responda con el número según la opción:\n"+
+                "*1*: Sí\n"+
+                      "*2*: No";
+
+              }else if(req.body.Body === '2'){
+
+                conversation.pregunta += 1; //Va a pregunta 57 paso 3
+                conversation.linea_contacto_alternativo = false;
+                crearEncuesta(conversation);
+                mensajeRespuesta = "¿Esta línea de contacto está asociada a WhatsApp?. Responda con el número según la opción:\n"+
+                "*1*: Sí\n"+
+                      "*2*: No";;
+
+              }else{
+                mensajeRespuesta = "¿Esta línea de contacto es propia?. Responda con el número según la opción:\n"+
+                    "*1*: Sí\n"+
+                    "*2*: No";
+              }
+            
+            break;
+
+
+            case 57:
+
+              switch(req.body.Body){
+                case '1':
+
+                  conversation.pregunta += 1; //Va a pregunta 58 paso 3
+                  conversation.linea_alternativa_asociada_whatsapp = true;
+                  crearEncuesta(conversation);
+                  mensajeRespuesta = "Escribe un correo electrónico donde te podamos contactar";
+                break;
+
+                case '2':
+                  conversation.pregunta += 1; //Va a pregunta 58 paso 3
+                  conversation.linea_alternativa_asociada_whatsapp = false;
+                  crearEncuesta(conversation);
+                  mensajeRespuesta = "Escribe un correo electrónico donde te podamos contactar";
+                  break;
+
+              default:
+
+                mensajeRespuesta = "¿Esta línea de contacto está asociada a WhatsApp?. Responda con el número según la opción:\n"+
+                "*1*: Sí\n"+
+                      "*2*: No";
+
+                break;
+            }
+
+            break;
+
+
+            case 58:
+
+              conversation.pregunta += 1; //Va a pregunta 59 paso 3
+              conversation.correo_electronico = req.body.Body;
+              crearEncuesta(conversation);
+              mensajeRespuesta = "¿Tienes cuenta en Facebook?. Responde con el número según la opción:\n"+
+              "*1*: Sí\n"+
+                      "*2*: No";
+
+            break;
+
+            case 59:
+
+              switch(req.body.Body){
+
+                case '1':
+
+                  conversation.pregunta += 1; //Va a pregunta 60 paso 3
+                  conversation.tiene_cuenta_facebook = true;
+                  crearEncuesta(conversation);
+                  mensajeRespuesta = "¿Cuál es la cuenta?";
+                  break;
+
+                case '2':
+
+                  conversation.pregunta += 2; //Va a pregunta 61 paso 3
+                  conversation.tiene_cuenta_facebook = false;
+                  crearEncuesta(conversation);
+                  mensajeRespuesta = "¿Podemos contactarte el momento en el que llegues a tu destino final?"+
+                  "Responde con el númeor según la opción correspondiente:\n"+
+                  "*1*: Sí\n"+
+                      "*2*: No";
+                  break;
+
+                default:
+                  mensajeRespuesta = "¿Tienes cuenta en Facebook?. Responde con el número según la opción:\n"+
+              "*1*: Sí\n"+
+                      "*2*: No";
+                  break;
+              }
+
+            break;
+
+            case 60:
+
+              conversation.pregunta += 1; //Va a pregunta 62 paso 3
+              conversation.cuenta_facebook = req.body.Body;
+              crearEncuesta(conversation);
+              mensajeRespuesta = "¿Podemos contactarte el momento en el que llegues a tu destino final?"+
+              "Responde con el númeor según la opción correspondiente:\n"+
+              "*1*: Sí\n"+
+                  "*2*: No";
+
+            break;
+
+            case 61:
+
+              switch(req.body.Body){
+
+                case '1':
+
+                  conversation.pregunta += 1; //Va a pregunta 62 paso 3
+                  conversation.podemos_contactarte = true;
+                  crearEncuesta(conversation);
+                  mensajeRespuesta = "¿Cuál sería la mejor forma para contactarte?. Responde con el número según la opción:\n"+
+                  "*1*: Por llamada\n"+
+                  "*2*: WhatsApp\n"+
+                  "*3*: Facebook\n"+
+                  "*4*: Correo electrónico\n"+
+                  "*5*: Otro";
+                  break;
+
+                case '2':
+
+                  conversation.pregunta += 3; //Va a pregunta 64 paso 3
+                  conversation.podemos_contactarte = false;
+                  crearEncuesta(conversation);
+                  mensajeRespuesta = "¿Podrías darnos alguna información adicional para contactarte?"+
+                  "Por ejemplo, el teléfono de algún familiar o amigo y por quién preguntar, las horas más adecuadas para llamarte o los días de la semana en los que te podremos encontrar.";
+                  
+                  break;
+
+                default:
+                  mensajeRespuesta = "¿Podemos contactarte el momento en el que llegues a tu destino final?"+
+              "Responde con el númeor según la opción correspondiente:\n"+
+              "*1*: Sí\n"+
+                  "*2*: No";
+                  break;
+              }
+
+            break;
+
+            case 62:
+
+              switch(req.body.Body){
+                
+                case '1':
+                  conversation.forma_contactarte = "Por llamada";
+                  conversation.pregunta += 2; //pasa a pregunta 64
+                  crearEncuesta(conversation);
+                  mensajeRespuesta = "¿Podrías darnos alguna información adicional para contactarte?"+
+                  "Por ejemplo, el teléfono de algún familiar o amigo y por quién preguntar, las horas más adecuadas para llamarte o los días de la semana en los que te podremos encontrar.";
+                  break;
+                
+                case '2':
+
+                  conversation.forma_contactarte = "WhatsApp";
+                  conversation.pregunta += 2; //pasa a pregunta 64
+                  crearEncuesta(conversation);
+                  mensajeRespuesta = "¿Podrías darnos alguna información adicional para contactarte?"+
+                  "Por ejemplo, el teléfono de algún familiar o amigo y por quién preguntar, las horas más adecuadas para llamarte o los días de la semana en los que te podremos encontrar.";
+                  break;
+                
+                case '3':
+                  conversation.forma_contactarte = "Facebook";
+                  conversation.pregunta += 2; //pasa a pregunta 64
+                  crearEncuesta(conversation);
+                  mensajeRespuesta = "¿Podrías darnos alguna información adicional para contactarte?"+
+                  "Por ejemplo, el teléfono de algún familiar o amigo y por quién preguntar, las horas más adecuadas para llamarte o los días de la semana en los que te podremos encontrar.";
+                break;
+
+                case '4':
+                  conversation.forma_contactarte = "Correo electrónico";
+                  conversation.pregunta += 2; //pasa a pregunta 64
+                  crearEncuesta(conversation);
+                  mensajeRespuesta = "¿Podrías darnos alguna información adicional para contactarte?"+
+                  "Por ejemplo, el teléfono de algún familiar o amigo y por quién preguntar, las horas más adecuadas para llamarte o los días de la semana en los que te podremos encontrar.";
+                break;
+
+                case '5':
+
+                  conversation.forma_contactarte = "Otro";
+                  conversation.pregunta += 1; //pasa a pregunta 63
+                  crearEncuesta(conversation);
+                  mensajeRespuesta = "Envía otra opción para contactarte";
+
+                break;
+
+                default:
+                  mensajeRespuesta = "¿Cuál sería la mejor forma para contactarte?. Responde con el número según la opción:\n"+
+                  "*1*: Por llamada\n"+
+                  "*2*: WhatsApp\n"+
+                  "*3*: Facebook\n"+
+                  "*4*: Correo electrónico\n"+
+                  "*5*: Otro";
+                  break;
 
               }
               
 
-            break;*/
-
-
-
-            case 50:
-              //Termina la encuesta
-              conversation.encuesta_chatbot = false;
-              crearEncuesta(conversation);
-              mensajeRespuesta = "terminamos!";
             break;
+
+            case 63:
+              conversation.otra_forma_contactarte = req.body.Body;
+                  conversation.pregunta += 1; //pasa a pregunta 64
+                  crearEncuesta(conversation);
+                  mensajeRespuesta = "¿Podrías darnos alguna información adicional para contactarte?"+
+                  "Por ejemplo, el teléfono de algún familiar o amigo y por quién preguntar, las horas más adecuadas para llamarte o los días de la semana en los que te podremos encontrar.";
+                
+            break;
+
+            case 64:
+                  conversation.comentario = req.body.Body;
+                  conversation.encuesta_chatbot = false;
+                  crearEncuesta(conversation);
+                  mensajeRespuesta = "¡Gracias por participar!\n"+
+                  "Si eres preseleccionado/a el programa #VenEsperanza se comunicará contigo\n"+
+                  "Recuerda:\n"+
+                  "En el programa #VenEsperanza no cobramos ni pedimos remuneración por ningún servicio a la comunidad, no tenemos intermediarios."
+            break;
+
+            
           }
             
             
@@ -2539,1347 +3115,6 @@ app.post('/whatsapp', async (req, res) => {
     }
     
   }
-    
-/*
-    var mensajeRespuesta = '';
-
-  
-
-        //Cuando no envia ubicacion.
-        //Por defecto se muestra el saludo con las opciones para responder.
-        //Cuando responde alguno de los numeros 1,2,3,4 o 5 se muestra mensaje correspondiente.
-        if(req.body.Body !== '' && conversation.encuesta == false  && conversation.actualizar_datos == false && conversation.reportar_llegada == false){
-           
-        
-            switch (req.body.Body) {
-              case '1':
-
-                      mensajeRespuesta = 'Vas a crear nuevo pedido'
-                break;
-              
-              case '2':
-
-                      mensajeRespuesta = 'Vas a hacer un reclamo'
-              break;
-
-              case '3':
-
-                      mensajeRespuesta = 'Quieres contactar a un agente de servicio al cliente'
-              break;
-
-              case '4':
-
-                      mensajeRespuesta = 'Envianos tu ubicación'
-              break;
-
-              case '5':
-                      
-                      mensajeRespuesta = 'Quieres terminar el proceso. Hasta luego Gracias'
-              break;
-            
-              default:
-                    mensajeRespuesta = 'Venesperanza es un programa de asistencia humanitaria financiado por USAID. Esta plataforma, es un mecanismo de registro para hogares de personas que recién llegan a Colombia como migrantes. Este proceso es gratuito.'+
-                    'Por favor, continúa sólo si:'+
-                    '- Eres parte de una familia migrante venezolana o colombiano retornado que llegó a Colombia.'+
-                    '- Llevas tres meses o menos en Colombia.'+
-                    '- No te has registrado previamente ni tu, ni ningún miembro de tu familia.'+
-                    'Tu participación es voluntaria. Puedes decidir no participar o retirarte en cualquier momento del proceso.'+
-                    'Para continuar una de las siguientes opciones:'+
-                    '*1*: Llenar formulario'+
-                    '*2*: Actualizar datos'+
-                    '*3*: Reportar llegada';
-
-                      mensajeRespuesta = 'Hello *_'+ req.body.ProfileName+ '_*. Welcome to Tienda Online!\n'+
-                      'Selecciona entre las siguientes opciones:\n'+
-                      '*1*: Crear Nuevo Pedido.\n'+
-                      '*2*: Hacer un reclamo.\n'+
-                      '*3*: Contactar agente de servicio al cliente\n'+
-                      '*4*: Quiero enviar mi ubicación para mejor servicio\n'+
-                      '*5*: Terminar'
-              
-              break;
-
-              }
-        
-        }else if(conversation.encuesta == true){
-
-          switch(conversation.pregunta){
-            
-
-            case 14:
-              console.log('RESPUESTA PREGUNTA 4: ', req.body.Body);
-        
-              
-              switch (req.body.Body){
-                case '1':
-                  conversation.pregunta += 1; //va a pregunta 15
-                  conversation.estar_dentro_colombia = 1;
-                  conversation.pais_destino_fuera_colombia = null;
-                  mensajeRespuesta = "¿Cuál es tu destino final dentro de Colombia?"+
-                  "Escriba en mayúscula el nombre del Departamento ó la palabra *NO SE* en caso de que no tenta definido el Departamento de destino";
-                  crearEncuesta(conversation);
-                  
-                  break;
-                case '2':
-                  conversation.pregunta += 2; //va a pregunta 16
-                  conversation.estar_dentro_colombia = 0;
-                  conversation.id_departamento_destino_final = null;
-                  conversation.id_municipio_destino_final = null;
-                  mensajeRespuesta = "¿Cuál es tu destino final? Seleccione uno de los siguientes países."+
-                  "Envíe el número correspondiente de la opción:\n"+
-                  "*1*: Antigua y Barbuda\n"+
-                  "*2*: Argentina\n"+
-                  "*3*: Bahamas\n"+
-                  "*4*: Barbados\n"+
-                  "*5*: Bolivia\n"+
-                  "*6*: Brasil\n"+
-                  "*7*: Chile\n"+
-                  "*8*: Colombia\n"+
-                  "*9*: Costa Rica\n"+
-                  "*10*: Cuba\n"+
-                  "*11*: Dominica\n"+
-                  "*12*: Ecuador\n"+
-                  "*13*: Granada\n"+
-                  "*14*: Guyana\n"+
-                  "*15*: Jamaica\n"+
-                  "*16*: México\n"+
-                  "*17*: Panamá\n"+
-                  "*18*: Perú\n"+
-                  "*19*: República Dominicana\n"+
-                  "*20*: Surinam\n"+
-                  "*21*: Trinidad y Tobago\n"+
-                  "*22*: Uruguay\n"+
-                  "*23*: Venezuela\n";
-                  crearEncuesta(conversation);
-                  break;
-
-                case '3':
-                  conversation.pregunta += 1; //va a pregunta 15
-                  conversation.estar_dentro_colombia = 2;
-                  conversation.pais_destino_fuera_colombia = null;
-                  mensajeRespuesta = "¿Cuál es tu destino final dentro de Colombia?"+
-                  "Escriba en mayúscula el nombre del Departamento ó la palabra *NO SE* en caso de que no tenta definido el Departamento de destino";
-
-                  crearEncuesta(conversation);
-                  break;
-
-                default:
-                  mensajeRespuesta = "¿En los próximos seis meses planeas estar dentro de Colombia?"+
-                    "Selecciona una de las siguientes opciones escribiendo el número correspondiente de la opción:\n"+
-                    "*1*: Sí\n"+
-                    "*2*: No\n"+
-                    "*3*: No estoy seguro";
-                  break;
-              }
-              
-              
-
-              break;
-
-            case 15:
-              
-
-              if(req.body.Body === 'NO SE' || req.body.Body === 'No sé' || req.body.Body === 'No se' || req.body.Body === 'no sé' || req.body.Body === 'No se'){
-                conversation.pregunta += 3; //va a pregunta 18
-                conversation.id_departamento_destino_final = null;
-                conversation.id_municipio_destino_final = null;
-                mensajeRespuesta = "¿Cuál es la razón para elegir este lugar como destino final?\n"+
-                "Seleccione una de las opciones, enviando el número de la opción correspondiente:\n"+
-                "*1*: Algún amigo o familiar me espera.\n"+
-                "*2*: Conozco personas que me pueden dar trabajo\n"+
-                "*3*: He escuchado que puedo tener trabajo allá\n"+
-                "*4*: Otra";
-
-                crearEncuesta(conversation);
-              }else{
-
-                $sqlConsultaDepartamento = `SELECT nombre FROM departamento where nombre = '${req.body.Body}'`;
-
-                connection.query($sqlConsultaDepartamento, (error,res)=>{
-                  if (error) throw error;
-                  console.log('CONSULTA DEPARTAMENTO: ', res);
-                  console.log('TAMAÑO: ', res.length);
-                  if(res.length == 1){
-
-                    conversation.pregunta += 2; //va a pregunta 17
-                    conversation.id_departamento_destino_final =  req.body.Body;
-
-                    mensajeRespuesta = "Escriba en mayúscula el nombre del Municipio ó la palabra *NO SE* en caso de que no tenta definido el Municipio de destino";
-                    crearEncuesta(conversation);
-
-                  }
-              
-                  });
-
-                
-                
-
-              }
-              
-              
-              
-            break;
-
-            case 16:
-
-                switch(req.body.Body){
-                  case '1':
-
-                    conversation.pais_destino_fuera_colombia = "Antigua y Barbuda";
-                    
-                    conversation.pregunta += 2;//va a pregunta 18
-                    crearEncuesta(conversation);
-                    mensajeRespuesta = "¿Cuál es la razón para elegir este lugar como destino final?\n"+
-                                      "Seleccione una de las opciones, enviando el número de la opción correspondiente:\n"+
-                                      "*1*: Algún amigo o familiar me espera.\n"+
-                                      "*2*: Conozco personas que me pueden dar trabajo\n"+
-                                      "*3*: He escuchado que puedo tener trabajo allá\n"+
-                                      "*4*: Otra";
-              
-                  break;
-
-                  case '2':
-
-                    conversation.pais_destino_fuera_colombia = "Argentina";
-                  
-                    conversation.pregunta += 2;//va a pregunta 18
-                    crearEncuesta(conversation);
-                    mensajeRespuesta = "¿Cuál es la razón para elegir este lugar como destino final?\n"+
-                                      "Seleccione una de las opciones, enviando el número de la opción correspondiente:\n"+
-                                      "*1*: Algún amigo o familiar me espera.\n"+
-                                      "*2*: Conozco personas que me pueden dar trabajo\n"+
-                                      "*3*: He escuchado que puedo tener trabajo allá\n"+
-                                      "*4*: Otra";
-                    break;
-                    case '3':
-
-                      conversation.pais_destino_fuera_colombia = "Bahamas";
-                     
-                      conversation.pregunta += 2;//va a pregunta 18
-                      crearEncuesta(conversation);
-                      mensajeRespuesta = "¿Cuál es la razón para elegir este lugar como destino final?\n"+
-                                      "Seleccione una de las opciones, enviando el número de la opción correspondiente:\n"+
-                                      "*1*: Algún amigo o familiar me espera.\n"+
-                                      "*2*: Conozco personas que me pueden dar trabajo\n"+
-                                      "*3*: He escuchado que puedo tener trabajo allá\n"+
-                                      "*4*: Otra";
-                      break;
-                    
-                      case '4':
-
-                      conversation.pais_destino_fuera_colombia = "Barbados";
-                     
-                      conversation.pregunta += 2;//va a pregunta 18
-                      crearEncuesta(conversation);
-                      mensajeRespuesta = "¿Cuál es la razón para elegir este lugar como destino final?\n"+
-                                      "Seleccione una de las opciones, enviando el número de la opción correspondiente:\n"+
-                                      "*1*: Algún amigo o familiar me espera.\n"+
-                                      "*2*: Conozco personas que me pueden dar trabajo\n"+
-                                      "*3*: He escuchado que puedo tener trabajo allá\n"+
-                                      "*4*: Otra";
-                      break;
-
-                      case '5':
-
-                        conversation.pais_destino_fuera_colombia = "Bolivia";
-                        
-                        conversation.pregunta += 2;//va a pregunta 18
-                        crearEncuesta(conversation);
-                        mensajeRespuesta = "¿Cuál es la razón para elegir este lugar como destino final?\n"+
-                                      "Seleccione una de las opciones, enviando el número de la opción correspondiente:\n"+
-                                      "*1*: Algún amigo o familiar me espera.\n"+
-                                      "*2*: Conozco personas que me pueden dar trabajo\n"+
-                                      "*3*: He escuchado que puedo tener trabajo allá\n"+
-                                      "*4*: Otra";
-                        break;
-
-                        case '6':
-
-                        conversation.pais_destino_fuera_colombia = "Brasil";
-                        conversation.pregunta += 2;//va a pregunta 18
-                        crearEncuesta(conversation);
-                        mensajeRespuesta = "¿Cuál es la razón para elegir este lugar como destino final?\n"+
-                                      "Seleccione una de las opciones, enviando el número de la opción correspondiente:\n"+
-                                      "*1*: Algún amigo o familiar me espera.\n"+
-                                      "*2*: Conozco personas que me pueden dar trabajo\n"+
-                                      "*3*: He escuchado que puedo tener trabajo allá\n"+
-                                      "*4*: Otra";
-                        break;
-
-                      
-                        case '7':
-
-                        conversation.pais_destino_fuera_colombia = "Chile";
-                        conversation.pregunta += 2;//va a pregunta 18
-                        crearEncuesta(conversation);
-                        mensajeRespuesta = "¿Cuál es la razón para elegir este lugar como destino final?\n"+
-                                      "Seleccione una de las opciones, enviando el número de la opción correspondiente:\n"+
-                                      "*1*: Algún amigo o familiar me espera.\n"+
-                                      "*2*: Conozco personas que me pueden dar trabajo\n"+
-                                      "*3*: He escuchado que puedo tener trabajo allá\n"+
-                                      "*4*: Otra";
-                        break;
-
-                        case '8':
-
-                        conversation.pais_destino_fuera_colombia = "Colombia";
-                        
-                        conversation.pregunta += 2;//va a pregunta 18
-                        crearEncuesta(conversation);
-                        mensajeRespuesta = "¿Cuál es la razón para elegir este lugar como destino final?\n"+
-                                      "Seleccione una de las opciones, enviando el número de la opción correspondiente:\n"+
-                                      "*1*: Algún amigo o familiar me espera.\n"+
-                                      "*2*: Conozco personas que me pueden dar trabajo\n"+
-                                      "*3*: He escuchado que puedo tener trabajo allá\n"+
-                                      "*4*: Otra";
-                        break;
-
-                      
-                        case '9':
-
-                          conversation.pais_destino_fuera_colombia = "Costa Rica";
-                          
-                          conversation.pregunta += 2;//va a pregunta 18
-                          crearEncuesta(conversation);
-                          mensajeRespuesta = "¿Cuál es la razón para elegir este lugar como destino final?\n"+
-                                      "Seleccione una de las opciones, enviando el número de la opción correspondiente:\n"+
-                                      "*1*: Algún amigo o familiar me espera.\n"+
-                                      "*2*: Conozco personas que me pueden dar trabajo\n"+
-                                      "*3*: He escuchado que puedo tener trabajo allá\n"+
-                                      "*4*: Otra";
-                          break;
-
-
-                          case '10':
-
-                            conversation.pais_destino_fuera_colombia = "Cuba";
-                            
-                            conversation.pregunta += 2;//va a pregunta 18
-                            crearEncuesta(conversation);
-                            mensajeRespuesta = "¿Cuál es la razón para elegir este lugar como destino final?\n"+
-                                      "Seleccione una de las opciones, enviando el número de la opción correspondiente:\n"+
-                                      "*1*: Algún amigo o familiar me espera.\n"+
-                                      "*2*: Conozco personas que me pueden dar trabajo\n"+
-                                      "*3*: He escuchado que puedo tener trabajo allá\n"+
-                                      "*4*: Otra";
-                            break;
-
-                            case '11':
-
-                              conversation.pais_destino_fuera_colombia = "Dominica";
-                              
-                              conversation.pregunta += 2;//va a pregunta 18
-                              crearEncuesta(conversation);
-                              mensajeRespuesta = "¿Cuál es la razón para elegir este lugar como destino final?\n"+
-                                      "Seleccione una de las opciones, enviando el número de la opción correspondiente:\n"+
-                                      "*1*: Algún amigo o familiar me espera.\n"+
-                                      "*2*: Conozco personas que me pueden dar trabajo\n"+
-                                      "*3*: He escuchado que puedo tener trabajo allá\n"+
-                                      "*4*: Otra";
-                              break;
-
-                              case '12':
-
-                                conversation.pais_destino_fuera_colombia = "Ecuador";
-                                
-                                conversation.pregunta += 2;//va a pregunta 18
-                                crearEncuesta(conversation);
-                                mensajeRespuesta = "¿Cuál es la razón para elegir este lugar como destino final?\n"+
-                                      "Seleccione una de las opciones, enviando el número de la opción correspondiente:\n"+
-                                      "*1*: Algún amigo o familiar me espera.\n"+
-                                      "*2*: Conozco personas que me pueden dar trabajo\n"+
-                                      "*3*: He escuchado que puedo tener trabajo allá\n"+
-                                      "*4*: Otra";
-                                break;
-
-                                case '13':
-
-                                  conversation.pais_destino_fuera_colombia = "Granada";
-                                  
-                                  conversation.pregunta += 2;//va a pregunta 18
-                                  crearEncuesta(conversation);
-                                  mensajeRespuesta = "¿Cuál es la razón para elegir este lugar como destino final?\n"+
-                                      "Seleccione una de las opciones, enviando el número de la opción correspondiente:\n"+
-                                      "*1*: Algún amigo o familiar me espera.\n"+
-                                      "*2*: Conozco personas que me pueden dar trabajo\n"+
-                                      "*3*: He escuchado que puedo tener trabajo allá\n"+
-                                      "*4*: Otra";
-                                  break;
-
-
-                                  case '14':
-
-                                  conversation.pais_destino_fuera_colombia = "Guyana";
-                                
-                                  conversation.pregunta += 2;//va a pregunta 18
-                                  crearEncuesta(conversation);
-                                  mensajeRespuesta = "¿Cuál es la razón para elegir este lugar como destino final?\n"+
-                                      "Seleccione una de las opciones, enviando el número de la opción correspondiente:\n"+
-                                      "*1*: Algún amigo o familiar me espera.\n"+
-                                      "*2*: Conozco personas que me pueden dar trabajo\n"+
-                                      "*3*: He escuchado que puedo tener trabajo allá\n"+
-                                      "*4*: Otra";
-                                  break;
-
-
-                                  case '15':
-
-                                  conversation.pais_destino_fuera_colombia = "Jamaica";
-                                 
-                                  conversation.pregunta += 2;//va a pregunta 18
-                                  crearEncuesta(conversation);
-                                  mensajeRespuesta = "¿Cuál es la razón para elegir este lugar como destino final?\n"+
-                                      "Seleccione una de las opciones, enviando el número de la opción correspondiente:\n"+
-                                      "*1*: Algún amigo o familiar me espera.\n"+
-                                      "*2*: Conozco personas que me pueden dar trabajo\n"+
-                                      "*3*: He escuchado que puedo tener trabajo allá\n"+
-                                      "*4*: Otra";
-                                  break;
-
-                                  case '16':
-
-                                  conversation.pais_destino_fuera_colombia = "México";
-                                  
-                                  conversation.pregunta += 2;//va a pregunta 18
-                                  crearEncuesta(conversation);
-                                  mensajeRespuesta = "¿Cuál es la razón para elegir este lugar como destino final?\n"+
-                                      "Seleccione una de las opciones, enviando el número de la opción correspondiente:\n"+
-                                      "*1*: Algún amigo o familiar me espera.\n"+
-                                      "*2*: Conozco personas que me pueden dar trabajo\n"+
-                                      "*3*: He escuchado que puedo tener trabajo allá\n"+
-                                      "*4*: Otra";
-                                  break;
-
-                                  case '17':
-
-                                  conversation.pais_destino_fuera_colombia = "Panamá";
-                                  
-                                  conversation.pregunta += 2;//va a pregunta 18
-                                  crearEncuesta(conversation);
-                                  mensajeRespuesta = "¿Cuál es la razón para elegir este lugar como destino final?\n"+
-                                      "Seleccione una de las opciones, enviando el número de la opción correspondiente:\n"+
-                                      "*1*: Algún amigo o familiar me espera.\n"+
-                                      "*2*: Conozco personas que me pueden dar trabajo\n"+
-                                      "*3*: He escuchado que puedo tener trabajo allá\n"+
-                                      "*4*: Otra";
-                                  break;
-
-
-                                  case '18':
-
-                                  conversation.pais_destino_fuera_colombia = "Perú";
-                                  
-                                  conversation.pregunta += 2;//va a pregunta 18
-                                  crearEncuesta(conversation);
-                                  mensajeRespuesta = "¿Cuál es la razón para elegir este lugar como destino final?\n"+
-                                      "Seleccione una de las opciones, enviando el número de la opción correspondiente:\n"+
-                                      "*1*: Algún amigo o familiar me espera.\n"+
-                                      "*2*: Conozco personas que me pueden dar trabajo\n"+
-                                      "*3*: He escuchado que puedo tener trabajo allá\n"+
-                                      "*4*: Otra";
-                                  break;
-
-
-                                  case '19':
-
-                                  conversation.pais_destino_fuera_colombia = "República Dominicana";
-                                  
-                                  conversation.pregunta += 2;//va a pregunta 18
-                                  crearEncuesta(conversation);
-                                  mensajeRespuesta = "¿Cuál es la razón para elegir este lugar como destino final?\n"+
-                                      "Seleccione una de las opciones, enviando el número de la opción correspondiente:\n"+
-                                      "*1*: Algún amigo o familiar me espera.\n"+
-                                      "*2*: Conozco personas que me pueden dar trabajo\n"+
-                                      "*3*: He escuchado que puedo tener trabajo allá\n"+
-                                      "*4*: Otra";
-                                  break;
-
-                                  case '20':
-
-                                  conversation.pais_destino_fuera_colombia = "Surinam";
-                                  
-                                  conversation.pregunta += 2;//va a pregunta 18
-                                  crearEncuesta(conversation);
-                                  mensajeRespuesta = "¿Cuál es la razón para elegir este lugar como destino final?\n"+
-                                      "Seleccione una de las opciones, enviando el número de la opción correspondiente:\n"+
-                                      "*1*: Algún amigo o familiar me espera.\n"+
-                                      "*2*: Conozco personas que me pueden dar trabajo\n"+
-                                      "*3*: He escuchado que puedo tener trabajo allá\n"+
-                                      "*4*: Otra";
-                                  break;
-
-
-                                  case '21':
-
-                                    conversation.pais_destino_fuera_colombia = "Trinidad y Tobago";
-                                    
-                                    conversation.pregunta += 2;//va a pregunta 18
-                                    crearEncuesta(conversation);
-                                    mensajeRespuesta = "¿Cuál es la razón para elegir este lugar como destino final?\n"+
-                                      "Seleccione una de las opciones, enviando el número de la opción correspondiente:\n"+
-                                      "*1*: Algún amigo o familiar me espera.\n"+
-                                      "*2*: Conozco personas que me pueden dar trabajo\n"+
-                                      "*3*: He escuchado que puedo tener trabajo allá\n"+
-                                      "*4*: Otra";
-                                    break;
-
-
-
-                                    case '22':
-
-                                      conversation.pais_destino_fuera_colombia = "Uruguay";
-                                     
-                                      conversation.pregunta += 2;//va a pregunta 18
-                                      crearEncuesta(conversation);
-                                      mensajeRespuesta = "¿Cuál es la razón para elegir este lugar como destino final?\n"+
-                                      "Seleccione una de las opciones, enviando el número de la opción correspondiente:\n"+
-                                      "*1*: Algún amigo o familiar me espera.\n"+
-                                      "*2*: Conozco personas que me pueden dar trabajo\n"+
-                                      "*3*: He escuchado que puedo tener trabajo allá\n"+
-                                      "*4*: Otra";
-                                      break;
-
-
-                                      case '23':
-
-                                      conversation.pais_destino_fuera_colombia = "Venezuela";
-                                     
-                                      conversation.pregunta += 2;//va a pregunta 18
-                                      crearEncuesta(conversation);
-                                      mensajeRespuesta = "¿Cuál es la razón para elegir este lugar como destino final?\n"+
-                                      "Seleccione una de las opciones, enviando el número de la opción correspondiente:\n"+
-                                      "*1*: Algún amigo o familiar me espera.\n"+
-                                      "*2*: Conozco personas que me pueden dar trabajo\n"+
-                                      "*3*: He escuchado que puedo tener trabajo allá\n"+
-                                      "*4*: Otra";
-                                      break;
-
-                                      default:
-
-                                        mensajeRespuesta = "¿Cuál es tu destino final? Seleccione uno de los siguientes países."+
-                                        "Envíe el número correspondiente de la opción:\n"+
-                                        "*1*: Antigua y Barbuda\n"+
-                                        "*2*: Argentina\n"+
-                                        "*3*: Bahamas\n"+
-                                        "*4*: Barbados\n"+
-                                        "*5*: Bolivia\n"+
-                                        "*6*: Brasil\n"+
-                                        "*7*: Chile\n"+
-                                        "*8*: Colombia\n"+
-                                        "*9*: Costa Rica\n"+
-                                        "*10*: Cuba\n"+
-                                        "*11*: Dominica\n"+
-                                        "*12*: Ecuador\n"+
-                                        "*13*: Granada\n"+
-                                        "*14*: Guyana\n"+
-                                        "*15*: Jamaica\n"+
-                                        "*16*: México\n"+
-                                        "*17*: Panamá\n"+
-                                        "*18*: Perú\n"+
-                                        "*19*: República Dominicana\n"+
-                                        "*20*: Surinam\n"+
-                                        "*21*: Trinidad y Tobago\n"+
-                                        "*22*: Uruguay\n"+
-                                        "*23*: Venezuela\n";
-
-                  break;
-                };
-                
-              
-
-
-            break;
-
-            case 17:
-
-              console.log('RESPUESTA EN 17: ', req.body.Body);
-              if(req.body.Body === 'NO SE' || req.body.Body === 'No sé' || req.body.Body === 'No se' || req.body.Body === 'no sé' || req.body.Body === 'No se'){
-                conversation.id_municipio_destino_final = null;
-                mensajeRespuesta = "¿Cuál es la razón para elegir este lugar como destino final?\n"+
-                "Seleccione una de las opciones, enviando el número de la opción correspondiente:\n"+
-                "*1*: Algún amigo o familiar me espera.\n"+
-                "*2*: Conozco personas que me pueden dar trabajo\n"+
-                "*3*: He escuchado que puedo tener trabajo allá\n"+
-                "*4*: Otra";
-                conversation.pregunta += 1;//va a pregunta 18
-                crearEncuesta(conversation);
-              }else{
-                
-                conversation.id_municipio_destino_final =  req.body.Body;
-
-                mensajeRespuesta = "¿Cuál es la razón para elegir este lugar como destino final?\n"+
-                "Seleccione una de las opciones, enviando el número de la opción correspondiente:\n"+
-                "*1*: Algún amigo o familiar me espera.\n"+
-                "*2*: Conozco personas que me pueden dar trabajo\n"+
-                "*3*: He escuchado que puedo tener trabajo allá\n"+
-                "*4*: Otra";
-                conversation.pregunta += 1;//va a pregunta 18
-                crearEncuesta(conversation);
-
-              }
-              
-              
-            break;
-
-
-            case 18:
-
-            console.log('RESPUESTA EN 18: ', req.body.Body);
-              
-              switch(req.body.Body){
-                case '1':
-                  conversation.pregunta += 2;//va a pregunta 20
-                  mensajeRespuesta = "¿Tu hogar está recibiendo transporte humanitario? Selecciona la opción enviando el número correspondiente:\n"+
-                  "*1*: Sí\n"+
-                  "*2*: No\n";
-                  conversation.razon_elegir_destino_final =  req.body.Body;
-                  conversation.otra_razon_elegir_destino_final = null;
-                  crearEncuesta(conversation);
-
-                  break;
-                  
-                  case '2':
-                  conversation.pregunta += 2;//va a pregunta 20
-                  mensajeRespuesta = "¿Tu hogar está recibiendo transporte humanitario? Selecciona la opción enviando el número correspondiente:\n"+
-                  "*1*: Sí\n"+
-                  "*2*: No\n";
-                  conversation.razon_elegir_destino_final =  req.body.Body;
-                  conversation.otra_razon_elegir_destino_final = null;
-                  crearEncuesta(conversation);
-
-                  break;
-                  
-                  case '3':
-                  conversation.pregunta += 2;//va a pregunta 20
-                  mensajeRespuesta = "¿Tu hogar está recibiendo transporte humanitario? Selecciona la opción enviando el número correspondiente:\n"+
-                  "*1*: Sí\n"+
-                  "*2*: No\n";
-                  conversation.razon_elegir_destino_final =  req.body.Body;
-                  conversation.otra_razon_elegir_destino_final = null;
-                  crearEncuesta(conversation);
-
-                  break;
-
-                case '4':
-                  conversation.pregunta += 1;//va a pregunta 19
-                  mensajeRespuesta = "¿Cuál otra razón?";
-                  conversation.razon_elegir_destino_final =  req.body.Body;
-                  crearEncuesta(conversation);
-
-                  break;
-
-                  default:
-                    break;
-              }
-              
-            break;
-
-            case 19:
-              
-              
-                  conversation.pregunta += 1;//va a pregunta 20
-                  mensajeRespuesta = "¿Tu hogar está recibiendo transporte humanitario? Selecciona la opción enviando el número correspondiente:\n"+
-                  "*1*: Sí\n"+
-                  "*2*: No\n";
-                  conversation.otra_razon_elegir_destino_final =  req.body.Body;
-                  crearEncuesta(conversation);
-
-               
-              
-            break;
-
-            case 20:
-
-              switch(req.body.Body){
-
-                case '1':
-                      
-                  conversation.recibe_transporte_humanitario =  1;
-
-                  if(conversation.estar_dentro_colombia == 0){
-                      conversation.encuesta = false;
-                        
-                        crearEncuesta(conversation);
-                        mensajeRespuesta = "Gracias la encuesta ha terminado, hasta una próxima ocasión!";
-                     
-
-                  }else{
-                      conversation.pregunta = 21;//va a pregunta 20
-                      crearEncuesta(conversation);
-                      mensajeRespuesta = "*PASO 2 - DATOS DE LOS MIEMBROS DEL HOGAR*\n"+
-                      "Cuántas personas de tu famillia (incluyéndote) están contigo en este momento? Por ejemplo si vaiajas solo responte *1*";
-
-                  }
-                      
-                  break;
-
-                case '2':
-
-                     conversation.recibe_transporte_humanitario =  0;
-                      if(conversation.estar_dentro_colombia == 0){
-                        conversation.encuesta = false;
-                          
-                          crearEncuesta(conversation);
-                          mensajeRespuesta = "Gracias la encuesta ha terminado, hasta una próxima ocasión!";
-                   
-  
-                    }else{
-                        conversation.pregunta = 21;//va a pregunta 21 CONTINUAR
-                        crearEncuesta(conversation);
-                        mensajeRespuesta = "*PASO 2 - DATOS DE LOS MIEMBROS DEL HOGAR*\n"+
-                        "Cuántas personas de tu famillia (incluyéndote) están contigo en este momento? Por ejemplo si vaiajas solo responte *1*";
-  
-                    }
-                  break;
-
-                default:
-                  break
-              }
-              
-              
-            break;
-
-            //EMPEZAMOS CON PASO 2
-             case 21:
-                
-                conversation.total_miembros_hogar = parseInt(req.body.Body);
-                conversation.miembro_hogar_preguntando = 1;
-                conversation.pregunta += 1; //va a pregunta 22
-                mensajeRespuesta = "Envie la palabra CONTINUAR para responder información sobre los miembros de su hogar";
-                crearEncuesta(conversation);
-  
-              break;
-
-
-              case 22:
-                //valida continuar
-                conversation.pregunta += 1; //va a pregunta 23
-                mensajeRespuesta = "A continuación responda las preguntas para miembro #"+conversation.miembro_hogar_preguntando+"\n"+
-                "*Primer Nombre*";
-                crearEncuesta(conversation);
-  
-              break;
-
-              case 23:
-                
-                
-                guardarInfoMiembro(req.body.Body, 'primer_nombre_miembro', conversation.miembro_hogar_preguntando, conversation.id);
-                conversation.pregunta += 1; //va a pregunta 24
-                crearEncuesta(conversation);
-                
-                mensajeRespuesta = "*Segundo Nombre* (miembro #"+conversation.miembro_hogar_preguntando+")."+
-                "En caso de que no tenga Segundo Nombre, envíe un '.' (punto)";
-  
-              break;
-
-
-              case 24:
-                
-                guardarInfoMiembro(req.body.Body, 'segundo_nombre_miembro', conversation.miembro_hogar_preguntando, conversation.id);
-                conversation.pregunta += 1; //va a pregunta 25
-                mensajeRespuesta = "*Primer Apellido* (miembro #"+conversation.miembro_hogar_preguntando+").";
-                //guardarInfoMiembro(req.body.Body, 'primer_nombre', conversation.miembroHogarPreguntando, conversation.id);
-                crearEncuesta(conversation);
-  
-              break;
-
-            
-              case 25:
-                
-                guardarInfoMiembro(req.body.Body, 'primer_apellido_miembro', conversation.miembro_hogar_preguntando, conversation.id);
-                conversation.pregunta += 1; //va a pregunta 26
-                mensajeRespuesta = "*Segundo Apellido* (miembro #"+conversation.miembro_hogar_preguntando+")."+
-                "En caso de que no tenga Segundo Nombre, envíe un '.' (punto)";
-                //guardarInfoMiembro(req.body.Body, 'primer_nombre', conversation.miembroHogarPreguntando, conversation.id);
-                crearEncuesta(conversation);
-  
-              break;
-
-              case 26:
-                
-                guardarInfoMiembro(req.body.Body, 'segundo_apellido_miembro', conversation.miembro_hogar_preguntando, conversation.id);
-                conversation.pregunta += 1; //va a pregunta 27
-                mensajeRespuesta = "*Sexo:* (miembro #"+conversation.miembro_hogar_preguntando+")."+
-                "Envíe el número de acuerdo a la opción:\n"+
-                "*1*: Mujer\n"+
-                "*2*: Hombre";
-                //guardarInfoMiembro(req.body.Body, 'primer_nombre', conversation.miembroHogarPreguntando, conversation.id);
-                crearEncuesta(conversation);
-
-              break;
-
-              case 27:
-                
-                if(req.body.Body === '1'){
-                  guardarInfoMiembro('mujer', 'sexo_miembro', conversation.miembro_hogar_preguntando, conversation.id);
-
-                }else if(req.body.Body === '2'){
-                  guardarInfoMiembro('hombre', 'sexo_miembro', conversation.miembro_hogar_preguntando, conversation.id);
-
-                }
-                conversation.pregunta += 1; //va a pregunta 28
-                mensajeRespuesta = "*Fecha de Nacimiento*: (miembro #"+conversation.miembro_hogar_preguntando+")."+
-                "(Escriba la fecha en formato DD-MM-AA para (Día-Mes-Año)";
-                //guardarInfoMiembro(req.body.Body, 'primer_nombre', conversation.miembroHogarPreguntando, conversation.id);
-                crearEncuesta(conversation);
-
-          
-              break;
-
-              case 28:
-                
-                guardarInfoMiembro(req.body.Body, 'fecha_nacimiento', conversation.miembro_hogar_preguntando, conversation.id);
-                conversation.pregunta += 1; //va a pregunta 29
-                mensajeRespuesta = "*Nacionalidad:* (miembro #"+conversation.miembro_hogar_preguntando+")."+
-                "Envíe el número de acuerdo a la opción correspondiente:\n"+
-                "*2*: Colombiana\n"+
-                "*2*: Venezolana\n"+
-                "*3*: Colombo-venezolana\n"+
-                "*4*: Otro";
-                //guardarInfoMiembro(req.body.Body, 'primer_nombre', conversation.miembroHogarPreguntando, conversation.id);
-                crearEncuesta(conversation);
-
-              break;
-
-              case 29:
-
-                if(req.body.Body === '4'){
-                  guardarInfoMiembro('Otro', 'nacionalidad', conversation.miembro_hogar_preguntando, conversation.id);
-                  conversation.pregunta += 1; //va a pregunta 30
-                  crearEncuesta(conversation);
-
-                  mensajeRespuesta = "¿Cuál? (Indicar nacionalidad, ejemplo: Peruana)"+ "(miembro #"+conversation.miembro_hogar_preguntando+").";
-                
-                }else if(req.body.Body === '1'){
-                  guardarInfoMiembro('Colombiana', 'nacionalidad', conversation.miembro_hogar_preguntando, conversation.id);
-                  conversation.pregunta += 2; //va a pregunta 31
-                  crearEncuesta(conversation);
-                  mensajeRespuesta = "*Tipo de Documento*: (miembro #"+conversation.miembro_hogar_preguntando+")."+
-                  "Envie el número de acuerdo a la opción correspondiente:\n"+
-                  "*1*: Acta de Nacimiento\n"+
-                  "*2*: Cédula de Identidad (venezonala)\n"+
-                  "*3*: Cédula de ciudadania (colombiana)\n"+
-                  "*4*: Pasaporte\n"+
-                  "*5*: Cédula de Extranjería\n"+
-                  "*6*: Indocumentado\n"+
-                  "*7*: Otro\n";
-                  
-                }else if(req.body.Body === '2'){
-                  guardarInfoMiembro('Venezolana', 'nacionalidad', conversation.miembro_hogar_preguntando, conversation.id);
-                  conversation.pregunta += 2; //va a pregunta 31
-                  crearEncuesta(conversation);
-                  mensajeRespuesta = "*Tipo de Documento*: (miembro #"+conversation.miembro_hogar_preguntando+")."+
-                  "Envie el número de acuerdo a la opción correspondiente:\n"+
-                  "*1*: Acta de Nacimiento\n"+
-                  "*2*: Cédula de Identidad (venezonala)\n"+
-                  "*3*: Cédula de ciudadania (colombiana)\n"+
-                  "*4*: Pasaporte\n"+
-                  "*5*: Cédula de Extranjería\n"+
-                  "*6*: Indocumentado\n"+
-                  "*7*: Otro\n";
-                  
-                }else if(req.body.Body === '3'){
-                  guardarInfoMiembro('Colombo-venezolana', 'nacionalidad', conversation.miembro_hogar_preguntando, conversation.id);
-                  conversation.pregunta += 2; //va a pregunta 31
-                  crearEncuesta(conversation);
-                  mensajeRespuesta = "*Tipo de Documento*: (miembro #"+conversation.miembro_hogar_preguntando+")."+
-                  "Envie el número de acuerdo a la opción correspondiente:\n"+
-                  "*1*: Acta de Nacimiento\n"+
-                  "*2*: Cédula de Identidad (venezonala)\n"+
-                  "*3*: Cédula de ciudadania (colombiana)\n"+
-                  "*4*: Pasaporte\n"+
-                  "*5*: Cédula de Extranjería\n"+
-                  "*6*: Indocumentado\n"+
-                  "*7*: Otro\n";
-                  
-                }
-
-              break;
-
-              case 30:
-
-                guardarInfoMiembro(req.body.Body, 'cual_otro_nacionalidad', conversation.miembro_hogar_preguntando, conversation.id);
-                conversation.pregunta += 1; //va a pregunta 31
-                  crearEncuesta(conversation);
-                  mensajeRespuesta = "*Tipo de Documento*: (miembro #"+conversation.miembro_hogar_preguntando+")."+
-                  "Envie el número de acuerdo a la opción correspondiente:\n"+
-                  "*1*: Acta de Nacimiento\n"+
-                  "*2*: Cédula de Identidad (venezonala)\n"+
-                  "*3*: Cédula de ciudadania (colombiana)\n"+
-                  "*4*: Pasaporte\n"+
-                  "*5*: Cédula de Extranjería\n"+
-                  "*6*: Indocumentado\n"+
-                  "*7*: Otro\n";
-
-                break;
-
-              case 31:
-                guardarInfoMiembro(req.body.Body, 'tipo_documento', conversation.miembro_hogar_preguntando, conversation.id);
-
-                if(req.body.Body === '7'){
-                  conversation.pregunta += 1; // pregunta 32
-                  crearEncuesta(conversation);
-                  mensajeRespuesta = "¿Cuál? (Indicar tipo, ejemplo: pasaporte) (miembro #"+conversation.miembro_hogar_preguntando+").";
-
-                }else{
-                  conversation.pregunta += 2;// pregunta 33
-                  crearEncuesta(conversation);
-                  mensajeRespuesta = "*Número de documento* (miembro #"+conversation.miembro_hogar_preguntando+").";
-
-                }
-
-              break;
-
-              case 32:
-                   
-                  guardarInfoMiembro(req.body.Body, 'cual_otro_tipo_documento', conversation.miembro_hogar_preguntando, conversation.id);
-                  conversation.pregunta += 1; // pregunta 33
-                  crearEncuesta(conversation);
-                  mensajeRespuesta = "*Número de documento* (miembro #"+conversation.miembro_hogar_preguntando+").";
-
-              break;
-
-              case 33:
-                   
-                  guardarInfoMiembro(req.body.Body, 'numero_documento', conversation.miembro_hogar_preguntando, conversation.id);
-                  conversation.pregunta += 1; // pregunta 34
-                  crearEncuesta(conversation);
-                  mensajeRespuesta = "¿Podrías compartir una fotografía del documento de identidad de este miembro del hogar? (miembro #"+conversation.miembro_hogar_preguntando+"). "+
-                  "Responde con el número correspondiente:\n"+
-                  "*1*: Sí\n"+
-                  "*2*: No\n";
-
-              break;
-
-              case 34:
-                   
-                  if(req.body.Body === '1'){
-                    guardarInfoMiembro('1', 'compartir_foto_documento', conversation.miembro_hogar_preguntando, conversation.id);
-                    conversation.pregunta += 1; // pregunta 35
-                    crearEncuesta(conversation);
-                    mensajeRespuesta = "Por favor carga una fotografía de tu documento aquí";
-
-                  }else if(req.body.Body === '2'){
-                    guardarInfoMiembro('0', 'compartir_foto_documento', conversation.miembro_hogar_preguntando, conversation.id);
-                    
-                    $contadorMiembrosHogar = conversation.miembro_hogar_preguntando +1;
-
-                    if($contadorMiembrosHogar <= conversation.total_miembros_hogar){
-                      conversation.miembro_hogar_preguntando +=1;
-                      conversation.pregunta = 23;
-                      mensajeRespuesta = "A continuación responda las preguntas para miembro #"+conversation.miembro_hogar_preguntando+"\n"+
-                    "*Primer Nombre*";
-                      crearEncuesta(conversation);
-                      
-                    }else{
-                      conversation.pregunta += 2; //Va a pregunta 36
-                      crearEncuesta(conversation);
-                      mensajeRespuesta = "*PASO 3 - DATOS DE CONTACTO*\n"+"¿En qué Municipio te encuentras en este momento?"
-
-                    }
-                  }
-
-              break;
-
-              //CUando termina las preguntas del miembro
-              case 35:
-                guardarInfoMiembro(req.body.Body, 'url_foto_documento', conversation.miembro_hogar_preguntando, conversation.id);
-                
-                $contadorMiembrosHogar = conversation.miembro_hogar_preguntando +1;
-
-                    if($contadorMiembrosHogar <= conversation.total_miembros_hogar){
-                      conversation.miembro_hogar_preguntando +=1;
-                      conversation.pregunta = 23;
-                      mensajeRespuesta = "A continuación responda las preguntas para miembro #"+conversation.miembro_hogar_preguntando+"\n"+
-                    "*Primer Nombre*";
-                      crearEncuesta(conversation);
-                      
-                    }else{
-                      conversation.pregunta += 1; //Va a pregunta 36
-                      crearEncuesta(conversation);
-                      mensajeRespuesta = "*PASO 3 - DATOS DE CONTACTO*. "+
-                      "Recuerda: es muy importante que proporciones TODOS tus datos personales de contacto, para poder localizarte en caso de resultar elegido para el programa.\n"+
-                      "¿En qué Municipio te encuentras en este momento?. Envía el nombre del municipio:\n"+
-                      "BOCHALEMA, BERLÍN, BUCARAMANGA, CÚCUTA, PAMPLONA, BOGOTÁ, CALI, PASTO, MEDELLÍN"
-                     
-
-                    }
-  
-              break;
-
-
-              case 36:
-                
-                
-                    if(req.body.Body === "BOCHALEMA" || req.body.Body === "BERLÍN" || req.body.Body === "BUCARAMANGA" || req.body.Body === "CÚCUTA" || req.body.Body === "PAMPLONA" ||
-                     req.body.Body === "BOGOTÁ" || req.body.Body === "CALI" || req.body.Body === "PASTO" || req.body.Body === "MEDELLÍN"){
-                          conversation.pregunta += 1; //Va a pregunta 37 paso 3
-                          conversation.ubicacion = req.body.Body; 
-                          crearEncuesta(conversation);
-                          mensajeRespuesta = "¿El número de contacto ha sido entregado por VenEsperanza?. Responda con el número según la opción:\n"+
-                          "*1*: Sí\n"+
-                          "*2*: No";
-                     }
-                  
-                
-  
-              break;
-
-              case 37:
-                
-                
-                conversation.pregunta += 1; //Va a pregunta 38 paso 3
-              
-                  if(req.body.Body === '1'){
-                    conversation.numero_entregado_venesperanza = true;
-                    
-                    
-                    crearEncuesta(conversation);
-                    mensajeRespuesta = "Ingresa el Número de Contacto VenEsperanza:";
-                  }else if(req.body.Body === '2'){
-                    conversation.numero_entregado_venesperanza = false;
-                    crearEncuesta(conversation);
-                    mensajeRespuesta = "Ingresa el Número de Contacto principal:";
-                  }
-                  
-  
-              break;
-
-
-              case 38:
-                
-                
-                    conversation.pregunta += 1; //Va a pregunta 39 paso 3
-                  
-                    conversation.numero_contacto = req.body.Body;
-                    
-                    crearEncuesta(conversation);
-                    mensajeRespuesta = "¿Esta línea de contacto es propia?. Responda con el número según la opción:\n"+
-                    "*1*: Sí\n"+
-                    "*2*: No";
-
-
-              break;
-
-
-              case 39:
-                
-                  switch(req.body.Body){
-
-                    case '1':
-                        conversation.linea_contacto_propia = true;
-                        conversation.pregunta += 1; //Va a pregunta 40 paso 3
-                        //conversation.encuesta = false;
-                        crearEncuesta(conversation);
-                        mensajeRespuesta = "¿Esta línea de contacto está asociada a WhatsApp?. Responda con el número según la opción:\n"+
-                    "*1*: Sí\n"+
-                    "*2*: No";
-                    
-                        break;
-
-                    case '2':
-
-                      conversation.linea_contacto_propia = false;
-                      conversation.pregunta += 1; //Va a pregunta 40 paso 3
-                      //conversation.encuesta = false;
-                          
-                      crearEncuesta(conversation);
-                      mensajeRespuesta = "¿Esta línea de contacto está asociada a WhatsApp?. Responda con el número según la opción:\n"+
-                  "*1*: Sí\n"+
-                  "*2*: No";
-
-
-                        break;
-
-                    default:
-                      mensajeRespuesta = "¿Esta línea de contacto es propia?. Responda con el número según la opción:\n"+
-                    "*1*: Sí\n"+
-                    "*2*: No";
-                      break;
-                            
-                  }
-              break;
-
-            case 40:
-
-                  switch(req.body.Body){
-                      case '1':
-
-                        conversation.pregunta += 2; //Va a pregunta 42 paso 3
-                        conversation.linea_asociada_whatsapp = true;
-                        crearEncuesta(conversation);
-                        mensajeRespuesta = "Número de contacto alternativo:";
-                      break;
-
-                      case '2':
-                        conversation.pregunta += 1; //Va a pregunta 41 paso 3
-                        conversation.linea_asociada_whatsapp = false;
-                        crearEncuesta(conversation);
-                        mensajeRespuesta = "Por favor agrega tu número de Whatsapp:";
-                        break;
-
-                    default:
-
-                      mensajeRespuesta = "¿Esta línea de contacto está asociada a WhatsApp?. Responda con el número según la opción:\n"+
-                      "*1*: Sí\n"+
-                      "*2*: No";
-
-                      break;
-                  }
-
-            break;
-
-            case 41:
-
-              conversation.pregunta += 1; //Va a pregunta 42 paso 3
-              conversation.numero_whatsapp_principal = req.body.Body;
-              crearEncuesta(conversation);
-              mensajeRespuesta = "Número de contacto alternativo:";
-
-            break;
-
-            case 42:
-
-              conversation.pregunta += 1; //Va a pregunta 43 paso 3
-              conversation.numero_alternativo = req.body.Body;
-              crearEncuesta(conversation);
-              mensajeRespuesta = "¿Esta línea de contacto es propia?";
-
-            break;
-
-            case 43:
-
-              if(req.body.Body === '1'){
-                
-                conversation.pregunta += 1; //Va a pregunta 44 paso 3
-                conversation.linea_contacto_alternativo = true;
-                crearEncuesta(conversation);
-                mensajeRespuesta = "¿Esta línea de contacto está asociada a WhatsApp?. Responda con el número según la opción:\n"+
-                "*1*: Sí\n"+
-                      "*2*: No";
-
-              }else if(req.body.Body === '2'){
-
-                conversation.pregunta += 1; //Va a pregunta 44 paso 3
-                conversation.linea_contacto_alternativo = false;
-                crearEncuesta(conversation);
-                mensajeRespuesta = "¿Esta línea de contacto está asociada a WhatsApp?. Responda con el número según la opción:\n"+
-                "*1*: Sí\n"+
-                      "*2*: No";;
-
-              }else{
-                mensajeRespuesta = "¿Esta línea de contacto es propia?";
-              }
-            
-            break;
-
-            case 44:
-
-              switch(req.body.Body){
-                case '1':
-
-                  conversation.pregunta += 1; //Va a pregunta 46 paso 3
-                  conversation.linea_alternativa_asociada_whatsapp = true;
-                  crearEncuesta(conversation);
-                  mensajeRespuesta = "Escribe un correo electrónico donde te podamos contactar";
-                break;
-
-                case '2':
-                  conversation.pregunta += 1; //Va a pregunta 45 paso 3
-                  conversation.linea_alternativa_asociada_whatsapp = false;
-                  crearEncuesta(conversation);
-                  mensajeRespuesta = "Escribe un correo electrónico donde te podamos contactar";
-                  break;
-
-              default:
-
-                mensajeRespuesta = "¿Esta línea de contacto está asociada a WhatsApp?. Responda con el número según la opción:\n"+
-                "*1*: Sí\n"+
-                      "*2*: No";
-
-                break;
-            }
-
-            break;
-
-
-            case 45:
-
-              conversation.pregunta += 1; //Va a pregunta 46 paso 3
-              conversation.correo_electronico = req.body.Body;
-              crearEncuesta(conversation);
-              mensajeRespuesta = "¿Tienes cuenta en Facebook?. Responde con el número según la opción:\n"+
-              "*1*: Sí\n"+
-                      "*2*: No";
-
-            break;
-
-            case 46:
-
-              switch(req.body.Body){
-
-                case '1':
-
-                  conversation.pregunta += 1; //Va a pregunta 47 paso 3
-                  conversation.tiene_cuenta_facebook = true;
-                  crearEncuesta(conversation);
-                  mensajeRespuesta = "¿Cuál es la cuenta?";
-                  break;
-
-                case '2':
-
-                  conversation.pregunta += 2; //Va a pregunta 48 paso 3
-                  conversation.tiene_cuenta_facebook = false;
-                  crearEncuesta(conversation);
-                  mensajeRespuesta = "¿Podemos contactarte el momento en el que llegues a tu destino final?"+
-                  "Responde con el númeor según la opción correspondiente:\n"+
-                  "*1*: Sí\n"+
-                      "*2*: No";
-                  break;
-
-                default:
-                  mensajeRespuesta = "¿Tienes cuenta en Facebook?. Responde con el número según la opción:\n"+
-              "*1*: Sí\n"+
-                      "*2*: No";
-                  break;
-              }
-
-            break;
-
-            case 47:
-
-              conversation.pregunta += 1; //Va a pregunta 48 paso 3
-              conversation.cuenta_facebook = req.body.Body;
-              crearEncuesta(conversation);
-              mensajeRespuesta = "¿Podemos contactarte el momento en el que llegues a tu destino final?"+
-              "Responde con el númeor según la opción correspondiente:\n"+
-              "*1*: Sí\n"+
-                  "*2*: No";
-
-            break;
-
-            case 48:
-
-              switch(req.body.Body){
-
-                case '1':
-
-                  conversation.pregunta += 1; //Va a pregunta 49 paso 3
-                  conversation.podemos_contactarte = true;
-                  crearEncuesta(conversation);
-                  mensajeRespuesta = "¿Cuál sería la mejor forma para contactarte?. Responde con el número según la opción:\n"+
-                  "*1*: Por llamada\n"+
-                  "*2*: WhatsApp\n"+
-                  "*3*: Facebook\n"+
-                  "*4*: Correo electrónico\n"+
-                  "*5*: Otro";
-                  break;
-
-                case '2':
-
-                  conversation.pregunta += 3; //Va a pregunta 51 paso 3
-                  conversation.podemos_contactarte = false;
-                  crearEncuesta(conversation);
-                  mensajeRespuesta = "¿Podrías darnos alguna información adicional para contactarte?"+
-                  "Por ejemplo, el teléfono de algún familiar o amigo y por quién preguntar, las horas más adecuadas para llamarte o los días de la semana en los que te podremos encontrar.";
-                  
-                  break;
-
-                default:
-                  mensajeRespuesta = "¿Podemos contactarte el momento en el que llegues a tu destino final?"+
-              "Responde con el númeor según la opción correspondiente:\n"+
-              "*1*: Sí\n"+
-                  "*2*: No";
-                  break;
-              }
-
-            break;
-
-            case 49:
-
-              switch(req.body.Body){
-                
-                case '1':
-                  conversation.forma_contactarte = "Por llamada";
-                  conversation.pregunta += 2; //pasa a pregunta 51
-                  crearEncuesta(conversation);
-                  mensajeRespuesta = "¿Podrías darnos alguna información adicional para contactarte?"+
-                  "Por ejemplo, el teléfono de algún familiar o amigo y por quién preguntar, las horas más adecuadas para llamarte o los días de la semana en los que te podremos encontrar.";
-                  break;
-                
-                case '2':
-
-                  conversation.forma_contactarte = "WhatsApp";
-                  conversation.pregunta += 2; //pasa a pregunta 51
-                  crearEncuesta(conversation);
-                  mensajeRespuesta = "¿Podrías darnos alguna información adicional para contactarte?"+
-                  "Por ejemplo, el teléfono de algún familiar o amigo y por quién preguntar, las horas más adecuadas para llamarte o los días de la semana en los que te podremos encontrar.";
-                  break;
-                
-                case '3':
-                  conversation.forma_contactarte = "Facebook";
-                  conversation.pregunta += 2; //pasa a pregunta 51
-                  crearEncuesta(conversation);
-                  mensajeRespuesta = "¿Podrías darnos alguna información adicional para contactarte?"+
-                  "Por ejemplo, el teléfono de algún familiar o amigo y por quién preguntar, las horas más adecuadas para llamarte o los días de la semana en los que te podremos encontrar.";
-                break;
-
-                case '4':
-                  conversation.forma_contactarte = "Correo electrónico";
-                  conversation.pregunta += 2; //pasa a pregunta 51
-                  crearEncuesta(conversation);
-                  mensajeRespuesta = "¿Podrías darnos alguna información adicional para contactarte?"+
-                  "Por ejemplo, el teléfono de algún familiar o amigo y por quién preguntar, las horas más adecuadas para llamarte o los días de la semana en los que te podremos encontrar.";
-                break;
-
-                case '5':
-
-                  conversation.forma_contactarte = "Otro";
-                  conversation.pregunta += 1; //pasa a pregunta 50
-                  crearEncuesta(conversation);
-                  mensajeRespuesta = "Envía otra opción para contactarte";
-
-                break;
-
-                default:
-                  mensajeRespuesta = "¿Cuál sería la mejor forma para contactarte?. Responde con el número según la opción:\n"+
-                  "*1*: Por llamada\n"+
-                  "*2*: WhatsApp\n"+
-                  "*3*: Facebook\n"+
-                  "*4*: Correo electrónico\n"+
-                  "*5*: Otro";
-                  break;
-
-              }
-              
-
-            break;
-
-            case 50:
-              conversation.otra_forma_contactarte = req.body.Body;
-                  conversation.pregunta += 1; //pasa a pregunta 51
-                  crearEncuesta(conversation);
-                  mensajeRespuesta = "¿Podrías darnos alguna información adicional para contactarte?"+
-                  "Por ejemplo, el teléfono de algún familiar o amigo y por quién preguntar, las horas más adecuadas para llamarte o los días de la semana en los que te podremos encontrar.";
-                
-            break;
-
-            case 51:
-                  conversation.comentario = req.body.Body;
-                  conversation.encuesta = false;
-                  crearEncuesta(conversation);
-                  mensajeRespuesta = "¡Gracias por participar!\n"+
-                  "Si eres preseleccionado/a el programa #VenEsperanza se comunicará contigo\n"+
-                  "Recuerda:\n"+
-                  "En el programa #VenEsperanza no cobramos ni pedimos remuneración por ningún servicio a la comunidad, no tenemos intermediarios."
-            break;
-            
-
-
-            default:
-              break;
-          }
-        }*/
 
         client.messages
       .create({
