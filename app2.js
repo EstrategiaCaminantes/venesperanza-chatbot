@@ -4,6 +4,12 @@ const nodemon = require('nodemon');
 const moment = require('moment');
 const mysql = require('mysql');
 const { defaultWorkerPolicies } = require('twilio/lib/jwt/taskrouter/util');
+const extName = require('ext-name');
+const fs = require('fs');
+const urlUtil = require('url');
+const path = require('path');
+const fetch = require('node-fetch');
+
 
 const app = express();
 
@@ -16,8 +22,10 @@ app.get('/', function (req, res) {
   res.send('Hello World!');
 });
 
-const TWILIO_ID = 'ACb4ee49c4ecdf005c1ef4b63215c71b15'
-const TWILIO_SK = '9bcfbaf8c33f103cb8e63d9c4ffb1eca'
+//const TWILIO_ID = 'ACb4ee49c4ecdf005c1ef4b63215c71b15'
+const TWILIO_ID = 'AC33d97e2dcce4623f505b5f80d7c4087d'
+//const TWILIO_SK = '9bcfbaf8c33f103cb8e63d9c4ffb1eca'
+const TWILIO_SK = '9adea6f739de4a4eb2a6d1cf3b45c705'
 
 const client = require('twilio')(TWILIO_ID, TWILIO_SK);
 
@@ -155,6 +163,35 @@ app.post('/whatsapp', async (req, res) => {
           return call_back(error)
         }
       });
+  }
+
+  /*
+  function deleteMediaItem(mediaItem) {
+    const client = getTwilioClient();
+
+    return client
+      .api.accounts(twilioAccountSid)
+      .messages(mediaItem.MessageSid)
+      .media(mediaItem.mediaSid).remove();
+  }*/
+
+  async function SaveMedia(mediaItem) {
+    console.log('LLEGA A SAVEMEDIA::', mediaItem);
+    const { mediaUrl, filename } = mediaItem;
+    //if (NODE_ENV !== 'test') {
+      //const fullPath = path.resolve(`${PUBLIC_DIR}/${filename}`);
+      const fullPath = path.resolve(`documentos/${filename}`);
+      if (!fs.existsSync(fullPath)) {
+        const response = await fetch(mediaUrl);
+        const fileStream = fs.createWriteStream(fullPath);
+
+        response.body.pipe(fileStream);
+
+        //deleteMediaItem(mediaItem);
+      }
+
+      
+    //}
   }
 
   /*
@@ -303,7 +340,7 @@ app.post('/whatsapp', async (req, res) => {
     }*/
 
 
-  function conversacion(conversation, $municipiosLista){
+  async function conversacion(conversation, $municipiosLista){
 
     mensajeRespuesta = '';
 
@@ -857,8 +894,34 @@ app.post('/whatsapp', async (req, res) => {
 
               try {
 
-                conversation.url_foto_documento_encuestado = 
-                conversation.url_foto_documento_encuestado = req.body.Body;
+                let saveOperations = [];
+                const mediaItems = [];
+                //console.log('::REQ: ', req);
+                //console.log('REQ body VIENE EL MENSAJE CON LA FOTO: ', req.body);
+                //console.log('MediaUrl:::', req.body[`MediaUrl0`]);
+                //console.log('MediaContentType::', req.body[`MediaContentType0`]);
+                const mediaUrl = req.body[`MediaUrl0`];
+                const contentType = req.body[`MediaContentType0`];
+                const extension = extName.mime(contentType)[0].ext;
+                //console.log('extension:::', extension);
+                //const mediaSid = path.basename(urlUtil.parse(mediaUrl).pathname);
+                //console.log('MEDIASID: ', mediaSid);
+                nombreImagen = conversation.id+conversation.codigo_encuesta;
+                //console.log('EXTENSION::', extension);
+                //const filename = `${mediaSid}.${extension}`;
+                const filename = `${nombreImagen}.${extension}`;
+                //console.log('FILE NAME:::', filename);
+
+               // mediaItem = { mediaUrl, filename };
+               // SaveMedia(mediaItem);
+                mediaItems.push({mediaUrl, filename });
+                saveOperations = mediaItems.map(mediaItem => SaveMedia(mediaItem));
+
+                //console.log('SAVE OPERATIONS: ', saveOperations);
+                await Promise.all(saveOperations);
+
+               
+                conversation.url_foto_documento_encuestado = "/documentos/"+filename;
                 conversation.pregunta += 1; //pregunta 24
                 crearEncuesta(conversation);
                     mensajeRespuesta = "¿Cómo encontraste este formulario? - Envía el número de acuerdo a la opción correspondiente:\n"+
@@ -2643,7 +2706,7 @@ app.post('/whatsapp', async (req, res) => {
                         conversation.pregunta += 1; //Va a pregunta 51
                       
                         crearEncuesta(conversation);
-                        mensajeRespuesta = "Ingresa el Número de Contacto VenEsperanza:";
+                        mensajeRespuesta = "Ingresa el Número de Contacto VenEsperanza. (Solamente ingrese números. El tamaño de carácteres debe ser mínimo 7 y máximo 10):";
                     break;
 
                     case '2':
@@ -2651,7 +2714,7 @@ app.post('/whatsapp', async (req, res) => {
                         conversation.pregunta += 1; //Va a pregunta 51
 
                         crearEncuesta(conversation);
-                        mensajeRespuesta = "Ingresa el Número de Contacto principal:";
+                        mensajeRespuesta = "Ingresa el Número de Contacto principal. (Solamente ingrese números. El tamaño de carácteres debe ser mínimo 7 y máximo 10):";
                     break;
 
                     default:
@@ -2673,9 +2736,18 @@ app.post('/whatsapp', async (req, res) => {
 
                 try {
                   
+                    /*
                     var valoresAceptados = /^[0-9]/;
-                    if(req.body.Body.match(valoresAceptados)){
-                      conversation.numero_contacto = req.body.Body;
+                    var valoresNoAceptados = /[aA-záéíóúñZÁÉÍÓÚÑ@#+-]/;
+                    console.log('acepta numeros: ', req.body.Body.match(valoresAceptados));
+                    console.log('No acepta letras y arroba: ', req.body.Body.match(valoresNoAceptados));
+                    
+                    if(req.body.Body.match(valoresAceptados) && !req.body.Body.match(valoresNoAceptados) &&
+                      (req.body.Body.length == 7 || req.body.Body.length == 10)){*/
+                    $numero = parseInt(req.body.Body);
+                    console.log('STRING A INTEGER: ', $numero);
+                    if( $numero.toString().length >= 7 && $numero.toString().length <= 10){
+                      conversation.numero_contacto = $numero;
                       conversation.pregunta += 1; //Va a pregunta 52
 
                       crearEncuesta(conversation);
@@ -2686,11 +2758,11 @@ app.post('/whatsapp', async (req, res) => {
                     }else{
                       if(conversation.numero_entregado_venesperanza == true){
     
-                        mensajeRespuesta = "Ingresa el Número de Contacto VenEsperanza:";
+                        mensajeRespuesta = "Ingresa el Número de Contacto VenEsperanza. (Solamente ingrese números. El tamaño de carácteres debe ser mínimo 7 y máximo 10):";
     
                       }else if(conversation.numero_entregado_venesperanza == false){
         
-                        mensajeRespuesta = "Ingresa el Número de Contacto principal:";
+                        mensajeRespuesta = "Ingresa el Número de Contacto principal. (Solamente ingrese números. El tamaño de carácteres debe ser mínimo 7 y máximo 10):";
     
                       }
                     }
@@ -2699,14 +2771,14 @@ app.post('/whatsapp', async (req, res) => {
                     conversation.pregunta = 51; //Vuelve a preguntar 51
 
                     crearEncuesta(conversation);
-                    mensajeRespuesta = "Ingresa el Número de Contacto VenEsperanza:";
+                    mensajeRespuesta = "Ingresa el Número de Contacto VenEsperanza. (Solamente ingrese números. El tamaño de carácteres debe ser mínimo 7 y máximo 10):";
 
                   }else if(conversation.numero_entregado_venesperanza == false){
 
                     conversation.pregunta = 51; //Vuelve a preguntar 51
 
                     crearEncuesta(conversation);
-                    mensajeRespuesta = "Ingresa el Número de Contacto principal:";
+                    mensajeRespuesta = "Ingresa el Número de Contacto principal. (Solamente ingrese números. El tamaño de carácteres debe ser mínimo 7 y máximo 10):";
 
                   }
                   
@@ -2770,14 +2842,14 @@ app.post('/whatsapp', async (req, res) => {
                       conversation.pregunta += 2; //Va a pregunta 55 paso 3
                       conversation.linea_asociada_whatsapp = true;
                       crearEncuesta(conversation);
-                      mensajeRespuesta = "Número de contacto alternativo:";
+                      mensajeRespuesta = "Ingresa el Número de Contacto alternativo. (Solamente ingrese números. El tamaño de carácteres debe ser mínimo 7 y máximo 10):";
                     break;
 
                     case '2':
                       conversation.pregunta += 1; //Va a pregunta 54 paso 3
                       conversation.linea_asociada_whatsapp = false;
                       crearEncuesta(conversation);
-                      mensajeRespuesta = "Por favor agrega tu número de Whatsapp:";
+                      mensajeRespuesta = "Por favor agrega tu número de Whatsapp. (Solamente ingrese números. El tamaño de carácteres debe ser mínimo 7 y máximo 10):";
                       break;
 
                   default:
@@ -2803,14 +2875,23 @@ app.post('/whatsapp', async (req, res) => {
 
             case 54:
               try {
-                    var valoresAceptados = /^[0-9]/;
-                    if(req.body.Body.match(valoresAceptados)){
+                    /*var valoresAceptados = /^[0-9]/;
+                    var valoresNoAceptados = /[aA-záéíóúñZÁÉÍÓÚÑ@#+-]/;
+                    console.log('acepta numeros: ', req.body.Body.match(valoresAceptados));
+                    console.log('No acepta letras y arroba: ', req.body.Body.match(valoresNoAceptados));
+                    
+                    //if(req.body.Body.match(valoresAceptados) && !req.body.Body.match(valoresNoAceptados)){*/
+                    $numeroWhatsappPrincipal = parseInt(req.body.Body);
+                    console.log('NUMERO SIN letras 54: ', $numeroWhatsappPrincipal);
+                    console.log('TAMAÑO NUMERO 54: ', $numeroWhatsappPrincipal.toString().length);
+                    if($numeroWhatsappPrincipal.toString().length >= 7 && $numeroWhatsappPrincipal.toString().length<=10){
                       conversation.pregunta += 1; //Va a pregunta 55 paso 3
-                      conversation.numero_whatsapp_principal = req.body.Body;
+                      conversation.numero_whatsapp_principal = $numeroWhatsappPrincipal;
                       crearEncuesta(conversation);
-                      mensajeRespuesta = "Número de contacto alternativo:";
+                      mensajeRespuesta = "Ingresa el Número de Contacto alternativo. (Solamente ingrese números. El tamaño de carácteres debe ser mínimo 7 y máximo 10):";
+
                     }else{
-                      mensajeRespuesta = "Por favor agrega tu número de Whatsapp:";
+                      mensajeRespuesta = "Por favor agrega tu número de Whatsapp. (Solamente ingrese números. El tamaño de carácteres debe ser mínimo 7 y máximo 10):";
 
                     }
                 
@@ -2818,7 +2899,7 @@ app.post('/whatsapp', async (req, res) => {
                 conversation.pregunta = 54; //Vuelve a pregunta 54
                 crearEncuesta(conversation);
 
-                mensajeRespuesta = "Por favor agrega tu número de Whatsapp:";
+                mensajeRespuesta = "Por favor agrega tu número de Whatsapp. (Solamente ingrese números. El tamaño de carácteres debe ser mínimo 7 y máximo 10):";
 
               }
               
@@ -2827,22 +2908,31 @@ app.post('/whatsapp', async (req, res) => {
 
             case 55:
               try {
-                    var valoresAceptados = /^[0-9]/;
-                    if(req.body.Body.match(valoresAceptados)){
+                    /*var valoresAceptados = /^[0-9]/;
+                    var valoresNoAceptados = /[aA-záéíóúñZÁÉÍÓÚÑ@#+-]/;
+                    console.log('acepta numeros: ', req.body.Body.match(valoresAceptados));
+                    console.log('No acepta letras y arroba: ', req.body.Body.match(valoresNoAceptados))
+                    //if(req.body.Body.match(valoresAceptados) && !req.body.Body.match(valoresNoAceptados)){
+                    
+                      //if(req.body.Body.match(valoresAceptados) && !req.body.Body.match(valoresNoAceptados)){*/
+                    $numeroAlternativo = parseInt(req.body.Body);
+                    console.log('NUMERO SIN letras 55: ', $numeroAlternativo);
+                    console.log('TAMAÑO NUMERO 55: ', $numeroAlternativo.toString().length);
+                    if($numeroAlternativo.toString().length >= 7 && $numeroAlternativo.toString().length<=10){
                       conversation.pregunta += 1; //Va a pregunta 56 paso 3
-                      conversation.numero_alternativo = req.body.Body;
+                      conversation.numero_alternativo = $numeroAlternativo;
                       crearEncuesta(conversation);
                       mensajeRespuesta = "¿Esta línea de contacto es propia?. Responda con el número según la opción:\n"+
                             "*1*: Sí\n"+
                             "*2*: No";
                     }else{
-                      mensajeRespuesta = "Número de contacto alternativo:";
+                      mensajeRespuesta = "Ingresa el Número de Contacto alternativo. (Solamente ingrese números. El tamaño de carácteres debe ser mínimo 7 y máximo 10):";
                     }
                 
               } catch (error) {
                 conversation.pregunta = 55; //Vuelve a pregunta 55
                 crearEncuesta(conversation);
-                mensajeRespuesta = "Número de contacto alternativo:";
+                mensajeRespuesta = "Ingresa el Número de Contacto alternativo. (Solamente ingrese números. El tamaño de carácteres debe ser mínimo 7 y máximo 10):";
 
               }
               
@@ -2933,11 +3023,17 @@ app.post('/whatsapp', async (req, res) => {
 
               try {
                 conversation.pregunta += 1; //Va a pregunta 59 paso 3
-                conversation.correo_electronico = req.body.Body;
-                crearEncuesta(conversation);
-                mensajeRespuesta = "¿Tienes cuenta en Facebook?. Responde con el número según la opción:\n"+
-                "*1*: Sí\n"+
-                        "*2*: No";
+                emailregex = /^(?:[^<>()[\].,;:\s@"]+(\.[^<>()[\].,;:\s@"]+)*|"[^\n"]+")@(?:[^<>()[\].,;:\s@"]+\.)+[^<>()[\]\.,;:\s@"]{2,63}$/i;
+                if(emailregex.test(req.body.Body)){
+                  conversation.correo_electronico = req.body.Body;
+                  crearEncuesta(conversation);
+                  mensajeRespuesta = "¿Tienes cuenta en Facebook?. Responde con el número según la opción:\n"+
+                  "*1*: Sí\n"+
+                          "*2*: No";
+                }else{
+                  mensajeRespuesta = "Escribe un correo electrónico correcto";
+                }
+                
               } catch (error) {
                 conversation.pregunta = 58; //Vuelve a preguntar 58 paso 3
                     crearEncuesta(conversation);
@@ -3321,7 +3417,8 @@ app.post('/whatsapp', async (req, res) => {
          body: mensajeRespuesta,
          to: req.body.From
        })
-      .then(message => console.log(message.body));
+      .then(message => console.log(message.body))
+      .catch(e => { console.error('Got an error:', e.code, e.message); });
 
   }
   
