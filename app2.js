@@ -2138,7 +2138,8 @@ app.post('/whatsapp', async (req, res) => {
                     guardarInfoMiembro('mujer', 'sexo_miembro', conversation.miembro_hogar_preguntando, conversation.id);
                     crearEncuesta(conversation);
                     mensajeRespuesta = "*Fecha de Nacimiento*: (miembro #" + conversation.miembro_hogar_preguntando + ")." +
-                      "(Envía la fecha en formato AAAA-MM-DD para (Año-Mes-Día)";
+                      "Envía la fecha en formato AAAA-MM-DD para (Año-Mes-Día. Ejemplo: 2000-10-26)";
+                      
 
                     break;
                   case '2':
@@ -2146,7 +2147,7 @@ app.post('/whatsapp', async (req, res) => {
                     guardarInfoMiembro('hombre', 'sexo_miembro', conversation.miembro_hogar_preguntando, conversation.id);
                     crearEncuesta(conversation);
                     mensajeRespuesta = "*Fecha de Nacimiento*: (miembro #" + conversation.miembro_hogar_preguntando + ")." +
-                      "(Envía la fecha en formato AAAA-MM-DD para (Año-Mes-Día)";
+                      "Envía la fecha en formato AAAA-MM-DD para (Año-Mes-Día. Ejemplo: 2000-10-26)";
 
                     break;
 
@@ -2298,14 +2299,14 @@ app.post('/whatsapp', async (req, res) => {
                   }
                 } else {
                   mensajeRespuesta = "*Fecha de Nacimiento*: (miembro #" + conversation.miembro_hogar_preguntando + ")." +
-                    "(Envía la fecha en formato AAAA-MM-DD para (Año-Mes-Día)";
+                    "Envía la fecha en formato AAAA-MM-DD para (Año-Mes-Día. Ejemplo: 2000-10-26)";
                 }
 
               } catch (error) {
                 conversation.pregunta = 41;
                 crearEncuesta(conversation);
                 mensajeRespuesta = "*Fecha de Nacimiento*: (miembro #" + conversation.miembro_hogar_preguntando + ")." +
-                  "(Envía la fecha en formato AAAA-MM-DD para (Año-Mes-Día)";
+                  "Envía la fecha en formato AAAA-MM-DD para (Año-Mes-Día. Ejemplo: 2000-10-26)";
               }
 
               break;
