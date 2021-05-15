@@ -9,6 +9,7 @@ const fs = require('fs');
 const urlUtil = require('url');
 const path = require('path');
 const fetch = require('node-fetch');
+var dateFormat = require('dateformat');
 
 
 const app = express();
@@ -33,7 +34,7 @@ const connection = mysql.createConnection({
   host: 'localhost',
   user: 'root',
   password: 'root',
-  database: 'chatBotWhatsapp1',
+  database: 'venesperanzaCHATBOT',
   port: '8889'
 });
 
@@ -58,7 +59,7 @@ app.post('/whatsapp', async (req, res) => {
     connection.query($sqlConsultaMunicipios, (error, res) => {
       if (error) throw error;
 
-      //console.log('DENTRO DE CONSULTA LISTADO MUNICIPIOS RESPUESTA: ', res);
+      console.log('DENTRO DE CONSULTA LISTADO MUNICIPIOS RESPUESTA: ', res);
       return callback(res);
     });
   }
@@ -75,7 +76,7 @@ app.post('/whatsapp', async (req, res) => {
 
       if (results.length > 0) {
 
-        if (results[0].paso != 2 || results[0].miembro_hogar_preguntando == null || results[0].pregunta == 35 || results[0].pregunta == 36) { //si no ha agregado miembros hogar
+        if (results[0].paso_chatbot != 2 || results[0].miembro_hogar_preguntando == null || results[0].pregunta == 35 || results[0].pregunta == 36) { //si no ha agregado miembros hogar
           //console.log('CONVERSACION EXISTE: ', results[0]);
           var $conversation = results[0];
 
@@ -99,7 +100,7 @@ app.post('/whatsapp', async (req, res) => {
             conversacion($conversation, municipios);
           }
 
-        } else if (results[0].paso == 2 && results[0].miembro_hogar_preguntando != null) {
+        } else if (results[0].paso_chatbot == 2 && results[0].miembro_hogar_preguntando != null) {
 
           //para el paso 2 consulto conversacion-encuesta y traigo el miembro hogar que estoy preguntando
           consultarConversacionPaso2Miembro(results[0].id);
@@ -143,12 +144,14 @@ app.post('/whatsapp', async (req, res) => {
       conversation_start: false,
       //encuesta: true,
       encuesta_chatbot: false,
+      //fecha_nacimiento: new Date("1900-01-01"),
       //actualizar: false,
       //reportar: false 
-      paso: null,
+      paso_chatbot: null,
       pregunta: null,
       fuente: 1
     }
+    console.log('NUEVA CONVERSACION: ', nuevaconversacion);
 
     connection.query(sqlnuevo, nuevaconversacion, (error, results) => {
       if (error) throw error;
@@ -280,21 +283,36 @@ app.post('/whatsapp', async (req, res) => {
 
   function crearEncuesta($conversa) {
     //console.log('CONVERSA EN CREAR ENCUESTA: ', $conversa);
+    //YYYY-MM-DD
+    console.log('CREAR ENCUESTA CONVERSA::', $conversa);
 
+    console.log('CREAR ENCUESTA FECHA::', $conversa.fecha_nacimiento);
+   
+    if(!$conversa.fecha_nacimiento){
+      //$conversa.fecha_nacimiento = NULL;
+      console.log('CONVERSA NULL::', $conversa.fecha_nacimiento);
+      $conversa.fecha_nacimiento = "1900-01-01";
+    }else if(typeof($conversa.fecha_nacimiento) != 'string'){
+      console.log('CONVERSA NO ES NULL');
+      $conversa.fecha_nacimiento = $conversa.fecha_nacimiento.toISOString();
+      $conversa.fecha_nacimiento = $conversa.fecha_nacimiento.substring(0,10);
+    }
+    /*$conversa.fecha_nacimiento = dateFormat($conversa.fecha_nacimiento, "yyyy-mm-dd");
+    console.log('NUEVO FORMATO FECHA: ', $conversa.fecha_nacimiento);*/
 
     const sqlCreaEncuesta = `UPDATE encuesta SET conversation_start = ${$conversa.conversation_start}, 
-    encuesta_chatbot = ${$conversa.encuesta_chatbot}, paso = ${$conversa.paso}, pregunta = ${$conversa.pregunta},
+    encuesta_chatbot = ${$conversa.encuesta_chatbot}, paso_chatbot = ${$conversa.paso_chatbot}, pregunta = ${$conversa.pregunta},
     primer_nombre = '${$conversa.primer_nombre}', segundo_nombre = '${$conversa.segundo_nombre}', primer_apellido = '${$conversa.primer_apellido}', segundo_apellido = '${$conversa.segundo_apellido}',
     sexo = '${$conversa.sexo}', fecha_nacimiento = '${$conversa.fecha_nacimiento}', codigo_encuesta = '${$conversa.codigo_encuesta}',
     nacionalidad = '${$conversa.nacionalidad}', cual_otro_nacionalidad = '${$conversa.cual_otro_nacionalidad}', tipo_documento = '${$conversa.tipo_documento}',
     cual_otro_tipo_documento = '${$conversa.cual_otro_tipo_documento}', numero_documento = '${$conversa.numero_documento}',
     compartir_foto_documento_encuestado = ${$conversa.compartir_foto_documento_encuestado}, url_foto_documento_encuestado = '${$conversa.url_foto_documento_encuestado}',
-    como_llego_al_formulario = '${$conversa.como_llego_al_formulario}', donde_encontro_formulario = '${$conversa.donde_encontro_formulario}', fecha_llegada = '${$conversa.fecha_llegada}',
+    como_llego_al_formulario = '${$conversa.como_llego_al_formulario}', donde_encontro_formulario = '${$conversa.donde_encontro_formulario}', fecha_llegada_pais = '${$conversa.fecha_llegada_pais}',
     estar_dentro_colombia = ${$conversa.estar_dentro_colombia}, id_departamento_destino_final = ${$conversa.id_departamento_destino_final},
     id_municipio_destino_final = ${$conversa.id_municipio_destino_final},
      razon_elegir_destino_final = '${$conversa.razon_elegir_destino_final}', otra_razon_elegir_destino_final = '${$conversa.otra_razon_elegir_destino_final}',
-     recibe_transporte_humanitario = '${$conversa.recibe_transporte_humanitario}',
-     pais_destino_fuera_colombia = '${$conversa.pais_destino_fuera_colombia}',
+     recibe_transporte_humanitario = ${$conversa.recibe_transporte_humanitario},
+     pais_destino_final = '${$conversa.pais_destino_final}',
      total_miembros_hogar = ${$conversa.total_miembros_hogar}, miembro_hogar_preguntando = ${$conversa.miembro_hogar_preguntando},
      ubicacion = '${$conversa.ubicacion}', numero_entregado_venesperanza = ${$conversa.numero_entregado_venesperanza},
      numero_contacto = '${$conversa.numero_contacto}', linea_contacto_propia = ${$conversa.linea_contacto_propia},
@@ -305,6 +323,7 @@ app.post('/whatsapp', async (req, res) => {
      podemos_contactarte = ${$conversa.podemos_contactarte}, forma_contactarte = '${$conversa.forma_contactarte}',
      otra_forma_contactarte = '${$conversa.otra_forma_contactarte}', comentario = '${$conversa.comentario}'
      where id = ${$conversa.id}`;
+     //console.log('VALOR SQL', sqlCreaEncuesta);
 
     connection.query(sqlCreaEncuesta, (error, res) => {
       if (error) throw error;
@@ -372,13 +391,13 @@ app.post('/whatsapp', async (req, res) => {
               try {
                 autorizacionTratamientoDatos(conversation);
                 conversation.pregunta = 11;
-                conversation.paso = 1;
+                conversation.paso_chatbot = 1;
                 crearEncuesta(conversation);
                 mensajeRespuesta = "*PASO 1 - DATOS DEL ENCUESTADO, DATOS DE LLEGADA Y DESTINO:* \n\n" +
                   "*Primer Nombre:*";
               } catch (error) {
                 conversation.pregunta = null;
-                conversation.paso = null;
+                conversation.paso_chatbot = null;
                 crearEncuesta(conversation);
                 eliminarAutorizacion(conversation);
                 mensajeRespuesta = 'Envía el número *1* sí:\n' +
@@ -551,6 +570,7 @@ app.post('/whatsapp', async (req, res) => {
                     //console.log('FECHA VALIDA!!');
                     //console.log('TAMAÑO SI ES TRES: ', $fechavalidar.length);
                     conversation.pregunta += 1; //va a pregunta 17
+                    
                     conversation.fecha_nacimiento = $fechavalidar[0] + '-' + $fechavalidar[1] + '-' + $fechavalidar[2];
 
                     //console.log('CONVERSATION FECHA NACIMIENTO: ', conversation.fecha_nacimiento);
@@ -1081,7 +1101,7 @@ app.post('/whatsapp', async (req, res) => {
                     //console.log('FECHA VALIDA!!');
                     //console.log('TAMAÑO SI ES TRES: ', $fechavalidar.length);
                     conversation.pregunta += 1; //va a pregunta 27
-                    conversation.fecha_llegada = req.body.Body;
+                    conversation.fecha_llegada_pais = req.body.Body;
                     crearEncuesta(conversation);
                     mensajeRespuesta = "¿En los próximos seis meses planeas estar dentro de Colombia?" +
                       "Selecciona una de las siguientes opciones escribiendo el número correspondiente de la opción:\n" +
@@ -1116,7 +1136,7 @@ app.post('/whatsapp', async (req, res) => {
                   case '1':
                     conversation.pregunta += 1; //va a pregunta 28
                     conversation.estar_dentro_colombia = 1;
-                    conversation.pais_destino_fuera_colombia = null;
+                    conversation.pais_destino_final = null;
                     mensajeRespuesta = "¿Cuál es tu destino final dentro de Colombia?\n" +
                       "Envíe el número de acuerdo al Departamento correspondiente ó el número *1* en caso de que no tenga definido el Departamento de destino.\n" +
                       "*1*: No sé\n" +
@@ -1193,7 +1213,7 @@ app.post('/whatsapp', async (req, res) => {
                   case '3':
                     conversation.pregunta += 1; //va a pregunta 28
                     conversation.estar_dentro_colombia = 2;
-                    conversation.pais_destino_fuera_colombia = null;
+                    conversation.pais_destino_final = null;
                     mensajeRespuesta = "¿Cuál es tu destino final dentro de Colombia?\n" +
                       "Envíe el número de acuerdo al Departamento correspondiente ó el número *1* en caso de que no tenga definido el Departamento de destino.\n" +
                       "*1*: No sé\n" +
@@ -1291,14 +1311,17 @@ app.post('/whatsapp', async (req, res) => {
 
                   crearEncuesta(conversation);
                   //mensajeRespuesta = "Envía el número correspondiente al Municipio ó la palabra *NO SE* en caso de que no tengas definido el Municipio de destino:\n";
-                  mensajeRespuesta = "Envía el número correspondiente a la opción:\n *1*: No sé\n";
+                  mensajeRespuesta = "Consulta en el siguiente link los Municipios que en la columna *'id_departamento'* tengan el valor *"+conversation.id_departamento_destino_final+"* correspondiente al Departamento de destino.\n"+
+                  "Envía el número de la columna *'id_municipio'* que corresponda al Municipio destino: https://docs.google.com/spreadsheets/d/1AwkvC905X-yddB_FB526e-_2f3CIOYdQF7TUfDYjvWk/edit#gid=1717145484 .\n"+
+                  "Ó envía el número *1* en caso de que no tengas definido el Municipio de destino";
+                  //"Envía el número correspondiente a la opción:\n *1*: No sé\n";
 
-                  $municipiosLista.forEach(municipio => {
+                  /*$municipiosLista.forEach(municipio => {
                     if (municipio.id_departamento == $idDepartamentoRecibido) {
                       mensajeRespuesta += "*" + municipio.id + "*: " + municipio.nombre + "\n";
                     }
 
-                  });
+                  });*/
                   
                 } else {
                   mensajeRespuesta = "¿Cuál es tu destino final dentro de Colombia?\n" +
@@ -1422,11 +1445,14 @@ app.post('/whatsapp', async (req, res) => {
                       "*4*: Otra";
                   } else {
                     //mensajeRespuesta = "Envía el número correspondiente al Municipio ó la palabra *NO SE* en caso de que no tengas definido el Municipio de destino:\n";
-                    mensajeRespuesta = "Envía el número correspondiente a la opción:\n *1*: No sé\n";
+                    /*mensajeRespuesta = "Envía el número correspondiente a la opción:\n *1*: No sé\n";
 
                     $municipiosLista.forEach(municipio => {
                       mensajeRespuesta += "*" + municipio.id + "*: " + municipio.nombre + "\n";
-                    });
+                    });*/
+                    mensajeRespuesta = "Consulta en el siguiente link los Municipios que en la columna *'id_departamento'* tengan el valor *"+conversation.id_departamento_destino_final+"* correspondiente al Departamento de destino.\n"+
+                  "Envía el número de la columna *'id_municipio'* que corresponda al Municipio destino: https://docs.google.com/spreadsheets/d/1AwkvC905X-yddB_FB526e-_2f3CIOYdQF7TUfDYjvWk/edit#gid=1717145484 .\n"+
+                  "Ó envía el número *1* en caso de que no tengas definido el Municipio de destino";
                   }
 
                 }
@@ -1434,11 +1460,22 @@ app.post('/whatsapp', async (req, res) => {
                 conversation.pregunta = 29;
                 crearEncuesta(conversation);
                 //mensajeRespuesta = "Envía el número correspondiente al Municipio ó la palabra *NO SE* en caso de que no tengas definido el Municipio de destino:\n";
-                mensajeRespuesta = "Envía el número correspondiente a la opción:\n *1*: No sé\n";
+                /*mensajeRespuesta = "Envía el número correspondiente a la opción:\n *1*: No sé\n";
 
                 $municipiosLista.forEach(municipio => {
                   mensajeRespuesta += "*" + municipio.id + "*: " + municipio.nombre + "\n";
-                });
+                });*/
+                mensajeRespuesta = "Consulta en el siguiente link los Municipios que en la columna *'id_departamento'* tengan el valor *"+conversation.id_departamento_destino_final+"* correspondiente al Departamento de destino.\n"+
+                  "Envía el número de la columna *'id_municipio'* que corresponda al Municipio destino: https://docs.google.com/spreadsheets/d/1AwkvC905X-yddB_FB526e-_2f3CIOYdQF7TUfDYjvWk/edit#gid=1717145484 .\n"+
+                  "Ó envía el número *1* en caso de que no tengas definido el Municipio de destino";
+                  //"Envía el número correspondiente a la opción:\n *1*: No sé\n";
+
+                  /*$municipiosLista.forEach(municipio => {
+                    if (municipio.id_departamento == $idDepartamentoRecibido) {
+                      mensajeRespuesta += "*" + municipio.id + "*: " + municipio.nombre + "\n";
+                    }
+
+                  });*/
               }
 
               break;
@@ -1449,7 +1486,7 @@ app.post('/whatsapp', async (req, res) => {
                 switch (req.body.Body) {
                   case '1':
 
-                    conversation.pais_destino_fuera_colombia = "Antigua y Barbuda";
+                    conversation.pais_destino_final = "Antigua y Barbuda";
 
                     conversation.pregunta += 1;//va a pregunta 31
                     crearEncuesta(conversation);
@@ -1464,7 +1501,7 @@ app.post('/whatsapp', async (req, res) => {
 
                   case '2':
 
-                    conversation.pais_destino_fuera_colombia = "Argentina";
+                    conversation.pais_destino_final = "Argentina";
 
                     conversation.pregunta += 1;//va a pregunta 31
                     crearEncuesta(conversation);
@@ -1477,7 +1514,7 @@ app.post('/whatsapp', async (req, res) => {
                     break;
                   case '3':
 
-                    conversation.pais_destino_fuera_colombia = "Bahamas";
+                    conversation.pais_destino_final = "Bahamas";
 
                     conversation.pregunta += 1;//va a pregunta 31
                     crearEncuesta(conversation);
@@ -1491,7 +1528,7 @@ app.post('/whatsapp', async (req, res) => {
 
                   case '4':
 
-                    conversation.pais_destino_fuera_colombia = "Barbados";
+                    conversation.pais_destino_final = "Barbados";
 
                     conversation.pregunta += 1;//va a pregunta 31
                     crearEncuesta(conversation);
@@ -1505,7 +1542,7 @@ app.post('/whatsapp', async (req, res) => {
 
                   case '5':
 
-                    conversation.pais_destino_fuera_colombia = "Bolivia";
+                    conversation.pais_destino_final = "Bolivia";
 
                     conversation.pregunta += 1;//va a pregunta 31
                     crearEncuesta(conversation);
@@ -1519,7 +1556,7 @@ app.post('/whatsapp', async (req, res) => {
 
                   case '6':
 
-                    conversation.pais_destino_fuera_colombia = "Brasil";
+                    conversation.pais_destino_final = "Brasil";
                     conversation.pregunta += 1;//va a pregunta 31
                     crearEncuesta(conversation);
                     mensajeRespuesta = "¿Cuál es la razón para elegir este lugar como destino final?\n" +
@@ -1533,7 +1570,7 @@ app.post('/whatsapp', async (req, res) => {
 
                   case '7':
 
-                    conversation.pais_destino_fuera_colombia = "Chile";
+                    conversation.pais_destino_final = "Chile";
                     conversation.pregunta += 1;//va a pregunta 31
                     crearEncuesta(conversation);
                     mensajeRespuesta = "¿Cuál es la razón para elegir este lugar como destino final?\n" +
@@ -1546,7 +1583,7 @@ app.post('/whatsapp', async (req, res) => {
 
                   case '8':
 
-                    conversation.pais_destino_fuera_colombia = "Colombia";
+                    conversation.pais_destino_final = "Colombia";
 
                     conversation.pregunta += 1;//va a pregunta 31
                     crearEncuesta(conversation);
@@ -1561,7 +1598,7 @@ app.post('/whatsapp', async (req, res) => {
 
                   case '9':
 
-                    conversation.pais_destino_fuera_colombia = "Costa Rica";
+                    conversation.pais_destino_final = "Costa Rica";
 
                     conversation.pregunta += 1;//va a pregunta 31
                     crearEncuesta(conversation);
@@ -1576,7 +1613,7 @@ app.post('/whatsapp', async (req, res) => {
 
                   case '10':
 
-                    conversation.pais_destino_fuera_colombia = "Cuba";
+                    conversation.pais_destino_final = "Cuba";
 
                     conversation.pregunta += 1;//va a pregunta 31
                     crearEncuesta(conversation);
@@ -1590,7 +1627,7 @@ app.post('/whatsapp', async (req, res) => {
 
                   case '11':
 
-                    conversation.pais_destino_fuera_colombia = "Dominica";
+                    conversation.pais_destino_final = "Dominica";
 
                     conversation.pregunta += 1;//va a pregunta 31
                     crearEncuesta(conversation);
@@ -1604,7 +1641,7 @@ app.post('/whatsapp', async (req, res) => {
 
                   case '12':
 
-                    conversation.pais_destino_fuera_colombia = "Ecuador";
+                    conversation.pais_destino_final = "Ecuador";
 
                     conversation.pregunta += 1;//va a pregunta 31
                     crearEncuesta(conversation);
@@ -1618,7 +1655,7 @@ app.post('/whatsapp', async (req, res) => {
 
                   case '13':
 
-                    conversation.pais_destino_fuera_colombia = "Granada";
+                    conversation.pais_destino_final = "Granada";
 
                     conversation.pregunta += 1;//va a pregunta 31
                     crearEncuesta(conversation);
@@ -1633,7 +1670,7 @@ app.post('/whatsapp', async (req, res) => {
 
                   case '14':
 
-                    conversation.pais_destino_fuera_colombia = "Guyana";
+                    conversation.pais_destino_final = "Guyana";
 
                     conversation.pregunta += 1;//va a pregunta 31
                     crearEncuesta(conversation);
@@ -1648,7 +1685,7 @@ app.post('/whatsapp', async (req, res) => {
 
                   case '15':
 
-                    conversation.pais_destino_fuera_colombia = "Jamaica";
+                    conversation.pais_destino_final = "Jamaica";
 
                     conversation.pregunta += 1;//va a pregunta 31
                     crearEncuesta(conversation);
@@ -1662,7 +1699,7 @@ app.post('/whatsapp', async (req, res) => {
 
                   case '16':
 
-                    conversation.pais_destino_fuera_colombia = "México";
+                    conversation.pais_destino_final = "México";
 
                     conversation.pregunta += 1;//va a pregunta 31
                     crearEncuesta(conversation);
@@ -1676,7 +1713,7 @@ app.post('/whatsapp', async (req, res) => {
 
                   case '17':
 
-                    conversation.pais_destino_fuera_colombia = "Panamá";
+                    conversation.pais_destino_final = "Panamá";
 
                     conversation.pregunta += 1;//va a pregunta 31
                     crearEncuesta(conversation);
@@ -1691,7 +1728,7 @@ app.post('/whatsapp', async (req, res) => {
 
                   case '18':
 
-                    conversation.pais_destino_fuera_colombia = "Perú";
+                    conversation.pais_destino_final = "Perú";
 
                     conversation.pregunta += 1;//va a pregunta 31
                     crearEncuesta(conversation);
@@ -1706,7 +1743,7 @@ app.post('/whatsapp', async (req, res) => {
 
                   case '19':
 
-                    conversation.pais_destino_fuera_colombia = "República Dominicana";
+                    conversation.pais_destino_final = "República Dominicana";
 
                     conversation.pregunta += 1;//va a pregunta 31
                     crearEncuesta(conversation);
@@ -1720,7 +1757,7 @@ app.post('/whatsapp', async (req, res) => {
 
                   case '20':
 
-                    conversation.pais_destino_fuera_colombia = "Surinam";
+                    conversation.pais_destino_final = "Surinam";
 
                     conversation.pregunta += 1;//va a pregunta 31
                     crearEncuesta(conversation);
@@ -1735,7 +1772,7 @@ app.post('/whatsapp', async (req, res) => {
 
                   case '21':
 
-                    conversation.pais_destino_fuera_colombia = "Trinidad y Tobago";
+                    conversation.pais_destino_final = "Trinidad y Tobago";
 
                     conversation.pregunta += 1;//va a pregunta 31
                     crearEncuesta(conversation);
@@ -1751,7 +1788,7 @@ app.post('/whatsapp', async (req, res) => {
 
                   case '22':
 
-                    conversation.pais_destino_fuera_colombia = "Uruguay";
+                    conversation.pais_destino_final = "Uruguay";
 
                     conversation.pregunta += 1;//va a pregunta 31
                     crearEncuesta(conversation);
@@ -1766,7 +1803,7 @@ app.post('/whatsapp', async (req, res) => {
 
                   case '23':
 
-                    conversation.pais_destino_fuera_colombia = "Venezuela";
+                    conversation.pais_destino_final = "Venezuela";
 
                     conversation.pregunta += 1;//va a pregunta 31
                     crearEncuesta(conversation);
@@ -1946,7 +1983,7 @@ app.post('/whatsapp', async (req, res) => {
 
 
                     } else {
-                      conversation.paso = 2;
+                      conversation.paso_chatbot = 2;
                       conversation.pregunta = 34;//va a pregunta 34 donde empieza paso 2
                       crearEncuesta(conversation);
                       mensajeRespuesta = "*PASO 2 - DATOS DE LOS MIEMBROS DEL HOGAR*\n" +
@@ -1967,7 +2004,7 @@ app.post('/whatsapp', async (req, res) => {
 
 
                     } else {
-                      conversation.paso = 2;
+                      conversation.paso_chatbot = 2;
                       conversation.pregunta = 34;//va a pregunta 34 donde empieza paso 2
                       crearEncuesta(conversation);
                       mensajeRespuesta = "*PASO 2 - DATOS DE LOS MIEMBROS DEL HOGAR*\n" +
@@ -2484,7 +2521,7 @@ app.post('/whatsapp', async (req, res) => {
                         crearEncuesta(conversation);
                       } else {
                         conversation.pregunta += 5; //Va a pregunta 49
-                        conversation.paso += 1;
+                        conversation.paso_chatbot += 1;
                         crearEncuesta(conversation);
                         mensajeRespuesta = "*PASO 3 - DATOS DE CONTACTO*. " +
                           "Recuerda: es muy importante que proporciones TODOS tus datos personales de contacto, para poder localizarte en caso de resultar elegido para el programa.\n" +
@@ -2591,7 +2628,7 @@ app.post('/whatsapp', async (req, res) => {
 
                     } else {
                       conversation.pregunta += 2; //Va a pregunta 49
-                      conversation.paso += 1;
+                      conversation.paso_chatbot += 1;
                       crearEncuesta(conversation);
                       mensajeRespuesta = "*PASO 3 - DATOS DE CONTACTO*. " +
                         "Recuerda: es muy importante que proporciones TODOS tus datos personales de contacto, para poder localizarte en caso de resultar elegido para el programa.\n" +
@@ -2657,7 +2694,7 @@ app.post('/whatsapp', async (req, res) => {
 
                 } else {
                   conversation.pregunta += 1; //Va a pregunta 49
-                  conversation.paso += 1;
+                  conversation.paso_chatbot += 1;
                   crearEncuesta(conversation);
                   mensajeRespuesta = "*PASO 3 - DATOS DE CONTACTO*. " +
                     "Recuerda: es muy importante que proporciones TODOS tus datos personales de contacto, para poder localizarte en caso de resultar elegido para el programa.\n" +
