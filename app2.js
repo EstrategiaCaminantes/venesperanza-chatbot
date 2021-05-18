@@ -59,7 +59,7 @@ app.post('/whatsapp', async (req, res) => {
     connection.query($sqlConsultaMunicipios, (error, res) => {
       if (error) throw error;
 
-      console.log('DENTRO DE CONSULTA LISTADO MUNICIPIOS RESPUESTA: ', res);
+      //console.log('DENTRO DE CONSULTA LISTADO MUNICIPIOS RESPUESTA: ', res);
       return callback(res);
     });
   }
@@ -138,9 +138,17 @@ app.post('/whatsapp', async (req, res) => {
     const params = req.body;
     //console.log('PARAMS SON: ', params);
 
+    //console.log('ANTES DE REEMPLAZAR EMOTICONES:: ', params.ProfileName);
+    //reemplazo de emoticones en el nombre de perfil de whatsapp
+    //var regex = /(?:[\u2700-\u27bf]|(?:\ud83c[\udde6-\uddff]){2}|[\ud800-\udbff][\udc00-\udfff]|[\u0023-\u0039]\ufe0f?\u20e3|\u3299|\u3297|\u303d|\u3030|\u24c2|\ud83c[\udd70-\udd71]|\ud83c[\udd7e-\udd7f]|\ud83c\udd8e|\ud83c[\udd91-\udd9a]|\ud83c[\udde6-\uddff]|\ud83c[\ude01-\ude02]|\ud83c\ude1a|\ud83c\ude2f|\ud83c[\ude32-\ude3a]|\ud83c[\ude50-\ude51]|\u203c|\u2049|[\u25aa-\u25ab]|\u25b6|\u25c0|[\u25fb-\u25fe]|\u00a9|\u00ae|\u2122|\u2139|\ud83c\udc04|[\u2600-\u26FF]|\u2b05|\u2b06|\u2b07|\u2b1b|\u2b1c|\u2b50|\u2b55|\u231a|\u231b|\u2328|\u23cf|[\u23e9-\u23f3]|[\u23f8-\u23fa]|\ud83c\udccf|\u2934|\u2935|[\u2190-\u21ff])/g;
+
+    var newprofile = params.ProfileName.replace(/[^\ñ\Ñ\ü\Ü\á\Á\é\É\í\Í\ó\Ó\ú\Ú\w\s]/gi, '');
+
+   console.log('REEMPLAZO: ', newprofile);
+
     const nuevaconversacion = {
       waId: params.WaId,
-      profileName: params.ProfileName,
+      profileName: newprofile,
       conversation_start: false,
       //encuesta: true,
       encuesta_chatbot: false,
@@ -154,10 +162,24 @@ app.post('/whatsapp', async (req, res) => {
     console.log('NUEVA CONVERSACION: ', nuevaconversacion);
 
     connection.query(sqlnuevo, nuevaconversacion, (error, results) => {
-      if (error) throw error;
+      //if (error) throw error;
+      if(error){
+        mensajeRespuesta = "Su Nombre de perfil de Whatsapp contiene emoticones, por favor quitelos momentaneamente para interactuar con nuestro chat e intente nuevamente";
 
-      //console.log('RESULTS QUERY NUEVO: ', results);
-      consultaConversacion(nuevaconversacion.waId);
+        client.messages
+        .create({
+          from: 'whatsapp:+14155238886',
+          body: mensajeRespuesta,
+          to: req.body.From
+        })
+        .then(message => console.log(message.body))
+        .catch(e => { console.error('Got an error:', e.code, e.message); });
+      }else{
+        //console.log('RESULTS QUERY NUEVO: ', results);
+        consultaConversacion(nuevaconversacion.waId);
+      }
+
+      
 
     });
   }
@@ -284,16 +306,16 @@ app.post('/whatsapp', async (req, res) => {
   function crearEncuesta($conversa) {
     //console.log('CONVERSA EN CREAR ENCUESTA: ', $conversa);
     //YYYY-MM-DD
-    console.log('CREAR ENCUESTA CONVERSA::', $conversa);
+    //console.log('CREAR ENCUESTA CONVERSA::', $conversa);
 
-    console.log('CREAR ENCUESTA FECHA::', $conversa.fecha_nacimiento);
+    //console.log('CREAR ENCUESTA FECHA::', $conversa.fecha_nacimiento);
    
     if(!$conversa.fecha_nacimiento){
       //$conversa.fecha_nacimiento = NULL;
-      console.log('CONVERSA NULL::', $conversa.fecha_nacimiento);
+      //console.log('CONVERSA NULL::', $conversa.fecha_nacimiento);
       $conversa.fecha_nacimiento = "1900-01-01";
     }else if(typeof($conversa.fecha_nacimiento) != 'string'){
-      console.log('CONVERSA NO ES NULL');
+      //console.log('CONVERSA NO ES NULL');
       $conversa.fecha_nacimiento = $conversa.fecha_nacimiento.toISOString();
       $conversa.fecha_nacimiento = $conversa.fecha_nacimiento.substring(0,10);
     }
@@ -309,7 +331,8 @@ app.post('/whatsapp', async (req, res) => {
     compartir_foto_documento_encuestado = ${$conversa.compartir_foto_documento_encuestado}, url_foto_documento_encuestado = '${$conversa.url_foto_documento_encuestado}',
     como_llego_al_formulario = '${$conversa.como_llego_al_formulario}', donde_encontro_formulario = '${$conversa.donde_encontro_formulario}', fecha_llegada_pais = '${$conversa.fecha_llegada_pais}',
     estar_dentro_colombia = ${$conversa.estar_dentro_colombia}, id_departamento_destino_final = ${$conversa.id_departamento_destino_final},
-    id_municipio_destino_final = ${$conversa.id_municipio_destino_final},
+    id_municipio_destino_final = ${$conversa.id_municipio_destino_final}, 
+    nombre_municipio_destino_final = '${$conversa.nombre_municipio_destino_final}',
      razon_elegir_destino_final = '${$conversa.razon_elegir_destino_final}', otra_razon_elegir_destino_final = '${$conversa.otra_razon_elegir_destino_final}',
      recibe_transporte_humanitario = ${$conversa.recibe_transporte_humanitario},
      pais_destino_final = '${$conversa.pais_destino_final}',
@@ -394,7 +417,7 @@ app.post('/whatsapp', async (req, res) => {
                 conversation.paso_chatbot = 1;
                 crearEncuesta(conversation);
                 mensajeRespuesta = "*PASO 1 - DATOS DEL ENCUESTADO, DATOS DE LLEGADA Y DESTINO:* \n\n" +
-                  "*Primer Nombre:*";
+                  "*Primer Nombre:* (Ingrese solamente letras, sin emoticones ni caracteres especiales)";
               } catch (error) {
                 conversation.pregunta = null;
                 conversation.paso_chatbot = null;
@@ -433,7 +456,7 @@ app.post('/whatsapp', async (req, res) => {
             case 11:
 
               try {
-                conversation.primer_nombre = req.body.Body;
+                conversation.primer_nombre = req.body.Body.replace(/[^\ñ\Ñ\ü\Ü\á\Á\é\É\í\Í\ó\Ó\ú\Ú\w\s]/gi, '');
                 conversation.pregunta += 1; //pregunta 12
 
                 crearEncuesta(conversation);
@@ -452,7 +475,7 @@ app.post('/whatsapp', async (req, res) => {
             case 12:
 
               try {
-                conversation.segundo_nombre = req.body.Body;
+                conversation.segundo_nombre = req.body.Body.replace(/[^\ñ\Ñ\ü\Ü\á\Á\é\É\í\Í\ó\Ó\ú\Ú\w\s]/gi, '');
                 conversation.pregunta += 1; //pregunta 13
 
                 crearEncuesta(conversation);
@@ -469,7 +492,7 @@ app.post('/whatsapp', async (req, res) => {
             case 13:
 
               try {
-                conversation.primer_apellido = req.body.Body;
+                conversation.primer_apellido = req.body.Body.replace(/[^\ñ\Ñ\ü\Ü\á\Á\é\É\í\Í\ó\Ó\ú\Ú\w\s]/gi, '');
                 conversation.pregunta += 1; //pregunta 14
 
                 crearEncuesta(conversation);
@@ -488,7 +511,7 @@ app.post('/whatsapp', async (req, res) => {
 
               try {
                 //console.log('PREGUNTA 14, BODY: ', req.body.Body);
-                conversation.segundo_apellido = req.body.Body;
+                conversation.segundo_apellido = req.body.Body.replace(/[^\ñ\Ñ\ü\Ü\á\Á\é\É\í\Í\ó\Ó\ú\Ú\w\s]/gi, '');
                 conversation.pregunta += 1; //pregunta 15
 
                 crearEncuesta(conversation);
@@ -548,7 +571,10 @@ app.post('/whatsapp', async (req, res) => {
             case 16:
 
               try {
-                $fechavalidar = req.body.Body.split('-');
+                //console.log('FECHA ENVIADA: ', req.body.Body);
+                $fechaSinEmoticones = req.body.Body.replace(/[^\-\w\s]/gi, '');
+                //console.log('FECHA SIN EMOTICONES: ', $fechaSinEmoticones);
+                $fechavalidar = $fechaSinEmoticones.split('-');
                 if ($fechavalidar.length === 3 && $fechavalidar[0].length === 4 && $fechavalidar[1].length === 2 && $fechavalidar[2].length === 2) {
 
                   $validarAño = parseInt($fechavalidar[0]); //Año
@@ -721,7 +747,7 @@ app.post('/whatsapp', async (req, res) => {
             case 18:
 
               try {
-                conversation.cual_otro_nacionalidad = req.body.Body;
+                conversation.cual_otro_nacionalidad = req.body.Body.replace(/[^\ñ\Ñ\ü\Ü\á\Á\é\É\í\Í\ó\Ó\ú\Ú\w\s]/gi, '');
                 conversation.pregunta += 1; //va a pregunta 19
                 crearEncuesta(conversation);
                 mensajeRespuesta = "*Tipo de Documento*. " +
@@ -842,7 +868,7 @@ app.post('/whatsapp', async (req, res) => {
 
             case 20:
               try {
-                conversation.cual_otro_tipo_documento = req.body.Body;
+                conversation.cual_otro_tipo_documento = req.body.Body.replace(/[^\ñ\Ñ\ü\Ü\á\Á\é\É\í\Í\ó\Ó\ú\Ú\w\s]/gi, '');
                 conversation.pregunta += 1;// pregunta 21. 
                 crearEncuesta(conversation);
                 mensajeRespuesta = '*Número de Documento:*. Sí no sabes el número de documento, envía "." (punto)';
@@ -858,7 +884,7 @@ app.post('/whatsapp', async (req, res) => {
 
             case 21:
               try {
-                conversation.numero_documento = req.body.Body;
+                conversation.numero_documento = req.body.Body.replace(/[^\ñ\Ñ\ü\Ü\á\Á\é\É\í\Í\ó\Ó\ú\Ú\-\w\s]/gi, '');
                 conversation.pregunta += 1;// pregunta 22. 
                 crearEncuesta(conversation);
                 mensajeRespuesta = "*¿Podrías compartir una fotografía de tu documento de identidad?*\n" +
@@ -1062,7 +1088,7 @@ app.post('/whatsapp', async (req, res) => {
             case 25:
 
               try {
-                conversation.donde_encontro_formulario = req.body.Body;
+                conversation.donde_encontro_formulario = req.body.Body.replace(/[^\ñ\Ñ\ü\Ü\á\Á\é\É\í\Í\ó\Ó\ú\Ú\w\s]/gi, '');
                 conversation.pregunta += 1; //va a pregunta 26
                 crearEncuesta(conversation);
                 mensajeRespuesta = "¿En qué fecha tu y tu grupo familiar llegaron al país?. Envía la fecha en formato AAAA-MM-DD para (Año-Mes-Día. Ejemplo: 2000-10-26)";
@@ -1082,7 +1108,11 @@ app.post('/whatsapp', async (req, res) => {
             case 26:
 
               try {
-                $fechavalidar = req.body.Body.split('-');
+                $fechaSinEmoticones = req.body.Body.replace(/[^\-\w\s]/gi, '');
+                //console.log('FECHA SIN EMOTICONES: ', $fechaSinEmoticones);
+                $fechavalidar = $fechaSinEmoticones.split('-');
+                //$fechavalidar = req.body.Body.split('-');
+                //console.log('FECHA VALIDAR:', $fechavalidar);
 
                 if ($fechavalidar.length === 3 && $fechavalidar[0].length === 4 && $fechavalidar[1].length === 2 && $fechavalidar[2].length === 2) {
 
@@ -1101,7 +1131,8 @@ app.post('/whatsapp', async (req, res) => {
                     //console.log('FECHA VALIDA!!');
                     //console.log('TAMAÑO SI ES TRES: ', $fechavalidar.length);
                     conversation.pregunta += 1; //va a pregunta 27
-                    conversation.fecha_llegada_pais = req.body.Body;
+                    conversation.fecha_llegada_pais = req.body.Body.replace(/[^\-\w]/gi, '');
+                    
                     crearEncuesta(conversation);
                     mensajeRespuesta = "¿En los próximos seis meses planeas estar dentro de Colombia?" +
                       "Selecciona una de las siguientes opciones escribiendo el número correspondiente de la opción:\n" +
@@ -1310,10 +1341,10 @@ app.post('/whatsapp', async (req, res) => {
                   conversation.id_departamento_destino_final = $idDepartamentoRecibido;
 
                   crearEncuesta(conversation);
-                  //mensajeRespuesta = "Envía el número correspondiente al Municipio ó la palabra *NO SE* en caso de que no tengas definido el Municipio de destino:\n";
-                  mensajeRespuesta = "Consulta en el siguiente link los Municipios que en la columna *'id_departamento'* tengan el valor *"+conversation.id_departamento_destino_final+"* correspondiente al Departamento de destino.\n"+
-                  "Envía el número de la columna *'id_municipio'* que corresponda al Municipio destino: https://docs.google.com/spreadsheets/d/1AwkvC905X-yddB_FB526e-_2f3CIOYdQF7TUfDYjvWk/edit#gid=1717145484 .\n"+
-                  "Ó envía el número *1* en caso de que no tengas definido el Municipio de destino";
+                  mensajeRespuesta = "Envía el nombre del Municipio de destino ó el número *1* en caso de que NO lo tengas definido";
+                  //mensajeRespuesta = "Consulta en el siguiente link los Municipios que en la columna *'id_departamento'* tengan el valor *"+conversation.id_departamento_destino_final+"* correspondiente al Departamento de destino.\n"+
+                  //"Envía el número de la columna *'id_municipio'* que corresponda al Municipio destino: https://docs.google.com/spreadsheets/d/1AwkvC905X-yddB_FB526e-_2f3CIOYdQF7TUfDYjvWk/edit#gid=1717145484 .\n"+
+                  //"Ó envía el número *1* en caso de que no tengas definido el Municipio de destino";
                   //"Envía el número correspondiente a la opción:\n *1*: No sé\n";
 
                   /*$municipiosLista.forEach(municipio => {
@@ -1427,12 +1458,22 @@ app.post('/whatsapp', async (req, res) => {
                     "*4*: Otra";
                   //}else if(req.body.Body.match(valoresAceptados) && !req.body.Body.charAt){
                 } else {
+                  conversation.nombre_municipio_destino_final = req.body.Body.replace(/[^\ñ\Ñ\ü\Ü\á\Á\é\É\í\Í\ó\Ó\ú\Ú\w\s]/gi, '');
+                  conversation.pregunta += 2; //va a pregunta 31
+                  crearEncuesta(conversation);
+                    mensajeRespuesta = "¿Cuál es la razón para elegir este lugar como destino final?\n" +
+                      "Seleccione una de las opciones, enviando el número de la opción correspondiente:\n" +
+                      "*1*: Algún amigo o familiar me espera.\n" +
+                      "*2*: Conozco personas que me pueden dar trabajo\n" +
+                      "*3*: He escuchado que puedo tener trabajo allá\n" +
+                      "*4*: Otra";
                   //console.log('VALORES ACEPTADOS::');
                   //conversation.id_municipio_destino_final =  req.body.Body;
                   //$idMunicipioRecibido = parseInt(req.body.Body);
-                  const $encontroMunicipio = $municipiosLista.find(municipo => municipo.id == req.body.Body);
+                  //const $encontroMunicipio = $municipiosLista.find(municipo => municipo.id == req.body.Body);
 
                   //console.log('ENCONTRO MUNICIIPIO???', $encontroMunicipio);
+                  /*
                   if ($encontroMunicipio) {
                     conversation.pregunta += 2; //va a pregunta 31
                     conversation.id_municipio_destino_final = $encontroMunicipio.id;
@@ -1445,29 +1486,30 @@ app.post('/whatsapp', async (req, res) => {
                       "*4*: Otra";
                   } else {
                     //mensajeRespuesta = "Envía el número correspondiente al Municipio ó la palabra *NO SE* en caso de que no tengas definido el Municipio de destino:\n";
-                    /*mensajeRespuesta = "Envía el número correspondiente a la opción:\n *1*: No sé\n";
+                    //mensajeRespuesta = "Envía el número correspondiente a la opción:\n *1*: No sé\n";
 
                     $municipiosLista.forEach(municipio => {
                       mensajeRespuesta += "*" + municipio.id + "*: " + municipio.nombre + "\n";
-                    });*/
-                    mensajeRespuesta = "Consulta en el siguiente link los Municipios que en la columna *'id_departamento'* tengan el valor *"+conversation.id_departamento_destino_final+"* correspondiente al Departamento de destino.\n"+
-                  "Envía el número de la columna *'id_municipio'* que corresponda al Municipio destino: https://docs.google.com/spreadsheets/d/1AwkvC905X-yddB_FB526e-_2f3CIOYdQF7TUfDYjvWk/edit#gid=1717145484 .\n"+
-                  "Ó envía el número *1* en caso de que no tengas definido el Municipio de destino";
-                  }
+                    });
+                    //mensajeRespuesta = "Consulta en el siguiente link los Municipios que en la columna *'id_departamento'* tengan el valor *"+conversation.id_departamento_destino_final+"* correspondiente al Departamento de destino.\n"+
+                 // "Envía el número de la columna *'id_municipio'* que corresponda al Municipio destino: https://docs.google.com/spreadsheets/d/1AwkvC905X-yddB_FB526e-_2f3CIOYdQF7TUfDYjvWk/edit#gid=1717145484 .\n"+
+                 // "Ó envía el número *1* en caso de que no tengas definido el Municipio de destino";
+                  }*/
 
                 }
               } catch (error) {
                 conversation.pregunta = 29;
                 crearEncuesta(conversation);
+                mensajeRespuesta = "Envía el nombre del Municipio de destino ó el número *1* en caso de que NO lo tengas definido";
                 //mensajeRespuesta = "Envía el número correspondiente al Municipio ó la palabra *NO SE* en caso de que no tengas definido el Municipio de destino:\n";
                 /*mensajeRespuesta = "Envía el número correspondiente a la opción:\n *1*: No sé\n";
 
                 $municipiosLista.forEach(municipio => {
                   mensajeRespuesta += "*" + municipio.id + "*: " + municipio.nombre + "\n";
                 });*/
-                mensajeRespuesta = "Consulta en el siguiente link los Municipios que en la columna *'id_departamento'* tengan el valor *"+conversation.id_departamento_destino_final+"* correspondiente al Departamento de destino.\n"+
-                  "Envía el número de la columna *'id_municipio'* que corresponda al Municipio destino: https://docs.google.com/spreadsheets/d/1AwkvC905X-yddB_FB526e-_2f3CIOYdQF7TUfDYjvWk/edit#gid=1717145484 .\n"+
-                  "Ó envía el número *1* en caso de que no tengas definido el Municipio de destino";
+                //mensajeRespuesta = "Consulta en el siguiente link los Municipios que en la columna *'id_departamento'* tengan el valor *"+conversation.id_departamento_destino_final+"* correspondiente al Departamento de destino.\n"+
+                //  "Envía el número de la columna *'id_municipio'* que corresponda al Municipio destino: https://docs.google.com/spreadsheets/d/1AwkvC905X-yddB_FB526e-_2f3CIOYdQF7TUfDYjvWk/edit#gid=1717145484 .\n"+
+                //  "Ó envía el número *1* en caso de que no tengas definido el Municipio de destino";
                   //"Envía el número correspondiente a la opción:\n *1*: No sé\n";
 
                   /*$municipiosLista.forEach(municipio => {
@@ -1953,7 +1995,7 @@ app.post('/whatsapp', async (req, res) => {
             case 32:
               try {
                 conversation.pregunta += 1; //va a pregunta 33
-                conversation.otra_razon_elegir_destino_final = req.body.Body;
+                conversation.otra_razon_elegir_destino_final = req.body.Body.replace(/[^\ñ\Ñ\ü\Ü\á\Á\é\É\í\Í\ó\Ó\ú\Ú\w\s]/gi, '');
                 crearEncuesta(conversation);
                 mensajeRespuesta = "¿Tu hogar está recibiendo transporte humanitario? Selecciona la opción enviando el número correspondiente:\n" +
                   "*1*: Sí\n" +
@@ -2089,7 +2131,7 @@ app.post('/whatsapp', async (req, res) => {
             case 36:
               try {
 
-                guardarInfoMiembro(req.body.Body, 'primer_nombre_miembro', conversation.miembro_hogar_preguntando, conversation.id);
+                guardarInfoMiembro(req.body.Body.replace(/[^\ñ\Ñ\ü\Ü\á\Á\é\É\í\Í\ó\Ó\ú\Ú\w\s]/gi, ''), 'primer_nombre_miembro', conversation.miembro_hogar_preguntando, conversation.id);
                 guardarInfoMiembro(1, 'fuente', conversation.miembro_hogar_preguntando, conversation.id);
 
                 conversation.pregunta += 1; //va a pregunta 36
@@ -2110,7 +2152,7 @@ app.post('/whatsapp', async (req, res) => {
             case 37:
 
               try {
-                guardarInfoMiembro(req.body.Body, 'segundo_nombre_miembro', conversation.miembro_hogar_preguntando, conversation.id);
+                guardarInfoMiembro(req.body.Body.replace(/[^\ñ\Ñ\ü\Ü\á\Á\é\É\í\Í\ó\Ó\ú\Ú\w\s]/gi, ''), 'segundo_nombre_miembro', conversation.miembro_hogar_preguntando, conversation.id);
                 conversation.pregunta += 1; //va a pregunta 38
                 crearEncuesta(conversation);
                 mensajeRespuesta = "*Primer Apellido* (miembro #" + conversation.miembro_hogar_preguntando + ").";
@@ -2129,7 +2171,7 @@ app.post('/whatsapp', async (req, res) => {
             case 38:
 
               try {
-                guardarInfoMiembro(req.body.Body, 'primer_apellido_miembro', conversation.miembro_hogar_preguntando, conversation.id);
+                guardarInfoMiembro(req.body.Body.replace(/[^\ñ\Ñ\ü\Ü\á\Á\é\É\í\Í\ó\Ó\ú\Ú\w\s]/gi, ''), 'primer_apellido_miembro', conversation.miembro_hogar_preguntando, conversation.id);
                 conversation.pregunta += 1; //va a pregunta 39
                 crearEncuesta(conversation);
                 mensajeRespuesta = "*Segundo Apellido* (miembro #" + conversation.miembro_hogar_preguntando + ")." +
@@ -2148,7 +2190,7 @@ app.post('/whatsapp', async (req, res) => {
             case 39:
 
               try {
-                guardarInfoMiembro(req.body.Body, 'segundo_apellido_miembro', conversation.miembro_hogar_preguntando, conversation.id);
+                guardarInfoMiembro(req.body.Body.replace(/[^\ñ\Ñ\ü\Ü\á\Á\é\É\í\Í\ó\Ó\ú\Ú\w\s]/gi, ''), 'segundo_apellido_miembro', conversation.miembro_hogar_preguntando, conversation.id);
                 conversation.pregunta += 1; //va a pregunta 40
                 crearEncuesta(conversation);
                 mensajeRespuesta = "*Sexo:* (miembro #" + conversation.miembro_hogar_preguntando + ")." +
@@ -2215,12 +2257,21 @@ app.post('/whatsapp', async (req, res) => {
               try {
 
                 //validacion fecha nacimiento
-                $fechavalidarMiembro = req.body.Body.split('-');
-                if ($fechavalidarMiembro.length === 3 && $fechavalidarMiembro[0].length === 4 && $fechavalidarMiembro[1].length === 2 && $fechavalidarMiembro[2].length === 2) {
+                $fechaSinEmoticones = req.body.Body.replace(/[^\-\w\s]/gi, '');
+                console.log('FECHA SIN EMOTICONES: ', $fechaSinEmoticones);
+                $fechavalidarMiembro = $fechaSinEmoticones.split('-');
+                //$fechavalidarMiembro = req.body.Body.split('-');
+                if (($fechavalidarMiembro.length === 3 && $fechavalidarMiembro[0].length === 4 && $fechavalidarMiembro[1].length === 2 && $fechavalidarMiembro[2].length === 2)
+                &&
+                (parseInt($fechavalidarMiembro[0]) && parseInt($fechavalidarMiembro[1]) && parseInt($fechavalidarMiembro[2]))) {
 
                   $validarAño = parseInt($fechavalidarMiembro[0]); //Año
                   $validarMes = parseInt($fechavalidarMiembro[1]); //Mes
                   $validarDia = parseInt($fechavalidarMiembro[2]); //dia
+
+                  //console.log('VALIDAR AÑO: ', $validarAño);
+                  //console.log('VALIDAR MES: ', $validarMes);
+                  //console.log('VALIDAR DIA: ', $validarDia);
 
 
                   $fechaActual = new Date();
@@ -2433,7 +2484,7 @@ app.post('/whatsapp', async (req, res) => {
             case 43:
 
               try {
-                guardarInfoMiembro(req.body.Body, 'cual_otro_nacionalidad', conversation.miembro_hogar_preguntando, conversation.id);
+                guardarInfoMiembro(req.body.Body.replace(/[^\ñ\Ñ\ü\Ü\á\Á\é\É\í\Í\ó\Ó\ú\Ú\w\s]/gi, ''), 'cual_otro_nacionalidad', conversation.miembro_hogar_preguntando, conversation.id);
                 conversation.pregunta += 1; //va a pregunta 44
                 crearEncuesta(conversation);
                 mensajeRespuesta = "*Tipo de Documento*: (miembro #" + conversation.miembro_hogar_preguntando + ")." +
@@ -2461,7 +2512,7 @@ app.post('/whatsapp', async (req, res) => {
 
               try {
                 if (req.body.Body === '7') {
-                  guardarInfoMiembro(req.body.Body, 'tipo_documento', conversation.miembro_hogar_preguntando, conversation.id);
+                  guardarInfoMiembro("Otro", 'tipo_documento', conversation.miembro_hogar_preguntando, conversation.id);
                   conversation.pregunta += 1; // pregunta 45
                   crearEncuesta(conversation);
                   mensajeRespuesta = "¿Cuál? (Indicar tipo, ejemplo: pasaporte)";
@@ -2521,7 +2572,7 @@ app.post('/whatsapp', async (req, res) => {
                         crearEncuesta(conversation);
                       } else {
                         conversation.pregunta += 5; //Va a pregunta 49
-                        conversation.paso_chatbot += 1;
+                        conversation.paso_chatbot = 3;
                         crearEncuesta(conversation);
                         mensajeRespuesta = "*PASO 3 - DATOS DE CONTACTO*. " +
                           "Recuerda: es muy importante que proporciones TODOS tus datos personales de contacto, para poder localizarte en caso de resultar elegido para el programa.\n" +
@@ -2567,7 +2618,7 @@ app.post('/whatsapp', async (req, res) => {
 
             case 45:
               try {
-                guardarInfoMiembro(req.body.Body, 'cual_otro_tipo_documento', conversation.miembro_hogar_preguntando, conversation.id);
+                guardarInfoMiembro(req.body.Body.replace(/[^\ñ\Ñ\ü\Ü\á\Á\é\É\í\Í\ó\Ó\ú\Ú\w\s]/gi, ''), 'cual_otro_tipo_documento', conversation.miembro_hogar_preguntando, conversation.id);
                 conversation.pregunta += 1; // pregunta 46
                 crearEncuesta(conversation);
                 mensajeRespuesta = '*Número de Documento:*. (miembro #' + conversation.miembro_hogar_preguntando + '). Sí no sabe el número de Documento, envíe "." (punto)';
@@ -2584,7 +2635,7 @@ app.post('/whatsapp', async (req, res) => {
             case 46:
 
               try {
-                guardarInfoMiembro(req.body.Body, 'numero_documento', conversation.miembro_hogar_preguntando, conversation.id);
+                guardarInfoMiembro(req.body.Body.replace(/[^\ñ\Ñ\ü\Ü\á\Á\é\É\í\Í\ó\Ó\ú\Ú\-\w\s]/gi, ''), 'numero_documento', conversation.miembro_hogar_preguntando, conversation.id);
                 conversation.pregunta += 1; // pregunta 47
                 crearEncuesta(conversation);
                 mensajeRespuesta = "¿Podrías compartir una fotografía del documento de identidad de este miembro del hogar? (miembro #" + conversation.miembro_hogar_preguntando + "). " +
@@ -3058,10 +3109,13 @@ app.post('/whatsapp', async (req, res) => {
             case 58:
 
               try {
-                conversation.pregunta += 1; //Va a pregunta 59 paso 3
+                
+                $correoValidacion = req.body.Body.replace(/[^\.\@\_\-\w]/gi, '');
+                console.log('CORREO VALIDACION:: ', $correoValidacion);
                 emailregex = /^(?:[^<>()[\].,;:\s@"]+(\.[^<>()[\].,;:\s@"]+)*|"[^\n"]+")@(?:[^<>()[\].,;:\s@"]+\.)+[^<>()[\]\.,;:\s@"]{2,63}$/i;
-                if (emailregex.test(req.body.Body)) {
-                  conversation.correo_electronico = req.body.Body;
+                if (emailregex.test($correoValidacion)) {
+                  conversation.correo_electronico = $correoValidacion;
+                  conversation.pregunta += 1; //Va a pregunta 59 paso 3
                   crearEncuesta(conversation);
                   mensajeRespuesta = "¿Tienes cuenta en Facebook?. Responde con el número según la opción:\n" +
                     "*1*: Sí\n" +
@@ -3123,7 +3177,8 @@ app.post('/whatsapp', async (req, res) => {
             case 60:
               try {
                 conversation.pregunta += 1; //Va a pregunta 61 paso 3
-                conversation.cuenta_facebook = req.body.Body;
+                conversation.cuenta_facebook = req.body.Body.replace(/[^\ñ\Ñ\ü\Ü\á\Á\é\É\í\Í\ó\Ó\ú\Ú\@\_\&\$\.\/\-\w]/gi, '');
+                console.log('SE GUARDARA ASI: ', conversation.cuenta_facebook);
                 crearEncuesta(conversation);
                 mensajeRespuesta = "¿Podemos contactarte el momento en el que llegues a tu destino final?" +
                   "Responde con el númeor según la opción correspondiente:\n" +
@@ -3266,7 +3321,7 @@ app.post('/whatsapp', async (req, res) => {
             case 63:
 
               try {
-                conversation.otra_forma_contactarte = req.body.Body;
+                conversation.otra_forma_contactarte = req.body.Body.replace(/[^\ñ\Ñ\ü\Ü\á\Á\é\É\í\Í\ó\Ó\ú\Ú\w\s]/gi, '');
                 conversation.pregunta += 1; //pasa a pregunta 64
                 crearEncuesta(conversation);
                 mensajeRespuesta = "¿Podrías darnos alguna información adicional para contactarte?" +
@@ -3283,7 +3338,7 @@ app.post('/whatsapp', async (req, res) => {
 
             case 64:
               try {
-                conversation.comentario = req.body.Body;
+                conversation.comentario = req.body.Body.replace(/[^\ñ\Ñ\ü\Ü\á\Á\é\É\í\Í\ó\Ó\ú\Ú\@\.\-\/\_\#\w\s]/gi, '');;
                 conversation.encuesta_chatbot = false;
                 crearEncuesta(conversation);
                 mensajeRespuesta = "¡Gracias por participar!\n" +
