@@ -1,3 +1,4 @@
+require('dotenv').config();
 const express = require('express');
 const bodyParser = require('body-parser');
 const nodemon = require('nodemon');
@@ -23,19 +24,24 @@ app.get('/', function (req, res) {
   res.send('Hello World!');
 });
 
-//const TWILIO_ID = 'ACb4ee49c4ecdf005c1ef4b63215c71b15'
-const TWILIO_ID = 'AC33d97e2dcce4623f505b5f80d7c4087d'
-//const TWILIO_SK = '9bcfbaf8c33f103cb8e63d9c4ffb1eca'
-const TWILIO_SK = '9adea6f739de4a4eb2a6d1cf3b45c705'
+const TWILIO_ID = process.env.TWILIO_ID
+//const TWILIO_ID = 'AC45d7e7b6bc51bd018559b47dc64886d5'
+const TWILIO_SK = process.env.TWILIO_SK
+//const TWILIO_SK = '030d962958b770a00ea62252966ddeac'
 
 const client = require('twilio')(TWILIO_ID, TWILIO_SK);
 
 const connection = mysql.createConnection({
-  host: 'localhost',
-  user: 'root',
-  password: 'root',
-  database: 'venesperanzaCHATBOT',
-  port: '8889'
+  //host: 'localhost',
+  host: process.env.DB_HOST,
+  user: process.env.DB_USER,
+  //user: 'root',
+  password:process.env.DB_PASSWORD,
+  //password: 'root',
+  database: process.env.DB_NAME,
+  //database : 'venesperanzaCHATBOT',
+  port: process.env.DB_PORT
+  //port:'8889'
 });
 
 $preguntaEncuesta = 0;
@@ -144,7 +150,7 @@ app.post('/whatsapp', async (req, res) => {
 
     var newprofile = params.ProfileName.replace(/[^\ñ\Ñ\ü\Ü\á\Á\é\É\í\Í\ó\Ó\ú\Ú\w\s]/gi, '');
 
-   console.log('REEMPLAZO: ', newprofile);
+   //console.log('REEMPLAZO: ', newprofile);
 
     const nuevaconversacion = {
       waId: params.WaId,
@@ -159,7 +165,7 @@ app.post('/whatsapp', async (req, res) => {
       pregunta: null,
       fuente: 1
     }
-    console.log('NUEVA CONVERSACION: ', nuevaconversacion);
+    //console.log('NUEVA CONVERSACION: ', nuevaconversacion);
 
     connection.query(sqlnuevo, nuevaconversacion, (error, results) => {
       //if (error) throw error;
@@ -337,7 +343,7 @@ app.post('/whatsapp', async (req, res) => {
      recibe_transporte_humanitario = ${$conversa.recibe_transporte_humanitario},
      pais_destino_final = '${$conversa.pais_destino_final}',
      total_miembros_hogar = ${$conversa.total_miembros_hogar}, miembro_hogar_preguntando = ${$conversa.miembro_hogar_preguntando},
-     ubicacion = '${$conversa.ubicacion}', numero_entregado_venesperanza = ${$conversa.numero_entregado_venesperanza},
+     id_departamento = ${$conversa.id_departamento}, ubicacion = '${$conversa.ubicacion}', numero_entregado_venesperanza = ${$conversa.numero_entregado_venesperanza},
      numero_contacto = '${$conversa.numero_contacto}', linea_contacto_propia = ${$conversa.linea_contacto_propia},
      linea_asociada_whatsapp = ${$conversa.linea_asociada_whatsapp}, numero_whatsapp_principal = '${$conversa.numero_whatsapp_principal}',
      numero_alternativo = '${$conversa.numero_alternativo}', linea_contacto_alternativo = ${$conversa.linea_contacto_alternativo},
@@ -448,7 +454,7 @@ app.post('/whatsapp', async (req, res) => {
                 'Envía el número *2* sí NO estás de acuerdo';
           }
 
-        } else if (conversation.pregunta <= 64) {  //limite de preguntas
+        } else if (conversation.pregunta <= 66) {  //limite de preguntas
           //Entra a preguntar cuando el numero de la pregunta sea menor que el numero de la ultima pregunta del formulario.
           //cuando llega a la ultima pregunta ya no puede volver a preguntar y encuesta se hace false.
 
@@ -461,7 +467,7 @@ app.post('/whatsapp', async (req, res) => {
 
                 crearEncuesta(conversation);
                 mensajeRespuesta = "*Segundo Nombre:* " +
-                  "(En caso de que no tenga envíe un '.' (punto))";
+                  "(En caso de que no tenga envía un '.' (punto))";
 
               } catch (error) {
                 conversation.pregunta = 11;
@@ -485,7 +491,7 @@ app.post('/whatsapp', async (req, res) => {
                 conversation.pregunta = 12; //vuelve a entrar a paso 12
                 crearEncuesta(conversation);
                 mensajeRespuesta = "*Segundo Nombre:* " +
-                  "(En caso de que no tenga envíe un '.' (punto))";
+                  "(En caso de que no tenga envía un '.' (punto))";
               }
               break;
 
@@ -497,13 +503,13 @@ app.post('/whatsapp', async (req, res) => {
 
                 crearEncuesta(conversation);
                 mensajeRespuesta = "*Segundo Apellido:* " +
-                  "(En caso de que no tenga envíe un '.' (punto))";
+                  "(En caso de que no tenga envía un '.' (punto))";
 
               } catch (error) {
                 conversation.pregunta = 13; //vuelve a entrar a paso 13
                 crearEncuesta(conversation);
                 mensajeRespuesta = "*Primer Apellido:* " +
-                  "(En caso de que no tenga envíe un '.' (punto))";
+                  "(En caso de que no tenga envía un '.' (punto))";
               }
               break;
 
@@ -524,7 +530,7 @@ app.post('/whatsapp', async (req, res) => {
                 conversation.pregunta = 14; //vuelve a entrar a paso 14
                 crearEncuesta(conversation);
                 mensajeRespuesta = "*Segundo Apellido:* " +
-                  "(En caso de que no tenga envíe un '.' (punto))";
+                  "(En caso de que no tenga envía un '.' (punto))";
               }
               break;
 
@@ -787,7 +793,7 @@ app.post('/whatsapp', async (req, res) => {
                       conversation.tipo_documento = "Acta de Nacimiento";
                       conversation.pregunta += 2;// pregunta 21
                       crearEncuesta(conversation);
-                      mensajeRespuesta = '*Número de Documento:*. Sí no sabe el númeor de documento, envíe "." (punto)';
+                      mensajeRespuesta = '*Número de Documento:*. Sí no sabe el númeor de documento, envía "." (punto)';
 
 
                       break;
@@ -796,7 +802,7 @@ app.post('/whatsapp', async (req, res) => {
 
                       conversation.pregunta += 2;// pregunta 21
                       crearEncuesta(conversation);
-                      mensajeRespuesta = '*Número de Documento:*. Sí no sabe el númeor de documento, envíe "." (punto)';
+                      mensajeRespuesta = '*Número de Documento:*. Sí no sabes el númeor de documento, envías "." (punto)';
                       break;
 
                     case '3':
@@ -804,7 +810,7 @@ app.post('/whatsapp', async (req, res) => {
 
                       conversation.pregunta += 2;// pregunta 21
                       crearEncuesta(conversation);
-                      mensajeRespuesta = '*Número de Documento:*. Sí no sabe el númeor de documento, envíe "." (punto)';
+                      mensajeRespuesta = '*Número de Documento:*. Sí no sabes el númeor de documento, envía "." (punto)';
                       break;
 
                     case '4':
@@ -812,7 +818,7 @@ app.post('/whatsapp', async (req, res) => {
 
                       conversation.pregunta += 2;// pregunta 21
                       crearEncuesta(conversation);
-                      mensajeRespuesta = '*Número de Documento:*. Sí no sabe el númeor de documento, envíe "." (punto)';
+                      mensajeRespuesta = '*Número de Documento:*. Sí no sabes el númeor de documento, envía "." (punto)';
                       break;
 
                     case '5':
@@ -820,7 +826,7 @@ app.post('/whatsapp', async (req, res) => {
 
                       conversation.pregunta += 2;// pregunta 21
                       crearEncuesta(conversation);
-                      mensajeRespuesta = '*Número de Documento:*. Sí no sabe el númeor de documento, envíe "." (punto)';
+                      mensajeRespuesta = '*Número de Documento:*. Sí no sabes el númeor de documento, envía "." (punto)';
                       break;
 
                     case '6':
@@ -1169,7 +1175,7 @@ app.post('/whatsapp', async (req, res) => {
                     conversation.estar_dentro_colombia = 1;
                     conversation.pais_destino_final = null;
                     mensajeRespuesta = "¿Cuál es tu destino final dentro de Colombia?\n" +
-                      "Envíe el número de acuerdo al Departamento correspondiente ó el número *1* en caso de que no tenga definido el Departamento de destino.\n" +
+                      "Envía el número de acuerdo al Departamento correspondiente ó el número *1* en caso de que no tenga definido el Departamento de destino.\n" +
                       "*1*: No sé\n" +
                       "*2*:	Antioquia\n" +
                       "*3*:	Atlántico\n" +
@@ -1215,7 +1221,7 @@ app.post('/whatsapp', async (req, res) => {
                     conversation.id_municipio_destino_final = null;
                     crearEncuesta(conversation);
 
-                    mensajeRespuesta = "¿Cuál es tu destino final?. Envíe el número de acuerdo al país correspondiente:\n" +
+                    mensajeRespuesta = "¿Cuál es tu destino final?. Envía el número de acuerdo al país correspondiente:\n" +
                       "*1*: Antigua y Barbuda\n" +
                       "*2*: Argentina\n" +
                       "*3*: Bahamas\n" +
@@ -1246,7 +1252,7 @@ app.post('/whatsapp', async (req, res) => {
                     conversation.estar_dentro_colombia = 2;
                     conversation.pais_destino_final = null;
                     mensajeRespuesta = "¿Cuál es tu destino final dentro de Colombia?\n" +
-                      "Envíe el número de acuerdo al Departamento correspondiente ó el número *1* en caso de que no tenga definido el Departamento de destino.\n" +
+                      "Envía el número de acuerdo al Departamento correspondiente ó el número *1* en caso de que no tenga definido el Departamento de destino.\n" +
                       "*1*: No sé\n" +
                       "*2*:	Antioquia\n" +
                       "*3*:	Atlántico\n" +
@@ -1356,7 +1362,7 @@ app.post('/whatsapp', async (req, res) => {
                   
                 } else {
                   mensajeRespuesta = "¿Cuál es tu destino final dentro de Colombia?\n" +
-                    "Envíe el número de acuerdo al Departamento correspondiente ó el número *1* en caso de que no tenga definido el Departamento de destino.\n" +
+                    "Envía el número de acuerdo al Departamento correspondiente ó el número *1* en caso de que no tengas definido el Departamento de destino.\n" +
                     "*1*: No sé\n" +
                     "*2*:	Antioquia\n" +
                     "*3*:	Atlántico\n" +
@@ -1399,7 +1405,7 @@ app.post('/whatsapp', async (req, res) => {
                 conversation.pregunta = 28; //vuelve a 28
                 crearEncuesta(conversation);
                 mensajeRespuesta = "¿Cuál es tu destino final dentro de Colombia?\n" +
-                  "Envíe el número de acuerdo al Departamento correspondiente ó el número *1* en caso de que no tenga definido el Departamento de destino.\n" +
+                  "Envía el número de acuerdo al Departamento correspondiente ó el número *1* en caso de que no tengas definido el Departamento de destino.\n" +
                   "*1*: No sé\n" +
                   "*2*:	Antioquia\n" +
                   "*3*:	Atlántico\n" +
@@ -1533,7 +1539,7 @@ app.post('/whatsapp', async (req, res) => {
                     conversation.pregunta += 1;//va a pregunta 31
                     crearEncuesta(conversation);
                     mensajeRespuesta = "¿Cuál es la razón para elegir este lugar como destino final?\n" +
-                      "Envíe el número de la opción correspondiente:\n" +
+                      "Envía el número de la opción correspondiente:\n" +
                       "*1*: Algún amigo o familiar me espera.\n" +
                       "*2*: Conozco personas que me pueden dar trabajo\n" +
                       "*3*: He escuchado que puedo tener trabajo allá\n" +
@@ -1548,7 +1554,7 @@ app.post('/whatsapp', async (req, res) => {
                     conversation.pregunta += 1;//va a pregunta 31
                     crearEncuesta(conversation);
                     mensajeRespuesta = "¿Cuál es la razón para elegir este lugar como destino final?\n" +
-                      "Envíe el número de la opción correspondiente:\n" +
+                      "Envía el número de la opción correspondiente:\n" +
                       "*1*: Algún amigo o familiar me espera.\n" +
                       "*2*: Conozco personas que me pueden dar trabajo\n" +
                       "*3*: He escuchado que puedo tener trabajo allá\n" +
@@ -1561,7 +1567,7 @@ app.post('/whatsapp', async (req, res) => {
                     conversation.pregunta += 1;//va a pregunta 31
                     crearEncuesta(conversation);
                     mensajeRespuesta = "¿Cuál es la razón para elegir este lugar como destino final?\n" +
-                      "Envíe el número de la opción correspondiente:\n" +
+                      "Envía el número de la opción correspondiente:\n" +
                       "*1*: Algún amigo o familiar me espera.\n" +
                       "*2*: Conozco personas que me pueden dar trabajo\n" +
                       "*3*: He escuchado que puedo tener trabajo allá\n" +
@@ -1575,7 +1581,7 @@ app.post('/whatsapp', async (req, res) => {
                     conversation.pregunta += 1;//va a pregunta 31
                     crearEncuesta(conversation);
                     mensajeRespuesta = "¿Cuál es la razón para elegir este lugar como destino final?\n" +
-                      "Envíe el número de la opción correspondiente:\n" +
+                      "Envía el número de la opción correspondiente:\n" +
                       "*1*: Algún amigo o familiar me espera.\n" +
                       "*2*: Conozco personas que me pueden dar trabajo\n" +
                       "*3*: He escuchado que puedo tener trabajo allá\n" +
@@ -1589,7 +1595,7 @@ app.post('/whatsapp', async (req, res) => {
                     conversation.pregunta += 1;//va a pregunta 31
                     crearEncuesta(conversation);
                     mensajeRespuesta = "¿Cuál es la razón para elegir este lugar como destino final?\n" +
-                      "Envíe el número de la opción correspondiente:\n" +
+                      "Envía el número de la opción correspondiente:\n" +
                       "*1*: Algún amigo o familiar me espera.\n" +
                       "*2*: Conozco personas que me pueden dar trabajo\n" +
                       "*3*: He escuchado que puedo tener trabajo allá\n" +
@@ -1602,7 +1608,7 @@ app.post('/whatsapp', async (req, res) => {
                     conversation.pregunta += 1;//va a pregunta 31
                     crearEncuesta(conversation);
                     mensajeRespuesta = "¿Cuál es la razón para elegir este lugar como destino final?\n" +
-                      "Envíe el número de la opción correspondiente:\n" +
+                      "Envía el número de la opción correspondiente:\n" +
                       "*1*: Algún amigo o familiar me espera.\n" +
                       "*2*: Conozco personas que me pueden dar trabajo\n" +
                       "*3*: He escuchado que puedo tener trabajo allá\n" +
@@ -1616,7 +1622,7 @@ app.post('/whatsapp', async (req, res) => {
                     conversation.pregunta += 1;//va a pregunta 31
                     crearEncuesta(conversation);
                     mensajeRespuesta = "¿Cuál es la razón para elegir este lugar como destino final?\n" +
-                      "Envíe el número de la opción correspondiente:\n" +
+                      "Envía el número de la opción correspondiente:\n" +
                       "*1*: Algún amigo o familiar me espera.\n" +
                       "*2*: Conozco personas que me pueden dar trabajo\n" +
                       "*3*: He escuchado que puedo tener trabajo allá\n" +
@@ -1630,7 +1636,7 @@ app.post('/whatsapp', async (req, res) => {
                     conversation.pregunta += 1;//va a pregunta 31
                     crearEncuesta(conversation);
                     mensajeRespuesta = "¿Cuál es la razón para elegir este lugar como destino final?\n" +
-                      "Envíe el número de la opción correspondiente:\n" +
+                      "Envía el número de la opción correspondiente:\n" +
                       "*1*: Algún amigo o familiar me espera.\n" +
                       "*2*: Conozco personas que me pueden dar trabajo\n" +
                       "*3*: He escuchado que puedo tener trabajo allá\n" +
@@ -1645,7 +1651,7 @@ app.post('/whatsapp', async (req, res) => {
                     conversation.pregunta += 1;//va a pregunta 31
                     crearEncuesta(conversation);
                     mensajeRespuesta = "¿Cuál es la razón para elegir este lugar como destino final?\n" +
-                      "Envíe el número de la opción correspondiente:\n" +
+                      "Envía el número de la opción correspondiente:\n" +
                       "*1*: Algún amigo o familiar me espera.\n" +
                       "*2*: Conozco personas que me pueden dar trabajo\n" +
                       "*3*: He escuchado que puedo tener trabajo allá\n" +
@@ -1660,7 +1666,7 @@ app.post('/whatsapp', async (req, res) => {
                     conversation.pregunta += 1;//va a pregunta 31
                     crearEncuesta(conversation);
                     mensajeRespuesta = "¿Cuál es la razón para elegir este lugar como destino final?\n" +
-                      "Envíe el número de la opción correspondiente:\n" +
+                      "Envía el número de la opción correspondiente:\n" +
                       "*1*: Algún amigo o familiar me espera.\n" +
                       "*2*: Conozco personas que me pueden dar trabajo\n" +
                       "*3*: He escuchado que puedo tener trabajo allá\n" +
@@ -1674,7 +1680,7 @@ app.post('/whatsapp', async (req, res) => {
                     conversation.pregunta += 1;//va a pregunta 31
                     crearEncuesta(conversation);
                     mensajeRespuesta = "¿Cuál es la razón para elegir este lugar como destino final?\n" +
-                      "Envíe el número de la opción correspondiente:\n" +
+                      "Envía el número de la opción correspondiente:\n" +
                       "*1*: Algún amigo o familiar me espera.\n" +
                       "*2*: Conozco personas que me pueden dar trabajo\n" +
                       "*3*: He escuchado que puedo tener trabajo allá\n" +
@@ -1688,7 +1694,7 @@ app.post('/whatsapp', async (req, res) => {
                     conversation.pregunta += 1;//va a pregunta 31
                     crearEncuesta(conversation);
                     mensajeRespuesta = "¿Cuál es la razón para elegir este lugar como destino final?\n" +
-                      "Envíe el número de la opción correspondiente:\n" +
+                      "Envía el número de la opción correspondiente:\n" +
                       "*1*: Algún amigo o familiar me espera.\n" +
                       "*2*: Conozco personas que me pueden dar trabajo\n" +
                       "*3*: He escuchado que puedo tener trabajo allá\n" +
@@ -1702,7 +1708,7 @@ app.post('/whatsapp', async (req, res) => {
                     conversation.pregunta += 1;//va a pregunta 31
                     crearEncuesta(conversation);
                     mensajeRespuesta = "¿Cuál es la razón para elegir este lugar como destino final?\n" +
-                      "Envíe el número de la opción correspondiente:\n" +
+                      "Envía el número de la opción correspondiente:\n" +
                       "*1*: Algún amigo o familiar me espera.\n" +
                       "*2*: Conozco personas que me pueden dar trabajo\n" +
                       "*3*: He escuchado que puedo tener trabajo allá\n" +
@@ -1717,7 +1723,7 @@ app.post('/whatsapp', async (req, res) => {
                     conversation.pregunta += 1;//va a pregunta 31
                     crearEncuesta(conversation);
                     mensajeRespuesta = "¿Cuál es la razón para elegir este lugar como destino final?\n" +
-                      "Envíe el número de la opción correspondiente:\n" +
+                      "Envía el número de la opción correspondiente:\n" +
                       "*1*: Algún amigo o familiar me espera.\n" +
                       "*2*: Conozco personas que me pueden dar trabajo\n" +
                       "*3*: He escuchado que puedo tener trabajo allá\n" +
@@ -1732,7 +1738,7 @@ app.post('/whatsapp', async (req, res) => {
                     conversation.pregunta += 1;//va a pregunta 31
                     crearEncuesta(conversation);
                     mensajeRespuesta = "¿Cuál es la razón para elegir este lugar como destino final?\n" +
-                      "Envíe el número de la opción correspondiente:\n" +
+                      "Envía el número de la opción correspondiente:\n" +
                       "*1*: Algún amigo o familiar me espera.\n" +
                       "*2*: Conozco personas que me pueden dar trabajo\n" +
                       "*3*: He escuchado que puedo tener trabajo allá\n" +
@@ -1746,7 +1752,7 @@ app.post('/whatsapp', async (req, res) => {
                     conversation.pregunta += 1;//va a pregunta 31
                     crearEncuesta(conversation);
                     mensajeRespuesta = "¿Cuál es la razón para elegir este lugar como destino final?\n" +
-                      "Envíe el número de la opción correspondiente:\n" +
+                      "Envía el número de la opción correspondiente:\n" +
                       "*1*: Algún amigo o familiar me espera.\n" +
                       "*2*: Conozco personas que me pueden dar trabajo\n" +
                       "*3*: He escuchado que puedo tener trabajo allá\n" +
@@ -1760,7 +1766,7 @@ app.post('/whatsapp', async (req, res) => {
                     conversation.pregunta += 1;//va a pregunta 31
                     crearEncuesta(conversation);
                     mensajeRespuesta = "¿Cuál es la razón para elegir este lugar como destino final?\n" +
-                      "Envíe el número de la opción correspondiente:\n" +
+                      "Envía el número de la opción correspondiente:\n" +
                       "*1*: Algún amigo o familiar me espera.\n" +
                       "*2*: Conozco personas que me pueden dar trabajo\n" +
                       "*3*: He escuchado que puedo tener trabajo allá\n" +
@@ -1775,7 +1781,7 @@ app.post('/whatsapp', async (req, res) => {
                     conversation.pregunta += 1;//va a pregunta 31
                     crearEncuesta(conversation);
                     mensajeRespuesta = "¿Cuál es la razón para elegir este lugar como destino final?\n" +
-                      "Envíe el número de la opción correspondiente:\n" +
+                      "Envía el número de la opción correspondiente:\n" +
                       "*1*: Algún amigo o familiar me espera.\n" +
                       "*2*: Conozco personas que me pueden dar trabajo\n" +
                       "*3*: He escuchado que puedo tener trabajo allá\n" +
@@ -1790,7 +1796,7 @@ app.post('/whatsapp', async (req, res) => {
                     conversation.pregunta += 1;//va a pregunta 31
                     crearEncuesta(conversation);
                     mensajeRespuesta = "¿Cuál es la razón para elegir este lugar como destino final?\n" +
-                      "Envíe el número de la opción correspondiente:\n" +
+                      "Envía el número de la opción correspondiente:\n" +
                       "*1*: Algún amigo o familiar me espera.\n" +
                       "*2*: Conozco personas que me pueden dar trabajo\n" +
                       "*3*: He escuchado que puedo tener trabajo allá\n" +
@@ -1804,7 +1810,7 @@ app.post('/whatsapp', async (req, res) => {
                     conversation.pregunta += 1;//va a pregunta 31
                     crearEncuesta(conversation);
                     mensajeRespuesta = "¿Cuál es la razón para elegir este lugar como destino final?\n" +
-                      "Envíe el número de la opción correspondiente:\n" +
+                      "Envía el número de la opción correspondiente:\n" +
                       "*1*: Algún amigo o familiar me espera.\n" +
                       "*2*: Conozco personas que me pueden dar trabajo\n" +
                       "*3*: He escuchado que puedo tener trabajo allá\n" +
@@ -1819,7 +1825,7 @@ app.post('/whatsapp', async (req, res) => {
                     conversation.pregunta += 1;//va a pregunta 31
                     crearEncuesta(conversation);
                     mensajeRespuesta = "¿Cuál es la razón para elegir este lugar como destino final?\n" +
-                      "Envíe el número de la opción correspondiente:\n" +
+                      "Envía el número de la opción correspondiente:\n" +
                       "*1*: Algún amigo o familiar me espera.\n" +
                       "*2*: Conozco personas que me pueden dar trabajo\n" +
                       "*3*: He escuchado que puedo tener trabajo allá\n" +
@@ -1835,7 +1841,7 @@ app.post('/whatsapp', async (req, res) => {
                     conversation.pregunta += 1;//va a pregunta 31
                     crearEncuesta(conversation);
                     mensajeRespuesta = "¿Cuál es la razón para elegir este lugar como destino final?\n" +
-                      "Envíe el número de la opción correspondiente:\n" +
+                      "Envía el número de la opción correspondiente:\n" +
                       "*1*: Algún amigo o familiar me espera.\n" +
                       "*2*: Conozco personas que me pueden dar trabajo\n" +
                       "*3*: He escuchado que puedo tener trabajo allá\n" +
@@ -1850,7 +1856,7 @@ app.post('/whatsapp', async (req, res) => {
                     conversation.pregunta += 1;//va a pregunta 31
                     crearEncuesta(conversation);
                     mensajeRespuesta = "¿Cuál es la razón para elegir este lugar como destino final?\n" +
-                      "Envíe el número de la opción correspondiente:\n" +
+                      "Envía el número de la opción correspondiente:\n" +
                       "*1*: Algún amigo o familiar me espera.\n" +
                       "*2*: Conozco personas que me pueden dar trabajo\n" +
                       "*3*: He escuchado que puedo tener trabajo allá\n" +
@@ -1859,8 +1865,8 @@ app.post('/whatsapp', async (req, res) => {
 
                   default:
 
-                    mensajeRespuesta = "¿Cuál es tu destino final? Seleccione uno de los siguientes países." +
-                      "Envíe el número correspondiente de la opción:\n" +
+                    mensajeRespuesta = "¿Cuál es tu destino final? Selecciona uno de los siguientes países." +
+                      "Envía el número correspondiente de la opción:\n" +
                       "*1*: Antigua y Barbuda\n" +
                       "*2*: Argentina\n" +
                       "*3*: Bahamas\n" +
@@ -1891,7 +1897,7 @@ app.post('/whatsapp', async (req, res) => {
               } catch (error) {
 
                 mensajeRespuesta = "¿Cuál es tu destino final? Seleccione uno de los siguientes países." +
-                  "Envíe el número correspondiente de la opción:\n" +
+                  "Envía el número correspondiente de la opción:\n" +
                   "*1*: Antigua y Barbuda\n" +
                   "*2*: Argentina\n" +
                   "*3*: Bahamas\n" +
@@ -1972,7 +1978,7 @@ app.post('/whatsapp', async (req, res) => {
 
                   default:
                     mensajeRespuesta = "¿Cuál es la razón para elegir este lugar como destino final?\n" +
-                      "Envíe el número de la opción correspondiente:\n" +
+                      "Envía el número de la opción correspondiente:\n" +
                       "*1*: Algún amigo o familiar me espera.\n" +
                       "*2*: Conozco personas que me pueden dar trabajo\n" +
                       "*3*: He escuchado que puedo tener trabajo allá\n" +
@@ -1984,7 +1990,7 @@ app.post('/whatsapp', async (req, res) => {
                 conversation.pregunta = 31;// vuelve a pregunta 31
                 crearEncuesta(conversation);
                 mensajeRespuesta = "¿Cuál es la razón para elegir este lugar como destino final?\n" +
-                  "Envíe el número de la opción correspondiente:\n" +
+                  "Envía el número de la opción correspondiente:\n" +
                   "*1*: Algún amigo o familiar me espera.\n" +
                   "*2*: Conozco personas que me pueden dar trabajo\n" +
                   "*3*: He escuchado que puedo tener trabajo allá\n" +
@@ -2138,7 +2144,7 @@ app.post('/whatsapp', async (req, res) => {
                 crearEncuesta(conversation);
 
                 mensajeRespuesta = "*Segundo Nombre* (miembro #" + conversation.miembro_hogar_preguntando + ")." +
-                  "En caso de que no tenga Segundo Nombre, envíe un '.' (punto)";
+                  "En caso de que no tenga Segundo Nombre, envía un '.' (punto)";
 
               } catch (error) {
                 conversation.pregunta = 36;
@@ -2162,7 +2168,7 @@ app.post('/whatsapp', async (req, res) => {
                 conversation.pregunta = 37;
                 crearEncuesta(conversation);
                 mensajeRespuesta = "*Segundo Nombre* (miembro #" + conversation.miembro_hogar_preguntando + ")." +
-                  "En caso de que no tenga Segundo Nombre, envíe un '.' (punto)";
+                  "En caso de que no tenga Segundo Nombre, envía un '.' (punto)";
               }
 
               break;
@@ -2175,7 +2181,7 @@ app.post('/whatsapp', async (req, res) => {
                 conversation.pregunta += 1; //va a pregunta 39
                 crearEncuesta(conversation);
                 mensajeRespuesta = "*Segundo Apellido* (miembro #" + conversation.miembro_hogar_preguntando + ")." +
-                  "En caso de que no tenga Segundo Nombre, envíe un '.' (punto)";
+                  "En caso de que no tenga Segundo Nombre, envía un '.' (punto)";
 
               } catch (error) {
                 conversation.pregunta = 38;
@@ -2194,7 +2200,7 @@ app.post('/whatsapp', async (req, res) => {
                 conversation.pregunta += 1; //va a pregunta 40
                 crearEncuesta(conversation);
                 mensajeRespuesta = "*Sexo:* (miembro #" + conversation.miembro_hogar_preguntando + ")." +
-                  "Envíe el número de acuerdo a la opción:\n" +
+                  "Envía el número de acuerdo a la opción:\n" +
                   "*1*: Mujer\n" +
                   "*2*: Hombre";
 
@@ -2202,7 +2208,7 @@ app.post('/whatsapp', async (req, res) => {
                 conversation.pregunta = 39;
                 crearEncuesta(conversation);
                 mensajeRespuesta = "*Segundo Apellido* (miembro #" + conversation.miembro_hogar_preguntando + ")." +
-                  "En caso de que no tenga Segundo Nombre, envíe un '.' (punto)";
+                  "En caso de que no tenga Segundo Nombre, envía un '.' (punto)";
               }
 
               break;
@@ -2232,7 +2238,7 @@ app.post('/whatsapp', async (req, res) => {
 
                   default:
                     mensajeRespuesta = "*Sexo:* (miembro #" + conversation.miembro_hogar_preguntando + ")." +
-                      "Envíe el número de acuerdo a la opción:\n" +
+                      "Envía el número de acuerdo a la opción:\n" +
                       "*1*: Mujer\n" +
                       "*2*: Hombre";
                     break;
@@ -2243,7 +2249,7 @@ app.post('/whatsapp', async (req, res) => {
                 conversation.pregunta = 40;
                 crearEncuesta(conversation);
                 mensajeRespuesta = "*Sexo:* (miembro #" + conversation.miembro_hogar_preguntando + ")." +
-                  "Envíe el número de acuerdo a la opción:\n" +
+                  "Envía el número de acuerdo a la opción:\n" +
                   "*1*: Mujer\n" +
                   "*2*: Hombre";
               }
@@ -2258,7 +2264,7 @@ app.post('/whatsapp', async (req, res) => {
 
                 //validacion fecha nacimiento
                 $fechaSinEmoticones = req.body.Body.replace(/[^\-\w\s]/gi, '');
-                console.log('FECHA SIN EMOTICONES: ', $fechaSinEmoticones);
+                //console.log('FECHA SIN EMOTICONES: ', $fechaSinEmoticones);
                 $fechavalidarMiembro = $fechaSinEmoticones.split('-');
                 //$fechavalidarMiembro = req.body.Body.split('-');
                 if (($fechavalidarMiembro.length === 3 && $fechavalidarMiembro[0].length === 4 && $fechavalidarMiembro[1].length === 2 && $fechavalidarMiembro[2].length === 2)
@@ -2378,7 +2384,7 @@ app.post('/whatsapp', async (req, res) => {
                     //await Promise.resolve(crearEncuesta(conversation));
                     await Promise.resolve(saveOperations2);
                     mensajeRespuesta = "*Nacionalidad:* (miembro #" + conversation.miembro_hogar_preguntando + ")." +
-                      "Envíe el número de acuerdo a la opción correspondiente:\n" +
+                      "Envía el número de acuerdo a la opción correspondiente:\n" +
                       "*1*: Colombiana\n" +
                       "*2*: Venezolana\n" +
                       "*3*: Colombo-venezolana\n" +
@@ -2459,7 +2465,7 @@ app.post('/whatsapp', async (req, res) => {
 
                   default:
                     mensajeRespuesta = "*Nacionalidad:* (miembro #" + conversation.miembro_hogar_preguntando + ")." +
-                      "Envíe el número de acuerdo a la opción correspondiente:\n" +
+                      "Envía el número de acuerdo a la opción correspondiente:\n" +
                       "*1*: Colombiana\n" +
                       "*2*: Venezolana\n" +
                       "*3*: Colombo-venezolana\n" +
@@ -2472,7 +2478,7 @@ app.post('/whatsapp', async (req, res) => {
                 conversation.pregunta = 42;
                 crearEncuesta(conversation);
                 mensajeRespuesta = "*Nacionalidad:* (miembro #" + conversation.miembro_hogar_preguntando + ")." +
-                  "Envíe el número de acuerdo a la opción correspondiente:\n" +
+                  "Envía el número de acuerdo a la opción correspondiente:\n" +
                   "*1*: Colombiana\n" +
                   "*2*: Venezolana\n" +
                   "*3*: Colombo-venezolana\n" +
@@ -2525,7 +2531,7 @@ app.post('/whatsapp', async (req, res) => {
 
                       conversation.pregunta += 2;// pregunta 46
                       crearEncuesta(conversation);
-                      mensajeRespuesta = '*Número de Documento:*. (miembro #' + conversation.miembro_hogar_preguntando + '). Sí no sabe el número de Documento, envíe "." (punto)';
+                      mensajeRespuesta = '*Número de Documento:*. (miembro #' + conversation.miembro_hogar_preguntando + '). Sí no sabes el número de Documento, envía "." (punto)';
 
 
                       break;
@@ -2533,7 +2539,7 @@ app.post('/whatsapp', async (req, res) => {
                       guardarInfoMiembro("Cédula de Identidad (venezonala)", 'tipo_documento', conversation.miembro_hogar_preguntando, conversation.id);
                       conversation.pregunta += 2;// pregunta 46
                       crearEncuesta(conversation);
-                      mensajeRespuesta = '*Número de Documento:*. (miembro #' + conversation.miembro_hogar_preguntando + '). Sí no sabe el número de Documento, envíe "." (punto)';
+                      mensajeRespuesta = '*Número de Documento:*. (miembro #' + conversation.miembro_hogar_preguntando + '). Sí no sabes el número de Documento, envía "." (punto)';
                       break;
 
                     case '3':
@@ -2541,14 +2547,14 @@ app.post('/whatsapp', async (req, res) => {
 
                       conversation.pregunta += 2;// pregunta 46
                       crearEncuesta(conversation);
-                      mensajeRespuesta = '*Número de Documento:*. (miembro #' + conversation.miembro_hogar_preguntando + '). Sí no sabe el número de Documento, envíe "." (punto)';
+                      mensajeRespuesta = '*Número de Documento:*. (miembro #' + conversation.miembro_hogar_preguntando + '). Sí no sabes el número de Documento, envía "." (punto)';
                       break;
 
                     case '4':
                       guardarInfoMiembro("Pasaporte", 'tipo_documento', conversation.miembro_hogar_preguntando, conversation.id);
                       conversation.pregunta += 2;// pregunta 46
                       crearEncuesta(conversation);
-                      mensajeRespuesta = '*Número de Documento:*.  (miembro #' + conversation.miembro_hogar_preguntando + ').Sí no sabe el número de documento, envíe "." (punto)';
+                      mensajeRespuesta = '*Número de Documento:*.  (miembro #' + conversation.miembro_hogar_preguntando + ').Sí no sabes el número de documento, envía "." (punto)';
                       break;
 
                     case '5':
@@ -2556,7 +2562,7 @@ app.post('/whatsapp', async (req, res) => {
 
                       conversation.pregunta += 2;// pregunta 46
                       crearEncuesta(conversation);
-                      mensajeRespuesta = '*Número de Documento:*. (miembro #' + conversation.miembro_hogar_preguntando + '). Sí no sabe el número de documento, envíe "." (punto)';
+                      mensajeRespuesta = '*Número de Documento:*. (miembro #' + conversation.miembro_hogar_preguntando + '). Sí no sabes el número de documento, envía "." (punto)';
                       break;
 
                     case '6':
@@ -2574,11 +2580,48 @@ app.post('/whatsapp', async (req, res) => {
                         conversation.pregunta += 5; //Va a pregunta 49
                         conversation.paso_chatbot = 3;
                         crearEncuesta(conversation);
-                        mensajeRespuesta = "*PASO 3 - DATOS DE CONTACTO*. " +
-                          "Recuerda: es muy importante que proporciones TODOS tus datos personales de contacto, para poder localizarte en caso de resultar elegido para el programa.\n" +
-                          "Por favor compartenos tu ubicación para poder localizarte de una forma más fácil";
+                        mensajeRespuesta = "*PASO 3 - DATOS DE CONTACTO*.\n" +
+                         // "Recuerda: es muy importante que proporciones TODOS tus datos personales de contacto, para poder localizarte en caso de resultar elegido para el programa.\n" +
+                          //"Por favor compartenos tu ubicación para poder localizarte de una forma más fácil";
                         //"¿En qué Municipio te encuentras en este momento?. Envía el nombre del municipio:\n"+
                         //"BOCHALEMA, BERLÍN, BUCARAMANGA, CÚCUTA, PAMPLONA, BOGOTÁ, CALI, PASTO, MEDELLÍN"*/
+                       "¿En qué Departamento te encuentras actualmente?\n" +
+                      "Envía el número de acuerdo al Departamento correspondiente ó el número *1* en caso de que no sepas en qué Departamento estás actualmente.\n" +
+                      "*1*: No sé\n" +
+                      "*2*:	Antioquia\n" +
+                      "*3*:	Atlántico\n" +
+                      "*4*:	Bogotá D.C.\n" +
+                      "*5*:	Bolívar\n" +
+                      "*6*:	Boyaca\n" +
+                      "*7*:	Caldas\n" +
+                      "*8*:	Caqueta\n" +
+                      "*9*:	Cauca\n" +
+                      "*10*:	Cesar\n" +
+                      "*11*:	Córdoba\n" +
+                      "*12*:	Cundinamarca\n" +
+                      "*13*:	Chocó\n" +
+                      "*14*:	Huila\n" +
+                      "*15*:	La Guajira\n" +
+                      "*16*:	Magdalena\n" +
+                      "*17*:	Meta\n" +
+                      "*18*:	Nariño\n" +
+                      "*19*:	Norte de Santander\n" +
+                      "*20*:	Quindio\n" +
+                      "*21*:	Risaralda\n" +
+                      "*22*:	Santander\n" +
+                      "*23*:	Sucre\n" +
+                      "*24*:	Tolima\n" +
+                      "*25*:	Valle del Cauca\n" +
+                      "*26*:	Arauca\n" +
+                      "*27*:	Casanare\n" +
+                      "*28*:	Putumayo\n" +
+                      "*29*:	San Andres\n" +
+                      "*30*:	Isla de Providencia y Santa Catalina\n" +
+                      "*31*:	Amazonas\n" +
+                      "*32*:	Guainia\n" +
+                      "*33*:	Guaviare\n" +
+                      "*34*:	Vaupes\n" +
+                      "*35*:	Vichada\n";
 
                       }
                       break;
@@ -2621,7 +2664,7 @@ app.post('/whatsapp', async (req, res) => {
                 guardarInfoMiembro(req.body.Body.replace(/[^\ñ\Ñ\ü\Ü\á\Á\é\É\í\Í\ó\Ó\ú\Ú\w\s]/gi, ''), 'cual_otro_tipo_documento', conversation.miembro_hogar_preguntando, conversation.id);
                 conversation.pregunta += 1; // pregunta 46
                 crearEncuesta(conversation);
-                mensajeRespuesta = '*Número de Documento:*. (miembro #' + conversation.miembro_hogar_preguntando + '). Sí no sabe el número de Documento, envíe "." (punto)';
+                mensajeRespuesta = '*Número de Documento:*. (miembro #' + conversation.miembro_hogar_preguntando + '). Sí no sabe el número de Documento, envía "." (punto)';
 
               } catch (error) {
                 conversation.pregunta = 45;
@@ -2681,11 +2724,48 @@ app.post('/whatsapp', async (req, res) => {
                       conversation.pregunta += 2; //Va a pregunta 49
                       conversation.paso_chatbot += 1;
                       crearEncuesta(conversation);
-                      mensajeRespuesta = "*PASO 3 - DATOS DE CONTACTO*. " +
-                        "Recuerda: es muy importante que proporciones TODOS tus datos personales de contacto, para poder localizarte en caso de resultar elegido para el programa.\n" +
-                        "Por favor compartenos tu ubicación para poder localizarte de una forma más fácil";
-                      //"¿En qué Municipio te encuentras en este momento?. Envía el nombre del municipio:\n"+
-                      //"BOCHALEMA, BERLÍN, BUCARAMANGA, CÚCUTA, PAMPLONA, BOGOTÁ, CALI, PASTO, MEDELLÍN"*/
+                      mensajeRespuesta = "*PASO 3 - DATOS DE CONTACTO*.\n" +
+                         // "Recuerda: es muy importante que proporciones TODOS tus datos personales de contacto, para poder localizarte en caso de resultar elegido para el programa.\n" +
+                          //"Por favor compartenos tu ubicación para poder localizarte de una forma más fácil";
+                        //"¿En qué Municipio te encuentras en este momento?. Envía el nombre del municipio:\n"+
+                        //"BOCHALEMA, BERLÍN, BUCARAMANGA, CÚCUTA, PAMPLONA, BOGOTÁ, CALI, PASTO, MEDELLÍN"*/
+                       "¿En qué Departamento te encuentras actualmente?\n" +
+                      "Envía el número de acuerdo al Departamento correspondiente ó el número *1* en caso de que no sepas en qué Departamento estás actualmente.\n" +
+                      "*1*: No sé\n" +
+                      "*2*:	Antioquia\n" +
+                      "*3*:	Atlántico\n" +
+                      "*4*:	Bogotá D.C.\n" +
+                      "*5*:	Bolívar\n" +
+                      "*6*:	Boyaca\n" +
+                      "*7*:	Caldas\n" +
+                      "*8*:	Caqueta\n" +
+                      "*9*:	Cauca\n" +
+                      "*10*:	Cesar\n" +
+                      "*11*:	Córdoba\n" +
+                      "*12*:	Cundinamarca\n" +
+                      "*13*:	Chocó\n" +
+                      "*14*:	Huila\n" +
+                      "*15*:	La Guajira\n" +
+                      "*16*:	Magdalena\n" +
+                      "*17*:	Meta\n" +
+                      "*18*:	Nariño\n" +
+                      "*19*:	Norte de Santander\n" +
+                      "*20*:	Quindio\n" +
+                      "*21*:	Risaralda\n" +
+                      "*22*:	Santander\n" +
+                      "*23*:	Sucre\n" +
+                      "*24*:	Tolima\n" +
+                      "*25*:	Valle del Cauca\n" +
+                      "*26*:	Arauca\n" +
+                      "*27*:	Casanare\n" +
+                      "*28*:	Putumayo\n" +
+                      "*29*:	San Andres\n" +
+                      "*30*:	Isla de Providencia y Santa Catalina\n" +
+                      "*31*:	Amazonas\n" +
+                      "*32*:	Guainia\n" +
+                      "*33*:	Guaviare\n" +
+                      "*34*:	Vaupes\n" +
+                      "*35*:	Vichada\n";
                     }
                     break;
 
@@ -2747,11 +2827,49 @@ app.post('/whatsapp', async (req, res) => {
                   conversation.pregunta += 1; //Va a pregunta 49
                   conversation.paso_chatbot += 1;
                   crearEncuesta(conversation);
-                  mensajeRespuesta = "*PASO 3 - DATOS DE CONTACTO*. " +
-                    "Recuerda: es muy importante que proporciones TODOS tus datos personales de contacto, para poder localizarte en caso de resultar elegido para el programa.\n" +
-                    "Por favor compartenos tu ubicación para poder localizarte de una forma más fácil";
-                  //"¿En qué Municipio te encuentras en este momento?. Envía el nombre del municipio:\n"+
-                  //"BOCHALEMA, BERLÍN, BUCARAMANGA, CÚCUTA, PAMPLONA, BOGOTÁ, CALI, PASTO, MEDELLÍN"*/
+                  
+                  mensajeRespuesta = "*PASO 3 - DATOS DE CONTACTO*.\n" +
+                         // "Recuerda: es muy importante que proporciones TODOS tus datos personales de contacto, para poder localizarte en caso de resultar elegido para el programa.\n" +
+                          //"Por favor compartenos tu ubicación para poder localizarte de una forma más fácil";
+                        //"¿En qué Municipio te encuentras en este momento?. Envía el nombre del municipio:\n"+
+                        //"BOCHALEMA, BERLÍN, BUCARAMANGA, CÚCUTA, PAMPLONA, BOGOTÁ, CALI, PASTO, MEDELLÍN"*/
+                       "¿En qué Departamento te encuentras actualmente?\n" +
+                      "Envía el número de acuerdo al Departamento correspondiente ó el número *1* en caso de que no sepas en qué Departamento estás actualmente.\n" +
+                      "*1*: No sé\n" +
+                      "*2*:	Antioquia\n" +
+                      "*3*:	Atlántico\n" +
+                      "*4*:	Bogotá D.C.\n" +
+                      "*5*:	Bolívar\n" +
+                      "*6*:	Boyaca\n" +
+                      "*7*:	Caldas\n" +
+                      "*8*:	Caqueta\n" +
+                      "*9*:	Cauca\n" +
+                      "*10*:	Cesar\n" +
+                      "*11*:	Córdoba\n" +
+                      "*12*:	Cundinamarca\n" +
+                      "*13*:	Chocó\n" +
+                      "*14*:	Huila\n" +
+                      "*15*:	La Guajira\n" +
+                      "*16*:	Magdalena\n" +
+                      "*17*:	Meta\n" +
+                      "*18*:	Nariño\n" +
+                      "*19*:	Norte de Santander\n" +
+                      "*20*:	Quindio\n" +
+                      "*21*:	Risaralda\n" +
+                      "*22*:	Santander\n" +
+                      "*23*:	Sucre\n" +
+                      "*24*:	Tolima\n" +
+                      "*25*:	Valle del Cauca\n" +
+                      "*26*:	Arauca\n" +
+                      "*27*:	Casanare\n" +
+                      "*28*:	Putumayo\n" +
+                      "*29*:	San Andres\n" +
+                      "*30*:	Isla de Providencia y Santa Catalina\n" +
+                      "*31*:	Amazonas\n" +
+                      "*32*:	Guainia\n" +
+                      "*33*:	Guaviare\n" +
+                      "*34*:	Vaupes\n" +
+                      "*35*:	Vichada\n";
 
 
                 }
@@ -2759,7 +2877,7 @@ app.post('/whatsapp', async (req, res) => {
               } catch (error) {
                 conversation.pregunta = 48; // pregunta 48
                 crearEncuesta(conversation);
-                mensajeRespuesta = "Por favor carga una fotografía de tu documento aquí";
+                mensajeRespuesta = "Por favor carga una fotografía del documento del miembro #" + conversation.miembro_hogar_preguntando + ") aquí:";
               }
 
 
@@ -2769,7 +2887,7 @@ app.post('/whatsapp', async (req, res) => {
             case 49:
 
               try {
-
+                /*
                 if (req.body.Latitude && req.body.Longitude) {
 
                   autorizacionAsignarCoordenadasUbicacion(req.body.Longitude, req.body.Latitude, conversation.id);
@@ -2781,45 +2899,209 @@ app.post('/whatsapp', async (req, res) => {
                 } else {
                   mensajeRespuesta = "Por favor compartenos tu ubicación para poder localizarte de una forma más fácil";
 
+                }*/
+                const opcionesDepartamentoActual = ['2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15', '16',
+                  '17', '18', '19', '20', '21', '22', '23', '24', '25', '26', '27', '28', '29', '30', '31', '32', '33', '34', '35'];
+
+                if (req.body.Body === '1') {
+                  conversation.pregunta += 2; //va a pregunta 51 a pedir ubicacion actual
+                  
+                  crearEncuesta(conversation);
+                  mensajeRespuesta = "Por favor compartenos tu ubicación para poder localizarte de una forma más fácil";
+
+
+
+                } else if (opcionesDepartamentoActual.includes(req.body.Body)) {
+                  //conversation.pregunta += 1; //va a pregunta 29
+                  //conversation.id_departamento_destino_final =  parseInt(req.body.Body);
+                  //crearEncuesta(conversation);
+                  //mensajeRespuesta = "Escriba en mayúscula el nombre del Municipio ó la palabra *NO SE* en caso de que no tenta definido el Municipio de destino.\n"+
+                  //"En el siguiente link puede consultar el nombre de los Municipios: https://docs.google.com/spreadsheets/d/1AwkvC905X-yddB_FB526e-_2f3CIOYdQF7TUfDYjvWk/edit#gid=1717145484";
+                  $idDepartamentoEnviado = parseInt(req.body.Body);
+              
+                  conversation.pregunta += 1; // pregunta 50 municipio
+                  conversation.id_departamento = $idDepartamentoEnviado;
+
+                  crearEncuesta(conversation);
+                  mensajeRespuesta = "Envía el nombre del Municipio en el que te encuentras actualmente ó el número *1* en caso de que NO sepas en qué Municipio estás actualmente";
+                  //mensajeRespuesta = "Consulta en el siguiente link los Municipios que en la columna *'id_departamento'* tengan el valor *"+conversation.id_departamento_destino_final+"* correspondiente al Departamento de destino.\n"+
+                  //"Envía el número de la columna *'id_municipio'* que corresponda al Municipio destino: https://docs.google.com/spreadsheets/d/1AwkvC905X-yddB_FB526e-_2f3CIOYdQF7TUfDYjvWk/edit#gid=1717145484 .\n"+
+                  //"Ó envía el número *1* en caso de que no tengas definido el Municipio de destino";
+                  //"Envía el número correspondiente a la opción:\n *1*: No sé\n";
+
+                  /*$municipiosLista.forEach(municipio => {
+                    if (municipio.id_departamento == $idDepartamentoRecibido) {
+                      mensajeRespuesta += "*" + municipio.id + "*: " + municipio.nombre + "\n";
+                    }
+
+                  });*/
+                  
+                } else {
+                  mensajeRespuesta = "¿Cuál es tu destino final dentro de Colombia?\n" +
+                    "Envía el número de acuerdo al Departamento correspondiente ó el número *1* en caso de que no tengas definido el Departamento de destino.\n" +
+                    "*1*: No sé\n" +
+                    "*2*:	Antioquia\n" +
+                    "*3*:	Atlántico\n" +
+                    "*4*:	Bogotá D.C.\n" +
+                    "*5*:	Bolívar\n" +
+                    "*6*:	Boyaca\n" +
+                    "*7*:	Caldas\n" +
+                    "*8*:	Caqueta\n" +
+                    "*9*:	Cauca\n" +
+                    "*10*:	Cesar\n" +
+                    "*11*:	Córdoba\n" +
+                    "*12*:	Cundinamarca\n" +
+                    "*13*:	Choco\n" +
+                    "*14*:	Huila\n" +
+                    "*15*:	La Guajira\n" +
+                    "*16*:	Magdalena\n" +
+                    "*17*:	Meta\n" +
+                    "*18*:	Nariño\n" +
+                    "*19*:	Norte de Santander\n" +
+                    "*20*:	Quindio\n" +
+                    "*21*:	Risaralda\n" +
+                    "*22*:	Santander\n" +
+                    "*23*:	Sucre\n" +
+                    "*24*:	Tolima\n" +
+                    "*25*:	Valle del Cauca\n" +
+                    "*26*:	Arauca\n" +
+                    "*27*:	Casanare\n" +
+                    "*28*:	Putumayo\n" +
+                    "*29*:	San Andres\n" +
+                    "*30*:	Isla de Providencia y Santa Catalina\n" +
+                    "*31*:	Amazonas\n" +
+                    "*32*:	Guainia\n" +
+                    "*33*:	Guaviare\n" +
+                    "*34*:	Vaupes\n" +
+                    "*35*:	Vichada\n";
                 }
               } catch (error) {
                 conversation.pregunta = 49; // pregunta 48
                 crearEncuesta(conversation);
-                mensajeRespuesta = "Por favor compartenos tu ubicación para poder localizarte de una forma más fácil";
+                //mensajeRespuesta = "Por favor compartenos tu ubicación para poder localizarte de una forma más fácil";
+                mensajeRespuesta = "¿En qué Departamento te encuentras actualmente?\n" +
+                      "Envía el número de acuerdo al Departamento correspondiente ó el número *1* en caso de que no sepas en qué Departamento estás actualmente.\n" +
+                      "*1*: No sé\n" +
+                      "*2*:	Antioquia\n" +
+                      "*3*:	Atlántico\n" +
+                      "*4*:	Bogotá D.C.\n" +
+                      "*5*:	Bolívar\n" +
+                      "*6*:	Boyaca\n" +
+                      "*7*:	Caldas\n" +
+                      "*8*:	Caqueta\n" +
+                      "*9*:	Cauca\n" +
+                      "*10*:	Cesar\n" +
+                      "*11*:	Córdoba\n" +
+                      "*12*:	Cundinamarca\n" +
+                      "*13*:	Chocó\n" +
+                      "*14*:	Huila\n" +
+                      "*15*:	La Guajira\n" +
+                      "*16*:	Magdalena\n" +
+                      "*17*:	Meta\n" +
+                      "*18*:	Nariño\n" +
+                      "*19*:	Norte de Santander\n" +
+                      "*20*:	Quindio\n" +
+                      "*21*:	Risaralda\n" +
+                      "*22*:	Santander\n" +
+                      "*23*:	Sucre\n" +
+                      "*24*:	Tolima\n" +
+                      "*25*:	Valle del Cauca\n" +
+                      "*26*:	Arauca\n" +
+                      "*27*:	Casanare\n" +
+                      "*28*:	Putumayo\n" +
+                      "*29*:	San Andres\n" +
+                      "*30*:	Isla de Providencia y Santa Catalina\n" +
+                      "*31*:	Amazonas\n" +
+                      "*32*:	Guainia\n" +
+                      "*33*:	Guaviare\n" +
+                      "*34*:	Vaupes\n" +
+                      "*35*:	Vichada\n";
               }
-
-
 
               break;
 
+            
             case 50:
+              try {
+                if (req.body.Body === '1') {
+                  conversation.pregunta += 1;//va a pregunta 51 compartir ubicacion
+                  crearEncuesta(conversation);
+                  mensajeRespuesta = "Por favor compartenos tu ubicación para poder localizarte de una forma más fácil";
+
+                  //}else if(req.body.Body.match(valoresAceptados) && !req.body.Body.charAt){
+                } else {
+                  conversation.ubicacion = req.body.Body.replace(/[^\ñ\Ñ\ü\Ü\á\Á\é\É\í\Í\ó\Ó\ú\Ú\w\s]/gi, '');
+                  conversation.pregunta += 1; //va a pregunta 51 compartir ubicacion
+                  crearEncuesta(conversation);
+                    mensajeRespuesta = "Por favor compartenos tu ubicación para poder localizarte de una forma más fácil";
+
+                }
+                
+              } catch (error) {
+                conversation.pregunta = 50; // pregunta 50 municipio
+
+                  crearEncuesta(conversation);
+                  mensajeRespuesta = "Envía el nombre del Municipio en el que te encuentras actualmente ó el número *1* en caso de que NO sepas en qué Municipio estás actualmente";
+                  
+              }
+            
+            break;
+
+            case 51:
+              try {
+                if (req.body.Latitude && req.body.Longitude) {
+
+                  autorizacionAsignarCoordenadasUbicacion(req.body.Longitude, req.body.Latitude, conversation.id);
+                  conversation.pregunta += 1; //va a pregunta 52
+                  crearEncuesta(conversation);
+                  mensajeRespuesta = "¿El número de contacto ha sido entregado por VenEsperanza?. Responda con el número según la opción:\n" +
+                    "*1*: Sí\n" +
+                    "*2*: No";
+                } else {
+                  mensajeRespuesta = "Por favor compartenos tu ubicación para poder localizarte de una forma más fácil";
+
+                }
+              } catch (error) {
+                conversation.pregunta = 51; //Vuelve a preguntar 51
+
+                  crearEncuesta(conversation);
+                mensajeRespuesta = "Por favor compartenos tu ubicación para poder localizarte de una forma más fácil";
+
+              }
+            
+            break;
+
+            case 52:
 
               try {
                 switch (req.body.Body) {
                   case '1':
                     conversation.numero_entregado_venesperanza = true;
-                    conversation.pregunta += 1; //Va a pregunta 51
+                    conversation.pregunta += 1; //Va a pregunta 53
 
                     crearEncuesta(conversation);
-                    mensajeRespuesta = "Ingresa el Número de Contacto VenEsperanza. (Solamente ingrese números. El tamaño de carácteres debe ser mínimo 7 y máximo 10):";
+                    mensajeRespuesta = "Ingresa el Número de Contacto VenEsperanza. (Solamente ingresa números. El tamaño de carácteres debe ser mínimo 7 y máximo 10):";
                     break;
 
                   case '2':
                     conversation.numero_entregado_venesperanza = false;
-                    conversation.pregunta += 1; //Va a pregunta 51
+                    conversation.pregunta += 1; //Va a pregunta 53
 
                     crearEncuesta(conversation);
-                    mensajeRespuesta = "Ingresa el Número de Contacto principal. (Solamente ingrese números. El tamaño de carácteres debe ser mínimo 7 y máximo 10):";
+                    mensajeRespuesta = "Ingresa el Número de Contacto principal. (Solamente ingresa números. El tamaño de carácteres debe ser mínimo 7 y máximo 10):";
                     break;
 
                   default:
-                    mensajeRespuesta = "¿El número de contacto ha sido entregado por VenEsperanza?. Responda con el número según la opción:\n" +
+                    mensajeRespuesta = "¿El número de contacto ha sido entregado por VenEsperanza?. Responde con el número según la opción:\n" +
                       "*1*: Sí\n" +
                       "*2*: No";
                     break;
                 }
               } catch (error) {
-                mensajeRespuesta = "¿El número de contacto ha sido entregado por VenEsperanza?. Responda con el número según la opción:\n" +
+                conversation.pregunta = 52; //Vuelve a preguntar 52
+
+                  crearEncuesta(conversation);
+                mensajeRespuesta = "¿El número de contacto ha sido entregado por VenEsperanza?. Responde con el número según la opción:\n" +
                   "*1*: Sí\n" +
                   "*2*: No";
 
@@ -2827,7 +3109,7 @@ app.post('/whatsapp', async (req, res) => {
 
               break;
 
-            case 51:
+            case 53:
 
               try {
 
@@ -2843,7 +3125,7 @@ app.post('/whatsapp', async (req, res) => {
 
                 if ($numero.toString().length >= 7 && $numero.toString().length <= 10) {
                   conversation.numero_contacto = $numero;
-                  conversation.pregunta += 1; //Va a pregunta 52
+                  conversation.pregunta += 1; //Va a pregunta 54
 
                   crearEncuesta(conversation);
                   mensajeRespuesta = "¿Esta línea de contacto es propia?. Responda con el número según la opción:\n" +
@@ -2863,14 +3145,14 @@ app.post('/whatsapp', async (req, res) => {
                 }
               } catch (error) {
                 if (conversation.numero_entregado_venesperanza == true) {
-                  conversation.pregunta = 51; //Vuelve a preguntar 51
+                  conversation.pregunta = 53; //Vuelve a preguntar 53
 
                   crearEncuesta(conversation);
                   mensajeRespuesta = "Ingresa el Número de Contacto VenEsperanza. (Solamente ingrese números. El tamaño de carácteres debe ser mínimo 7 y máximo 10):";
 
                 } else if (conversation.numero_entregado_venesperanza == false) {
 
-                  conversation.pregunta = 51; //Vuelve a preguntar 51
+                  conversation.pregunta = 53; //Vuelve a preguntar 51
 
                   crearEncuesta(conversation);
                   mensajeRespuesta = "Ingresa el Número de Contacto principal. (Solamente ingrese números. El tamaño de carácteres debe ser mínimo 7 y máximo 10):";
@@ -2881,13 +3163,13 @@ app.post('/whatsapp', async (req, res) => {
 
               break;
 
-            case 52:
+            case 54:
 
               try {
                 switch (req.body.Body) {
                   case '1':
                     conversation.linea_contacto_propia = true;
-                    conversation.pregunta += 1; //Va a pregunta 53
+                    conversation.pregunta += 1; //Va a pregunta 55
                     crearEncuesta(conversation);
                     mensajeRespuesta = "¿Esta línea de contacto está asociada a WhatsApp?. Responda con el número según la opción:\n" +
                       "*1*: Sí\n" +
@@ -2898,7 +3180,7 @@ app.post('/whatsapp', async (req, res) => {
                   case '2':
 
                     conversation.linea_contacto_propia = false;
-                    conversation.pregunta += 1; //Va a pregunta 53
+                    conversation.pregunta += 1; //Va a pregunta 55
                     //conversation.encuesta = false;
 
                     crearEncuesta(conversation);
@@ -2917,7 +3199,7 @@ app.post('/whatsapp', async (req, res) => {
                 }
 
               } catch (error) {
-                conversation.pregunta = 52; //Vuelve a preguntar 52
+                conversation.pregunta = 54; //Vuelve a preguntar 54
 
                 crearEncuesta(conversation);
                 mensajeRespuesta = "¿Esta línea de contacto es propia?. Responda con el número según la opción:\n" +
@@ -2928,20 +3210,20 @@ app.post('/whatsapp', async (req, res) => {
 
               break;
 
-            case 53:
+            case 55:
               try {
 
                 switch (req.body.Body) {
                   case '1':
 
-                    conversation.pregunta += 2; //Va a pregunta 55 paso 3
+                    conversation.pregunta += 2; //Va a pregunta 57 paso 3
                     conversation.linea_asociada_whatsapp = true;
                     crearEncuesta(conversation);
                     mensajeRespuesta = "Ingresa el Número de Contacto alternativo. (Solamente ingrese números. El tamaño de carácteres debe ser mínimo 7 y máximo 10):";
                     break;
 
                   case '2':
-                    conversation.pregunta += 1; //Va a pregunta 54 paso 3
+                    conversation.pregunta += 1; //Va a pregunta 56 paso 3
                     conversation.linea_asociada_whatsapp = false;
                     crearEncuesta(conversation);
                     mensajeRespuesta = "Por favor agrega tu número de Whatsapp. (Solamente ingrese números. El tamaño de carácteres debe ser mínimo 7 y máximo 10):";
@@ -2957,7 +3239,7 @@ app.post('/whatsapp', async (req, res) => {
                 }
 
               } catch (error) {
-                conversation.pregunta = 53; //Vuelve a preguntar 53
+                conversation.pregunta = 55; //Vuelve a preguntar 55
 
                 crearEncuesta(conversation);
                 mensajeRespuesta = "¿Esta línea de contacto está asociada a WhatsApp?. Responda con el número según la opción:\n" +
@@ -2968,7 +3250,7 @@ app.post('/whatsapp', async (req, res) => {
               break;
 
 
-            case 54:
+            case 56:
               try {
                 /*var valoresAceptados = /^[0-9]/;
                 var valoresNoAceptados = /[aA-záéíóúñZÁÉÍÓÚÑ@#+-]/;
@@ -2979,7 +3261,7 @@ app.post('/whatsapp', async (req, res) => {
                 $numeroWhatsappPrincipal = parseInt(req.body.Body);
 
                 if ($numeroWhatsappPrincipal.toString().length >= 7 && $numeroWhatsappPrincipal.toString().length <= 10) {
-                  conversation.pregunta += 1; //Va a pregunta 55 paso 3
+                  conversation.pregunta += 1; //Va a pregunta 57 paso 3
                   conversation.numero_whatsapp_principal = $numeroWhatsappPrincipal;
                   crearEncuesta(conversation);
                   mensajeRespuesta = "Ingresa el Número de Contacto alternativo. (Solamente ingrese números. El tamaño de carácteres debe ser mínimo 7 y máximo 10):";
@@ -2990,7 +3272,7 @@ app.post('/whatsapp', async (req, res) => {
                 }
 
               } catch (error) {
-                conversation.pregunta = 54; //Vuelve a pregunta 54
+                conversation.pregunta = 56; //Vuelve a pregunta 56
                 crearEncuesta(conversation);
 
                 mensajeRespuesta = "Por favor agrega tu número de Whatsapp. (Solamente ingrese números. El tamaño de carácteres debe ser mínimo 7 y máximo 10):";
@@ -3000,13 +3282,13 @@ app.post('/whatsapp', async (req, res) => {
 
               break;
 
-            case 55:
+            case 57:
               try {
                 
                 $numeroAlternativo = parseInt(req.body.Body);
 
                 if ($numeroAlternativo.toString().length >= 7 && $numeroAlternativo.toString().length <= 10) {
-                  conversation.pregunta += 1; //Va a pregunta 56 paso 3
+                  conversation.pregunta += 1; //Va a pregunta 58 paso 3
                   conversation.numero_alternativo = $numeroAlternativo;
                   crearEncuesta(conversation);
                   mensajeRespuesta = "¿Esta línea de contacto es propia?. Responda con el número según la opción:\n" +
@@ -3017,7 +3299,7 @@ app.post('/whatsapp', async (req, res) => {
                 }
 
               } catch (error) {
-                conversation.pregunta = 55; //Vuelve a pregunta 55
+                conversation.pregunta = 57; //Vuelve a pregunta 57
                 crearEncuesta(conversation);
                 mensajeRespuesta = "Ingresa el Número de Contacto alternativo. (Solamente ingrese números. El tamaño de carácteres debe ser mínimo 7 y máximo 10):";
 
@@ -3026,12 +3308,12 @@ app.post('/whatsapp', async (req, res) => {
 
               break;
 
-            case 56:
+            case 58:
 
               try {
                 switch (req.body.Body) {
                   case '1':
-                    conversation.pregunta += 1; //Va a pregunta 57 paso 3
+                    conversation.pregunta += 1; //Va a pregunta 59 paso 3
                     conversation.linea_contacto_alternativo = true;
                     crearEncuesta(conversation);
                     mensajeRespuesta = "¿Esta línea de contacto está asociada a WhatsApp?. Responda con el número según la opción:\n" +
@@ -3040,7 +3322,7 @@ app.post('/whatsapp', async (req, res) => {
                     break;
 
                   case '2':
-                    conversation.pregunta += 1; //Va a pregunta 57 paso 3
+                    conversation.pregunta += 1; //Va a pregunta 59 paso 3
                     conversation.linea_contacto_alternativo = false;
                     crearEncuesta(conversation);
                     mensajeRespuesta = "¿Esta línea de contacto está asociada a WhatsApp?. Responda con el número según la opción:\n" +
@@ -3056,7 +3338,7 @@ app.post('/whatsapp', async (req, res) => {
                 }
 
               } catch (error) {
-                conversation.pregunta = 56; //Va a pregunta 57 paso 3
+                conversation.pregunta = 58; //Vuelve a 58 paso 3
                 crearEncuesta(conversation);
                 mensajeRespuesta = "¿Esta línea de contacto es propia?. Responda con el número según la opción:\n" +
                   "*1*: Sí\n" +
@@ -3066,20 +3348,20 @@ app.post('/whatsapp', async (req, res) => {
               break;
 
 
-            case 57:
+            case 59:
 
               try {
                 switch (req.body.Body) {
                   case '1':
 
-                    conversation.pregunta += 1; //Va a pregunta 58 paso 3
+                    conversation.pregunta += 1; //Va a pregunta 60 paso 3
                     conversation.linea_alternativa_asociada_whatsapp = true;
                     crearEncuesta(conversation);
                     mensajeRespuesta = "Escribe un correo electrónico donde te podamos contactar";
                     break;
 
                   case '2':
-                    conversation.pregunta += 1; //Va a pregunta 58 paso 3
+                    conversation.pregunta += 1; //Va a pregunta 60 paso 3
                     conversation.linea_alternativa_asociada_whatsapp = false;
                     crearEncuesta(conversation);
                     mensajeRespuesta = "Escribe un correo electrónico donde te podamos contactar";
@@ -3095,7 +3377,7 @@ app.post('/whatsapp', async (req, res) => {
                 }
 
               } catch (error) {
-                conversation.pregunta = 57; //Vuelve a 57 paso 3
+                conversation.pregunta = 59; //Vuelve a 59 paso 3
                 crearEncuesta(conversation);
                 mensajeRespuesta = "¿Esta línea de contacto está asociada a WhatsApp?. Responda con el número según la opción:\n" +
                   "*1*: Sí\n" +
@@ -3106,16 +3388,16 @@ app.post('/whatsapp', async (req, res) => {
               break;
 
 
-            case 58:
+            case 60:
 
               try {
                 
                 $correoValidacion = req.body.Body.replace(/[^\.\@\_\-\w]/gi, '');
-                console.log('CORREO VALIDACION:: ', $correoValidacion);
+                //console.log('CORREO VALIDACION:: ', $correoValidacion);
                 emailregex = /^(?:[^<>()[\].,;:\s@"]+(\.[^<>()[\].,;:\s@"]+)*|"[^\n"]+")@(?:[^<>()[\].,;:\s@"]+\.)+[^<>()[\]\.,;:\s@"]{2,63}$/i;
                 if (emailregex.test($correoValidacion)) {
                   conversation.correo_electronico = $correoValidacion;
-                  conversation.pregunta += 1; //Va a pregunta 59 paso 3
+                  conversation.pregunta += 1; //Va a pregunta 61 paso 3
                   crearEncuesta(conversation);
                   mensajeRespuesta = "¿Tienes cuenta en Facebook?. Responde con el número según la opción:\n" +
                     "*1*: Sí\n" +
@@ -3125,7 +3407,7 @@ app.post('/whatsapp', async (req, res) => {
                 }
 
               } catch (error) {
-                conversation.pregunta = 58; //Vuelve a preguntar 58 paso 3
+                conversation.pregunta = 60; //Vuelve a preguntar 60 paso 3
                 crearEncuesta(conversation);
                 mensajeRespuesta = "Escribe un correo electrónico donde te podamos contactar";
               }
@@ -3133,14 +3415,14 @@ app.post('/whatsapp', async (req, res) => {
               break;
 
 
-            case 59:
+            case 61:
 
               try {
                 switch (req.body.Body) {
 
                   case '1':
 
-                    conversation.pregunta += 1; //Va a pregunta 60 paso 3
+                    conversation.pregunta += 1; //Va a pregunta 62 paso 3
                     conversation.tiene_cuenta_facebook = true;
                     crearEncuesta(conversation);
                     mensajeRespuesta = "¿Cuál es la cuenta?";
@@ -3148,7 +3430,7 @@ app.post('/whatsapp', async (req, res) => {
 
                   case '2':
 
-                    conversation.pregunta += 2; //Va a pregunta 61 paso 3
+                    conversation.pregunta += 2; //Va a pregunta 63 paso 3
                     conversation.tiene_cuenta_facebook = false;
                     crearEncuesta(conversation);
                     mensajeRespuesta = "¿Podemos contactarte el momento en el que llegues a tu destino final?" +
@@ -3165,7 +3447,7 @@ app.post('/whatsapp', async (req, res) => {
                 }
 
               } catch (error) {
-                conversation.pregunta = 59; //Vuelve a preguntar 59 paso 3
+                conversation.pregunta = 61; //Vuelve a preguntar 61 paso 3
                 crearEncuesta(conversation);
                 mensajeRespuesta = "¿Tienes cuenta en Facebook?. Responde con el número según la opción:\n" +
                   "*1*: Sí\n" +
@@ -3174,11 +3456,11 @@ app.post('/whatsapp', async (req, res) => {
 
               break;
 
-            case 60:
+            case 62:
               try {
-                conversation.pregunta += 1; //Va a pregunta 61 paso 3
+                conversation.pregunta += 1; //Va a pregunta 63 paso 3
                 conversation.cuenta_facebook = req.body.Body.replace(/[^\ñ\Ñ\ü\Ü\á\Á\é\É\í\Í\ó\Ó\ú\Ú\@\_\&\$\.\/\-\w]/gi, '');
-                console.log('SE GUARDARA ASI: ', conversation.cuenta_facebook);
+                //console.log('SE GUARDARA ASI: ', conversation.cuenta_facebook);
                 crearEncuesta(conversation);
                 mensajeRespuesta = "¿Podemos contactarte el momento en el que llegues a tu destino final?" +
                   "Responde con el númeor según la opción correspondiente:\n" +
@@ -3186,7 +3468,7 @@ app.post('/whatsapp', async (req, res) => {
                   "*2*: No";
 
               } catch (error) {
-                conversation.pregunta = 60; //Vuelve a pregunta 60 paso 3
+                conversation.pregunta = 62; //Vuelve a pregunta 60 paso 3
                 crearEncuesta(conversation);
                 mensajeRespuesta = "¿Cuál es la cuenta?";
               }
@@ -3194,7 +3476,7 @@ app.post('/whatsapp', async (req, res) => {
 
               break;
 
-            case 61:
+            case 63:
 
               try {
 
@@ -3202,7 +3484,7 @@ app.post('/whatsapp', async (req, res) => {
 
                   case '1':
 
-                    conversation.pregunta += 1; //Va a pregunta 62 paso 3
+                    conversation.pregunta += 1; //Va a pregunta 64 paso 3
                     conversation.podemos_contactarte = true;
                     crearEncuesta(conversation);
                     mensajeRespuesta = "¿Cuál sería la mejor forma para contactarte?. Responde con el número según la opción:\n" +
@@ -3215,7 +3497,7 @@ app.post('/whatsapp', async (req, res) => {
 
                   case '2':
 
-                    conversation.pregunta += 3; //Va a pregunta 64 paso 3
+                    conversation.pregunta += 3; //Va a pregunta 66 paso 3
                     conversation.podemos_contactarte = false;
                     crearEncuesta(conversation);
                     mensajeRespuesta = "¿Podrías darnos alguna información adicional para contactarte?" +
@@ -3232,7 +3514,7 @@ app.post('/whatsapp', async (req, res) => {
                 }
 
               } catch (error) {
-                conversation.pregunta = 61; //Vuelve a preguntar 61 paso 3
+                conversation.pregunta = 63; //Vuelve a preguntar 63 paso 3
                 crearEncuesta(conversation);
                 mensajeRespuesta = "¿Podemos contactarte el momento en el que llegues a tu destino final?" +
                   "Responde con el númeor según la opción correspondiente:\n" +
@@ -3244,14 +3526,14 @@ app.post('/whatsapp', async (req, res) => {
 
               break;
 
-            case 62:
+            case 64:
 
               try {
                 switch (req.body.Body) {
 
                   case '1':
                     conversation.forma_contactarte = "Por llamada";
-                    conversation.pregunta += 2; //pasa a pregunta 64
+                    conversation.pregunta += 2; //pasa a pregunta 66
                     crearEncuesta(conversation);
                     mensajeRespuesta = "¿Podrías darnos alguna información adicional para contactarte?" +
                       "Por ejemplo, el teléfono de algún familiar o amigo y por quién preguntar, las horas más adecuadas para llamarte o los días de la semana en los que te podremos encontrar.";
@@ -3260,7 +3542,7 @@ app.post('/whatsapp', async (req, res) => {
                   case '2':
 
                     conversation.forma_contactarte = "WhatsApp";
-                    conversation.pregunta += 2; //pasa a pregunta 64
+                    conversation.pregunta += 2; //pasa a pregunta 66
                     crearEncuesta(conversation);
                     mensajeRespuesta = "¿Podrías darnos alguna información adicional para contactarte?" +
                       "Por ejemplo, el teléfono de algún familiar o amigo y por quién preguntar, las horas más adecuadas para llamarte o los días de la semana en los que te podremos encontrar.";
@@ -3268,7 +3550,7 @@ app.post('/whatsapp', async (req, res) => {
 
                   case '3':
                     conversation.forma_contactarte = "Facebook";
-                    conversation.pregunta += 2; //pasa a pregunta 64
+                    conversation.pregunta += 2; //pasa a pregunta 66
                     crearEncuesta(conversation);
                     mensajeRespuesta = "¿Podrías darnos alguna información adicional para contactarte?" +
                       "Por ejemplo, el teléfono de algún familiar o amigo y por quién preguntar, las horas más adecuadas para llamarte o los días de la semana en los que te podremos encontrar.";
@@ -3276,7 +3558,7 @@ app.post('/whatsapp', async (req, res) => {
 
                   case '4':
                     conversation.forma_contactarte = "Correo electrónico";
-                    conversation.pregunta += 2; //pasa a pregunta 64
+                    conversation.pregunta += 2; //pasa a pregunta 66
                     crearEncuesta(conversation);
                     mensajeRespuesta = "¿Podrías darnos alguna información adicional para contactarte?" +
                       "Por ejemplo, el teléfono de algún familiar o amigo y por quién preguntar, las horas más adecuadas para llamarte o los días de la semana en los que te podremos encontrar.";
@@ -3285,7 +3567,7 @@ app.post('/whatsapp', async (req, res) => {
                   case '5':
 
                     conversation.forma_contactarte = "Otro";
-                    conversation.pregunta += 1; //pasa a pregunta 63
+                    conversation.pregunta += 1; //pasa a pregunta 65
                     crearEncuesta(conversation);
                     mensajeRespuesta = "Envía otra opción para contactarte";
 
@@ -3303,7 +3585,7 @@ app.post('/whatsapp', async (req, res) => {
                 }
 
               } catch (error) {
-                conversation.pregunta = 62; //vuelve a 62
+                conversation.pregunta = 64; //vuelve a 64
                 crearEncuesta(conversation);
                 mensajeRespuesta = "¿Cuál sería la mejor forma para contactarte?. Responde con el número según la opción:\n" +
                   "*1*: Por llamada\n" +
@@ -3318,25 +3600,25 @@ app.post('/whatsapp', async (req, res) => {
 
               break;
 
-            case 63:
+            case 65:
 
               try {
                 conversation.otra_forma_contactarte = req.body.Body.replace(/[^\ñ\Ñ\ü\Ü\á\Á\é\É\í\Í\ó\Ó\ú\Ú\w\s]/gi, '');
-                conversation.pregunta += 1; //pasa a pregunta 64
+                conversation.pregunta += 1; //pasa a pregunta 66
                 crearEncuesta(conversation);
                 mensajeRespuesta = "¿Podrías darnos alguna información adicional para contactarte?" +
                   "Por ejemplo, el teléfono de algún familiar o amigo y por quién preguntar, las horas más adecuadas para llamarte o los días de la semana en los que te podremos encontrar.";
 
 
               } catch (error) {
-                conversation.pregunta = 63; //vuelve a preguntar 63
+                conversation.pregunta = 65; //vuelve a preguntar 65
                 crearEncuesta(conversation);
                 mensajeRespuesta = "Envía otra opción para contactarte";
               }
 
               break;
 
-            case 64:
+            case 66:
               try {
                 conversation.comentario = req.body.Body.replace(/[^\ñ\Ñ\ü\Ü\á\Á\é\É\í\Í\ó\Ó\ú\Ú\@\.\-\/\_\#\w\s]/gi, '');;
                 conversation.encuesta_chatbot = false;
@@ -3348,7 +3630,7 @@ app.post('/whatsapp', async (req, res) => {
 
 
               } catch (error) {
-                conversation.pregunta = 64; //vuelve a preguntar 64
+                conversation.pregunta = 66; //vuelve a preguntar 66
 
                 crearEncuesta(conversation);
                 mensajeRespuesta = "¿Podrías darnos alguna información adicional para contactarte?" +
@@ -3498,9 +3780,11 @@ app.post('/whatsapp', async (req, res) => {
 
     }
 
+    //console.log('ENVIA A: ', process.env.TWILIO_WHATSAPP);
     client.messages
       .create({
         from: 'whatsapp:+14155238886',
+        //from: 'whatsapp:+14155238886',//+process.env.TWILIO_WHATSAPP,
         body: mensajeRespuesta,
         to: req.body.From
       })
@@ -3516,6 +3800,9 @@ connection.connect(error => {
   console.log('Database server running OK');
 });
 
-app.listen(3000, function () {
-  console.log('Example app listening on port 3000!');
+//puerto de despliegue
+//app.listen(3000, function () {
+app.listen(process.env.APP_PORT, function(){
+  console.log('Example app listening on port '+process.env.APP_PORT+'!');
+  //console.log('Example app listening on port 3000!');
 });
