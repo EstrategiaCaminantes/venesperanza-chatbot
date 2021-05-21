@@ -140,8 +140,9 @@ app.post('/whatsapp', async (req, res) => {
 
   function consultarConversacionPaso2Miembro($id_encuesta) {
 
-    const sqlEncuestaMiembroHogar = `SELECT encuesta.*, encuesta.miembro_hogar_preguntando, miembros_hogar.primer_nombre_miembro, miembros_hogar.id as id_miembro_hogar , miembros_hogar.primer_apellido_miembro, miembros_hogar.sexo_miembro, miembros_hogar.codigo_encuesta as codigo_encuesta_miembro FROM encuesta INNER JOIN miembros_hogar ON encuesta.id = miembros_hogar.id_encuesta where encuesta.id = '${$id_encuesta}' AND miembros_hogar.numero_miembro = encuesta.miembro_hogar_preguntando`;
-    connection.query(sqlEncuestaMiembroHogar, (error, results) => {
+    const sqlEncuestaMiembroHogar = `SELECT encuesta.*, miembros_hogar.primer_nombre_miembro, miembros_hogar.id as id_miembro_hogar , miembros_hogar.primer_apellido_miembro, miembros_hogar.sexo_miembro, miembros_hogar.codigo_encuesta as codigo_encuesta_miembro FROM encuesta INNER JOIN miembros_hogar ON encuesta.id = miembros_hogar.id_encuesta where encuesta.id = '${$id_encuesta}' AND miembros_hogar.numero_miembro = encuesta.miembro_hogar_preguntando`;
+  
+   connection.query(sqlEncuestaMiembroHogar, (error, results) => {
 
 
       if (error) throw error;
@@ -219,7 +220,7 @@ VALUES ('${params.WaId}','${newprofile}',0,0,null,null,1)`;
       }
     });
   }
-
+ 
   async function guardarInfoMiembroFechaNacimientoYCodigoEncuesta($fecha_nacimiento_miembro, $codigo_encuesta_miembro, $id_miembro, $encuesta_id) {
 
     const sqlactualizarMiembro = `UPDATE miembros_hogar SET fecha_nacimiento = '${$fecha_nacimiento_miembro}', codigo_encuesta = '${$codigo_encuesta_miembro}' WHERE id = ${$id_miembro} AND id_encuesta = ${$encuesta_id} `
@@ -365,27 +366,19 @@ const sqlAutorizacion = `INSERT INTO autorizaciones (id_encuesta, tratamiento_da
   function guardarInfoMiembro($valor, $campo, $numero_miembro, $id_encuesta) {
 
     if ($campo == 'primer_nombre_miembro') {
-      const sqlNuevoMiembro = `INSERT INTO miembros_hogar (id, numero_miembro, id_encuesta, primer_nombre_miembro) VALUES 
-      (NULL, ${$numero_miembro}, ${$id_encuesta}, '${$valor}')`;
-
+      const sqlNuevoMiembro = `INSERT INTO miembros_hogar (numero_miembro, id_encuesta, primer_nombre_miembro) VALUES 
+      (${$numero_miembro}, ${$id_encuesta}, '${$valor}')`;
       connection.query(sqlNuevoMiembro, (error, res) => {
         if (error) throw error;
-
       });
-
     } else {
-
-
       //console.log('NUMERO MIEMBRO: ', $numero_miembro);
       const sqlUpdateMiembro = `UPDATE miembros_hogar SET ${$campo} = '${$valor}' WHERE id_encuesta = ${$id_encuesta} AND numero_miembro = ${$numero_miembro} `
-      connection.query(sqlUpdateMiembro, (error, res) => {
+      console.log(sqlUpdateMiembro);
+	  connection.query(sqlUpdateMiembro, (error, res) => {
         if (error) throw error;
-
       });
-
     }
-
-
   }
 
   /*
@@ -2138,9 +2131,9 @@ const sqlAutorizacion = `INSERT INTO autorizaciones (id_encuesta, tratamiento_da
               try {
 
                 guardarInfoMiembro(req.body.Body.replace(/[^\ñ\Ñ\ü\Ü\á\Á\é\É\í\Í\ó\Ó\ú\Ú\w\s]/gi, ''), 'primer_nombre_miembro', conversation.miembro_hogar_preguntando, conversation.id);
-                guardarInfoMiembro(1, 'fuente', conversation.miembro_hogar_preguntando, conversation.id);
+                //guardarInfoMiembro(1, 'fuente', conversation.miembro_hogar_preguntando, conversation.id);
 
-                conversation.pregunta += 1; //va a pregunta 36
+                conversation.pregunta += 1; //va a pregunta 37
                 crearEncuesta(conversation);
 
                 mensajeRespuesta = "*Segundo Nombre* (miembro #" + conversation.miembro_hogar_preguntando + ")." +
