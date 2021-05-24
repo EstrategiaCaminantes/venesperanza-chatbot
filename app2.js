@@ -462,17 +462,25 @@ app.post('/whatsapp', async (req, res) => {
             case 11:
 
               try {
-                conversation.primer_nombre = req.body.Body.replace(/[^\ñ\Ñ\ü\Ü\á\Á\é\É\í\Í\ó\Ó\ú\Ú\w\s]/gi, '');
-                conversation.pregunta += 1; //pregunta 12
+                //console.log('body primer nombre:: ', req.body.Body);
+                conversation.primer_nombre = req.body.Body.replace(/[^\aA-zZ\ñ\Ñ\ü\Ü\á\Á\é\É\í\Í\ó\Ó\ú\Ú]/gi, '');
+                //console.log('primer nombre:: ', conversation.primer_nombre);
+                if(conversation.primer_nombre.length>0){
+                  conversation.pregunta += 1; //pregunta 12
 
-                crearEncuesta(conversation);
-                mensajeRespuesta = "*Segundo Nombre:* " +
-                  "(En caso de que no tenga envía un '.' (punto))";
+                  crearEncuesta(conversation);
+                  mensajeRespuesta = "*Segundo Nombre:* " +
+                    "(En caso de que no tenga envía un '.' (punto))";
+                }else{
+                  mensajeRespuesta = "*Primer Nombre:* (Ingrese solamente letras, sin emoticones ni caracteres especiales)"
+                }
+                
+                
 
               } catch (error) {
                 conversation.pregunta = 11;
                 crearEncuesta(conversation);
-                mensajeRespuesta = "*Primer Nombre*";
+                mensajeRespuesta = "*Primer Nombre:* (Ingrese solamente letras, sin emoticones ni caracteres especiales)"
               }
 
 
@@ -481,11 +489,13 @@ app.post('/whatsapp', async (req, res) => {
             case 12:
 
               try {
-                conversation.segundo_nombre = req.body.Body.replace(/[^\ñ\Ñ\ü\Ü\á\Á\é\É\í\Í\ó\Ó\ú\Ú\w\s]/gi, '');
+                console.log('SEGUNDO NOMBRE:: ', req.body.Body);
+                conversation.segundo_nombre = req.body.Body.replace(/[^\aA-zZ\ñ\Ñ\ü\Ü\á\Á\é\É\í\Í\ó\Ó\ú\Ú\s]/gi, '');
+                console.log("SEGUNDO NOMB:: ", conversation.segundo_nombre);
                 conversation.pregunta += 1; //pregunta 13
 
                 crearEncuesta(conversation);
-                mensajeRespuesta = "*Primer Apellido:* ";
+                mensajeRespuesta = "*Primer Apellido:*  (En caso de que no tenga envía un '.' (punto))";
 
               } catch (error) {
                 conversation.pregunta = 12; //vuelve a entrar a paso 12
@@ -499,11 +509,14 @@ app.post('/whatsapp', async (req, res) => {
 
               try {
                 conversation.primer_apellido = req.body.Body.replace(/[^\ñ\Ñ\ü\Ü\á\Á\é\É\í\Í\ó\Ó\ú\Ú\w\s]/gi, '');
-                conversation.pregunta += 1; //pregunta 14
+                
+                  conversation.pregunta += 1; //pregunta 14
 
-                crearEncuesta(conversation);
-                mensajeRespuesta = "*Segundo Apellido:* " +
-                  "(En caso de que no tenga envía un '.' (punto))";
+                  crearEncuesta(conversation);
+                  mensajeRespuesta = "*Segundo Apellido:* " +
+                    "(En caso de que no tenga envía un '.' (punto))";
+                  
+                
 
               } catch (error) {
                 conversation.pregunta = 13; //vuelve a entrar a paso 13
@@ -2035,7 +2048,9 @@ app.post('/whatsapp', async (req, res) => {
                       conversation.pregunta = 34;//va a pregunta 34 donde empieza paso 2
                       crearEncuesta(conversation);
                       mensajeRespuesta = "*PASO 2 - DATOS DE LOS MIEMBROS DEL HOGAR*\n" +
-                        "Cuántas personas de tu familia están contigo en este momento?";
+                        //"Cuántas personas de tu familia están contigo en este momento?"+
+                        "Envía el número de personas de tu familia que están contigo en este momento. "+
+                        "Envía 0 sí nadie te acompaña";
 
                     }
 
@@ -2056,7 +2071,9 @@ app.post('/whatsapp', async (req, res) => {
                       conversation.pregunta = 34;//va a pregunta 34 donde empieza paso 2
                       crearEncuesta(conversation);
                       mensajeRespuesta = "*PASO 2 - DATOS DE LOS MIEMBROS DEL HOGAR*\n" +
-                        "Cuántas personas de tu familia están contigo en este momento?";
+                        //"Cuántas personas de tu familia están contigo en este momento?"+
+                        "Envía el número de personas de tu familia que están contigo en este momento. "+
+                        "Envía 0 sí nadie te acompaña";
 
                     }
                     break;
@@ -2096,7 +2113,9 @@ app.post('/whatsapp', async (req, res) => {
 
                 } else {
                   mensajeRespuesta = "*PASO 2 - DATOS DE LOS MIEMBROS DEL HOGAR*\n" +
-                    "Cuántas personas de tu familia están contigo en este momento?";
+                    //"Cuántas personas de tu familia están contigo en este momento?"+
+                    "Envía el número de personas de tu familia que están contigo en este momento. "+
+                    "Envía 0 sí nadie te acompaña";
                 }
 
 
@@ -2105,7 +2124,9 @@ app.post('/whatsapp', async (req, res) => {
                 conversation.pregunta = 34;
                 crearEncuesta(conversation);
                 mensajeRespuesta = "*PASO 2 - DATOS DE LOS MIEMBROS DEL HOGAR*\n" +
-                  "Cuántas personas de tu familia están contigo en este momento?";
+                 //"Cuántas personas de tu familia están contigo en este momento?"+
+                 "Envía el número de personas de tu familia que están contigo en este momento. "+
+                 "Envía 0 sí nadie te acompaña";
               }
               break;
 
