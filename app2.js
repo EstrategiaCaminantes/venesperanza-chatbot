@@ -3,7 +3,8 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const nodemon = require('nodemon');
 const moment = require('moment');
-const mysql = require('mysql');
+//const mysql = require('mysql');
+const connection = require('mssql'); //Sql server
 const { defaultWorkerPolicies } = require('twilio/lib/jwt/taskrouter/util');
 const extName = require('ext-name');
 const fs = require('fs');
@@ -21,7 +22,7 @@ app.use(bodyParser.urlencoded({
 app.use(bodyParser.json());
 
 app.get('/', function (req, res) {
-  res.send('Hello World!');
+  res.send('VenEsperanza');
 });
 
 const TWILIO_ID = process.env.TWILIO_ID
@@ -31,6 +32,7 @@ const TWILIO_SK = process.env.TWILIO_SK
 
 const client = require('twilio')(TWILIO_ID, TWILIO_SK);
 
+/*
 const connection = mysql.createConnection({
   //host: 'localhost',
   host: process.env.DB_HOST,
@@ -42,7 +44,25 @@ const connection = mysql.createConnection({
   //database : 'venesperanzaCHATBOT',
   port: process.env.DB_PORT
   //port:'8889'
+});*/
+
+const dbconfig = {
+  server: process.env.DB_HOST,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  database: process.env.DB_NAME,
+  options: {
+    "enableArithAbort": true,
+    "encrypt":false
+  }
+};
+
+connection.connect(error => {
+  if (error) throw error;
+  console.log('Database server running OK');
 });
+
+
 
 $preguntaEncuesta = 0;
 $miembrosFamilia = 0;
@@ -57,15 +77,19 @@ app.post('/whatsapp', async (req, res) => {
   function consultaConversacion(whatsappID, $bandera) {
 
     //const sql = `SELECT * FROM encuesta where waId = '${whatsappID}'`;
-    const sql = `SELECT * FROM conversacion_chatbot where waId = '${whatsappID}'`;
+    const sql = `SELECT * FROM conversacion_chatbot WHERE waId = '${whatsappID}'`;
 
     connection.query(sql, (error, results) => {
 
-      if (error) throw error;
+      //if (error) throw error;
+      if (error) console.log('Error(consultaConversacion): ', error);
 
-      if (results.length > 0) { 
+      let data = results.recordset;
 
-        var $conversation = results[0];
+      //if (results.length > 0) { 
+      if (data.length > 0){
+
+        var $conversation = data[0];
         if(!$conversation.conversation_start){
 
           //$conversation.conversation_start = 1;
@@ -85,15 +109,18 @@ app.post('/whatsapp', async (req, res) => {
           seleccionarFormulario($conversation);
         
         }else if($conversation.tipo_formulario == 1){
-          const sqlencuesta = `SELECT * FROM encuesta where waId = '${whatsappID}'`;
+          const sqlencuesta = `SELECT * FROM encuesta WHERE waId = '${whatsappID}'`;
 
           connection.query(sqlencuesta, (error, encuesta) => {
-            if (error) throw error;
+            //if (error) throw error;
+            if (error) console.log('Error(consultaencuesta): ', error);
 
-            if (encuesta.length > 0) { 
+            let dataEncuesta = encuesta.recordset;
+
+            if (dataEncuesta.length > 0) { 
               
               //console.log('ENCUESTA ES: ', encuesta[0]);
-              conversacion($conversation,encuesta[0]);
+              conversacion($conversation,dataEncuesta[0]);
             }
 
           });
@@ -101,11 +128,13 @@ app.post('/whatsapp', async (req, res) => {
           const sqllegadas = `SELECT * FROM llegadas where waId = '${whatsappID}'`;
 
           connection.query(sqllegadas, (error, llegadas) => {
-            if (error) throw error;
+            if (error) console.log('Error(llegadas): ', error);
 
-            if (llegadas.length > 0) { 
+            let dataLlegadas = llegadas.recordset;
+
+            if (dataLlegadas.length > 0) { 
               //console.log('LLEGADA ES: ', llegadas[0]);
-              conversacion($conversation , llegadas[0]);
+              conversacion($conversation , dataLlegadas[0]);
             }
 
           });
@@ -114,11 +143,12 @@ app.post('/whatsapp', async (req, res) => {
           const sqlactualizardatos = `SELECT * FROM datos_actualizados where waId = '${whatsappID}'`;
 
           connection.query(sqlactualizardatos, (error, actualizardatos) => {
-            if (error) throw error;
+            if (error) console.log('Error(datos_actualizados): ', error);
 
-            if (actualizardatos.length > 0) { 
+            let dataActualizarDatos = actualizardatos.recordset;
+            if (dataActualizarDatos.length > 0) { 
               //console.log('ENCUESTA ES: ', actualizardatos[0]);
-              conversacion($conversation , actualizardatos[0]);
+              conversacion($conversation , dataActualizarDatos[0]);
             }
 
           });
@@ -134,13 +164,13 @@ app.post('/whatsapp', async (req, res) => {
 
   //funcion para consultar si existe una encuesta con el numero de whatsapp del usuario
   async function consultaExisteEncuesta(conversacion){
-    const sqlConsultarEncuesta = `SELECT * FROM encuesta where waId = '${conversacion.waId}'`;
+    const sqlConsultarEncuesta = `SELECT * FROM encuesta WHERE waId = '${conversacion.waId}'`;
 
     connection.query(sqlConsultarEncuesta, (error, existeEncuesta) => {
       mensajeRespuesta = '';
       if (error) throw error;
 
-      if (existeEncuesta.length > 0) { 
+      if (existeEncuesta.recordset.length > 0) { 
 
         mensajeRespuesta = `Ya has respondido el formulario. Gracias`;
         client.messages
@@ -151,7 +181,7 @@ app.post('/whatsapp', async (req, res) => {
             to: req.body.From
           })
           .then(message => console.log(message.body))
-          .catch(e => { console.error('Got an error:', e.code, e.message); });
+          .catch(e => { console.error('Error enviando mensaje:', e.code, e.message); });
         
       }else{
         //conversacion.tipo_formulario = 1;
@@ -215,7 +245,7 @@ app.post('/whatsapp', async (req, res) => {
             body: mensajeRespuesta,
             to: req.body.From
           })
-          .then(message => console.log(message.body))
+          //.then(message => console.log(message.body))
           .catch(e => { console.error('Got an error:', e.code, e.message); });
           break;
         }
@@ -235,7 +265,7 @@ app.post('/whatsapp', async (req, res) => {
             body: mensajeRespuesta,
             to: req.body.From
           })
-          .then(message => console.log(message.body))
+          //.then(message => console.log(message.body))
           .catch(e => { console.error('Got an error:', e.code, e.message); });
     }
     
@@ -246,7 +276,7 @@ app.post('/whatsapp', async (req, res) => {
   //crea nueva 'conversacion_chatbot'
   function nuevaConversacion() {
     //const sqlnuevo = 'INSERT INTO encuesta SET ?';
-    const sqlnuevo = 'INSERT INTO conversacion_chatbot SET ?';
+    //const sqlnuevo = 'INSERT INTO conversacion_chatbot SET ?';
 
     //console.log('PARAMS NUEVA CONVERSA: ', req.body);
     const params = req.body;
@@ -259,7 +289,7 @@ app.post('/whatsapp', async (req, res) => {
     var newprofile = params.ProfileName.replace(/[^\ñ\Ñ\ü\Ü\á\Á\é\É\í\Í\ó\Ó\ú\Ú\w\s]/gi, '');
 
    //console.log('REEMPLAZO: ', newprofile);
-
+    /*
     const nuevaconversacion = {
       waId: params.WaId,
       profileName: newprofile,
@@ -275,13 +305,20 @@ app.post('/whatsapp', async (req, res) => {
       //paso_chatbot: null,
       //pregunta: null,
       //fuente: 1
-    }
-    //console.log('NUEVA CONVERSACION: ', nuevaconversacion);
+    }*/
 
-    connection.query(sqlnuevo, nuevaconversacion, (error, results) => {
+    created_at = new Date();
+    //console.log('NUEVA CONVERSACION: ', nuevaconversacion);
+    
+
+    const sqlnuevo = `INSERT INTO conversacion_chatbot (waId,profileName,conversation_start,autorizacion,tipo_formulario,created_at)
+    VALUES ('${params.WaId}','${newprofile}',0,0,null,${created_at})`;
+    
+    //connection.query(sqlnuevo, nuevaconversacion, (error, results) => {
+    connection.query(sqlnuevo, (error, results) =>{
       //if (error) throw error;
       if(error){
-        mensajeRespuesta = "Su Nombre de perfil de Whatsapp contiene emoticones, por favor quitelos momentaneamente para interactuar con nuestro chat e intente nuevamente";
+        mensajeRespuesta = `Su Nombre de perfil de Whatsapp contiene emoticones, por favor quitelos momentaneamente para interactuar con nuestro chat e intente nuevamente`;
 
         client.messages
         .create({
@@ -289,11 +326,13 @@ app.post('/whatsapp', async (req, res) => {
           body: mensajeRespuesta,
           to: req.body.From
         })
-        .then(message => console.log(message.body))
-        .catch(e => { console.error('Got an error:', e.code, e.message); });
+        //.then(message => console.log(message.body))
+        //.catch(e => { console.error('Got an error:', e.code, e.message); });
+        .catch(e => { console.error('Error enviando mensaje:', e.code, e.message); });
       }else{
         //console.log('RESULTS QUERY NUEVO: ', results);
-        consultaConversacion(nuevaconversacion.waId);
+        //consultaConversacion(nuevaconversacion.waId);
+        consultaConversacion(params.waId);
       }
 
     });
@@ -349,11 +388,13 @@ app.post('/whatsapp', async (req, res) => {
 
   function autorizacionTratamientoDatos($conversa) {
 
-    const sqlAutorizacion = 'INSERT INTO autorizaciones SET ?';
-
+    //const sqlAutorizacion = 'INSERT INTO autorizaciones SET ?';
+    const sqlAutorizacion = `INSERT INTO autorizaciones (id_encuesta, tratamiento_datos, terminos_condiciones, condiciones, waId)
+    VALUES (null,1,1,1,${$conversa.waId})`;
     //console.log('NUEVA AUTORIZACION: ', $conversa);
     //console.log('PARAMS SON: ', params);
 
+    /*
     const nuevaAutorizacion = {
       //id_encuesta: $conversa.id,
       id_encuesta: null,
@@ -361,9 +402,10 @@ app.post('/whatsapp', async (req, res) => {
       terminos_condiciones: true,
       condiciones: true,
       waId: $conversa.waId
-    }
+    }*/
 
-    connection.query(sqlAutorizacion, nuevaAutorizacion, (error, results) => {
+    //connection.query(sqlAutorizacion, nuevaAutorizacion, (error, results) => {
+    connection.query(sqlAutorizacion,(error, results) => {
       if (error) throw error;
 
     });
@@ -374,7 +416,7 @@ app.post('/whatsapp', async (req, res) => {
   //funcion crear encuesta
   function crearEncuesta($conversation) {
 
-    const sqlnuevaencuesta = 'INSERT INTO encuesta SET ?';
+    //const sqlnuevaencuesta = 'INSERT INTO encuesta SET ?';
 
     //console.log('PARAMS NUEVA CONVERSA: ', req.body);
     const params = req.body;
@@ -387,7 +429,7 @@ app.post('/whatsapp', async (req, res) => {
     var newprofile = params.ProfileName.replace(/[^\ñ\Ñ\ü\Ü\á\Á\é\É\í\Í\ó\Ó\ú\Ú\w\s]/gi, '');
 
    //console.log('REEMPLAZO: ', newprofile);
-
+    /*
     const nuevaencuesta = {
       waId: $conversation.waId,
       //profileName: newprofile,
@@ -399,10 +441,15 @@ app.post('/whatsapp', async (req, res) => {
       //paso_chatbot: null,
       pregunta: 1,
       fuente: 1
-    }
+    }*/
     //console.log('NUEVA CONVERSACION: ', nuevaconversacion);
 
-    connection.query(sqlnuevaencuesta, nuevaencuesta, (error, results) => {
+    const sqlnuevaencuesta = `INSERT INTO encuesta (waId,profileName,pregunta,fuente)
+    VALUES ('${$conversation.waId}','${$conversation.profileName}',1,1)`;
+
+    //connection.query(sqlnuevaencuesta, nuevaencuesta, (error, results) => {
+    connection.query(sqlnuevaencuesta, (error,results)=>{
+
       if (error){
         mensajeRespuesta = `Disculpa tuvimos un problema en crear Encuesta. Por favor respóndeme con el número correspondiente a lo que quieres hacer:\n
         1️⃣ Quieres diligenciar el formulario de registro ✍🏻\n
@@ -423,8 +470,8 @@ app.post('/whatsapp', async (req, res) => {
           body: mensajeRespuesta,
           to: req.body.From
         })
-        .then(message => console.log(message.body))
-        .catch(e => { console.error('Got an error:', e.code, e.message); });
+        //.then(message => console.log(message.body))
+        .catch(e => { console.error('Error enviando mensaje', e.code, e.message); });
 
     });
 
@@ -432,19 +479,24 @@ app.post('/whatsapp', async (req, res) => {
 
   //funcion registro llegada
   function crearLlegadaADestino($conversation){
-    const sqlnuevaLlegada = 'INSERT INTO llegadas SET ?';
+    //const sqlnuevaLlegada = 'INSERT INTO llegadas SET ?';
 
     const params = req.body;
     var newprofile = params.ProfileName.replace(/[^\ñ\Ñ\ü\Ü\á\Á\é\É\í\Í\ó\Ó\ú\Ú\w\s]/gi, '');
 
    //console.log('REEMPLAZO: ', newprofile);
 
-    const nuevaLlegada = {
+    /*const nuevaLlegada = {
       waId: $conversation.waId,
       pregunta: 1,
-    }
+    }*/
 
-    connection.query(sqlnuevaLlegada, nuevaLlegada, (error, results) => {
+    const sqlnuevaLlegada = `INSERT INTO llegadas (waId,pregunta) 
+    VALUES ('${$conversation.waId}',1)`;
+
+
+    //connection.query(sqlnuevaLlegada, nuevaLlegada, (error, results) => {
+    connection.query(sqlnuevaLlegada, (error, results) => {
       if (error){
         mensajeRespuesta = `Disculpa tuvimos un problema. Por favor respóndeme con el número correspondiente a lo que quieres hacer:\n
         1️⃣ Quieres diligenciar el formulario de registro ✍🏻\n
@@ -472,8 +524,8 @@ app.post('/whatsapp', async (req, res) => {
           body: mensajeRespuesta,
           to: req.body.From
         })
-        .then(message => console.log(message.body))
-        .catch(e => { console.error('Got an error:', e.code, e.message); });
+        //.then(message => console.log(message.body))
+        .catch(e => { console.error('Error enviando mensaje:', e.code, e.message); });
 
     });
   }
@@ -481,19 +533,22 @@ app.post('/whatsapp', async (req, res) => {
   //funcion actualizar datos
   function crearDatosActualizados($conversation) {
 
-    const sqlnuevoDatosActualizados = 'INSERT INTO datos_actualizados SET ?';
+    //const sqlnuevoDatosActualizados = 'INSERT INTO datos_actualizados SET ?';
 
     const params = req.body;
     var newprofile = params.ProfileName.replace(/[^\ñ\Ñ\ü\Ü\á\Á\é\É\í\Í\ó\Ó\ú\Ú\w\s]/gi, '');
 
    //console.log('REEMPLAZO: ', newprofile);
-
+    /*
     const nuevoDatosActualizados = {
       waId: $conversation.waId,
-      pregunta: 'adsfa1',
-    }
+      pregunta: 1,
+    }*/
+    const sqlnuevoDatosActualizados = `INSERT INTO datos_actualizados (waId,pregunta) 
+    VALUES ('${$conversation.waId}',1)`;
 
-    connection.query(sqlnuevoDatosActualizados, nuevoDatosActualizados, (error, results) => {
+    //connection.query(sqlnuevoDatosActualizados, nuevoDatosActualizados, (error, results) => {
+    connection.query(sqlnuevoDatosActualizados, (error, results) => { 
       if (error){
         mensajeRespuesta = `Disculpa tuvimos un problema. Por favor respóndeme con el número correspondiente a lo que quieres hacer:\n
         1️⃣ Quieres diligenciar el formulario de registro ✍🏻\n
@@ -522,8 +577,8 @@ app.post('/whatsapp', async (req, res) => {
           body: mensajeRespuesta,
           to: req.body.From
         })
-        .then(message => console.log(message.body))
-        .catch(e => { console.error('Got an error:', e.code, e.message); });
+        //.then(message => console.log(message.body))
+        .catch(e => { console.error('Error enviando mensaje', e.code, e.message); });
 
     });
 
@@ -618,9 +673,9 @@ app.post('/whatsapp', async (req, res) => {
 
     mensajeRespuesta = '';
 
-    if (conversation.conversation_start == true) {
+    if (conversation.conversation_start == 1) {
 
-      if (conversation.autorizacion == true){
+      if (conversation.autorizacion == 1){
 
         if(conversation.tipo_formulario){
 
@@ -1265,7 +1320,7 @@ app.post('/whatsapp', async (req, res) => {
                     
                     switch(req.body.Body){
                       case '1':
-                        $formulario.numero_entregado_venesperanza = true;
+                        $formulario.numero_entregado_venesperanza = 1;
                         $formulario.pregunta += 1; //Va a pregunta 13
 
                         actualizarEncuesta($formulario);
@@ -1274,7 +1329,7 @@ app.post('/whatsapp', async (req, res) => {
                       break;
 
                       case '2':
-                        $formulario.numero_entregado_venesperanza = false;
+                        $formulario.numero_entregado_venesperanza = 0;
                         $formulario.pregunta += 1; //Va a pregunta 13
 
                         actualizarEncuesta($formulario);
@@ -1303,14 +1358,14 @@ app.post('/whatsapp', async (req, res) => {
                   try {
                     switch(req.body.Body){
                       case '1':
-                        $formulario.linea_contacto_propia = true;
+                        $formulario.linea_contacto_propia = 1;
                         $formulario.pregunta += 1; //Va a pregunta 14
                         actualizarEncuesta($formulario);
                         mensajeRespuesta = `¿Este número de contacto tiene WhatsApp? Responde con el número según la opción: 1️⃣ Sí 2️⃣ No`;
                       break;
 
                       case '2':
-                        $formulario.linea_contacto_propia = false;
+                        $formulario.linea_contacto_propia = 0;
                         $formulario.pregunta += 1; //Va a pregunta 14
                         actualizarEncuesta($formulario);
                         mensajeRespuesta = `¿Este número de contacto tiene WhatsApp? Responde con el número según la opción: 1️⃣ Sí 2️⃣ No`;
@@ -1337,14 +1392,14 @@ app.post('/whatsapp', async (req, res) => {
                   try {
                     switch(req.body.Body){
                       case '1':
-                        $formulario.linea_asociada_whatsapp = true;
+                        $formulario.linea_asociada_whatsapp = 1;
                         $formulario.pregunta += 1; //Va a pregunta 15
                         actualizarEncuesta($formulario);
                         mensajeRespuesta = `¿Podrías compartirme un correo electrónico 📧 en el que te podamos contactar?  (si no tienes, ¡no te preocupes! escribe NO`;
                       break;
 
                       case '2':
-                        $formulario.linea_asociada_whatsapp = false;
+                        $formulario.linea_asociada_whatsapp = 0;
                         $formulario.pregunta += 1; //Va a pregunta 15
                         actualizarEncuesta($formulario);
                         mensajeRespuesta = `¿Podrías compartirme un correo electrónico 📧 en el que te podamos contactar?  (si no tienes, ¡no te preocupes! escribe NO`;
@@ -1480,7 +1535,7 @@ app.post('/whatsapp', async (req, res) => {
           switch(req.body.Body){
           
             case '1':
-              conversation.autorizacion = true;
+              conversation.autorizacion = 1;
               actualizarConversacion(conversation);
               autorizacionTratamientoDatos(conversation);
 
@@ -1515,7 +1570,7 @@ app.post('/whatsapp', async (req, res) => {
     }else {
 
       try {
-        conversation.conversation_start = true;
+        conversation.conversation_start = 1;
         //console.log('IDNECUESTA: ', idencuesta);             
         //crearEncuesta(conversation);
         //console.log('CONVERSATION EN START FALSE:', conversation);
@@ -1548,10 +1603,11 @@ app.post('/whatsapp', async (req, res) => {
 
 });
 
+/*
 connection.connect(error => {
   if (error) throw error;
   console.log('Database server running OK');
-});
+});*/
 
 //puerto de despliegue
 //app.listen(3000, function () {
