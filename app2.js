@@ -31,6 +31,9 @@ const TWILIO_SK = process.env.TWILIO_SK
 
 const client = require('twilio')(TWILIO_ID, TWILIO_SK);
 
+//NuevoMessageBird
+var messagebird = require('messagebird')("x0fdqCXzhkFWNOVQlIh1t7wKs", null, ["ENABLE_CONVERSATIONSAPI_WHATSAPP_SANDBOX"]);
+
 const connection = mysql.createConnection({
   //host: 'localhost',
   host: process.env.DB_HOST,
@@ -48,9 +51,12 @@ $preguntaEncuesta = 0;
 $miembrosFamilia = 0;
 
 app.post('/whatsapp', async (req, res) => {
+//app.post('/webhooks', async (req, res) => {
 
-  consultaConversacion(req.body.WaId, 0);
+  console.log("MENSAJE MESSAGEBIRD:: ", req.body);
 
+  //consultaConversacion(req.body.WaId, 0);
+  consultaConversacion(req.body.contact.msisdn,0);
   
   
   //Consulta conversacion para seguir respondiendo o crear una nueva
@@ -157,6 +163,8 @@ app.post('/whatsapp', async (req, res) => {
           })
           .then(message => console.log(message.body))
           .catch(e => { console.error('Got an error:', e.code, e.message); });
+
+         
         
       }else{
         //conversacion.tipo_formulario = 1;
@@ -309,12 +317,13 @@ app.post('/whatsapp', async (req, res) => {
     //reemplazo de emoticones en el nombre de perfil de whatsapp
     //var regex = /(?:[\u2700-\u27bf]|(?:\ud83c[\udde6-\uddff]){2}|[\ud800-\udbff][\udc00-\udfff]|[\u0023-\u0039]\ufe0f?\u20e3|\u3299|\u3297|\u303d|\u3030|\u24c2|\ud83c[\udd70-\udd71]|\ud83c[\udd7e-\udd7f]|\ud83c\udd8e|\ud83c[\udd91-\udd9a]|\ud83c[\udde6-\uddff]|\ud83c[\ude01-\ude02]|\ud83c\ude1a|\ud83c\ude2f|\ud83c[\ude32-\ude3a]|\ud83c[\ude50-\ude51]|\u203c|\u2049|[\u25aa-\u25ab]|\u25b6|\u25c0|[\u25fb-\u25fe]|\u00a9|\u00ae|\u2122|\u2139|\ud83c\udc04|[\u2600-\u26FF]|\u2b05|\u2b06|\u2b07|\u2b1b|\u2b1c|\u2b50|\u2b55|\u231a|\u231b|\u2328|\u23cf|[\u23e9-\u23f3]|[\u23f8-\u23fa]|\ud83c\udccf|\u2934|\u2935|[\u2190-\u21ff])/g;
 
-    var newprofile = params.ProfileName.replace(/[^\ñ\Ñ\ü\Ü\á\Á\é\É\í\Í\ó\Ó\ú\Ú\w\s]/gi, '');
-
+    //var newprofile = params.ProfileName.replace(/[^\ñ\Ñ\ü\Ü\á\Á\é\É\í\Í\ó\Ó\ú\Ú\w\s]/gi, '');
+    var newprofile = params.contact.displayName.replace(/[^\ñ\Ñ\ü\Ü\á\Á\é\É\í\Í\ó\Ó\ú\Ú\w\s]/gi, '');
    //console.log('REEMPLAZO: ', newprofile);
 
     const nuevaconversacion = {
-      waId: params.WaId,
+      //waId: params.WaId,
+      waId: params.contact.msisdn, //messagebird
       profileName: newprofile,
       conversation_start: false,
       autorizacion: false,
@@ -2163,7 +2172,7 @@ app.post('/whatsapp', async (req, res) => {
       }else{
         try {
           
-          switch(req.body.Body){
+          switch(req.body.message.content.text){
           
             case '1':
               conversation.autorizacion = true;
@@ -2220,7 +2229,7 @@ app.post('/whatsapp', async (req, res) => {
       }
 
     }
-    client.messages
+    /*client.messages
       .create({
         //from: 'whatsapp:+14155238886',
         from: 'whatsapp:'+process.env.TWILIO_WHATSAPP,
@@ -2228,7 +2237,108 @@ app.post('/whatsapp', async (req, res) => {
         to: req.body.From
       })
       .then(message => console.log(message.body))
-      .catch(e => { console.error('Got an error:', e.code, e.message); });
+      .catch(e => { console.error('Got an error:', e.code, e.message); });*/
+      
+
+      //NUEVO MESASGE BIRD
+      //LO QUE VOY A RESPONDER::
+      console.log('TO::: ', '+'+req.body.contact.msisdn);
+      console.log('CHANNELID:: ', req.body.message.channelId);
+      console.log('CONTENT TEXT:: ', mensajeRespuesta);
+      console.log('CONVERSATION ID:: ', req.body.conversation.id)
+    
+      /*
+      messagebird.conversations.reply(req.body.conversation.id,
+        {
+          type: 'text',
+          content: {
+            text: mensajeRespuesta,
+          },
+        },
+        function(err, response) {
+          if (err) {
+            return console.log(err);
+          }
+          console.log(response);
+        },
+      );*/
+        var toNumber = '+'+req.body.contact.msisdn;
+
+        /*
+        messagebird.conversations.start({
+          'to': req.body.contact.msisdn,
+          'channelId': req.body.message.channelId,
+          'type': 'hsm',
+          'type':'text',
+            'content': {
+              'text': mensajeRespuesta,
+              'hsm': {
+                'namespace': '5f62b497_b385_47b5_956e_b86523ea56dd',
+                'templateName': 'support',
+                'language': {
+                  'policy': 'deterministic',
+                  'code': 'en'
+                },
+                'params': [
+                  {"default": "Roberto"},
+                  {"default": "123"},
+                  {"default": "new coffee machine"},
+                  {"default": "MessageBird, Trompenburgstraat 2C, 1079TX Amsterdam"}
+                ]
+              }
+            }
+          }, function (err, response) {
+            if (err) {
+              return console.log(err);
+            }
+            console.log(response);
+          });*/
+      
+      
+      var params = {
+        'to':  '+573229562177',
+        'type': 'text',
+        'from': '3fb8e8175c8d4220b5b38224631fb0c1',
+        'content': {
+                'text': mensajeRespuesta,
+              }
+      }
+
+      messagebird.conversations.send(params, function (err, response) {
+        if (err) {
+        return console.log(err);
+        }
+        console.log(response);
+      });
+    
+      /*
+      messagebird.conversations.start({
+        'to': '573229562177',
+        'channelId': '3fb8e8175c8d4220b5b38224631fb0c1' ,
+        'type': 'text',
+        'content': { 'text': mensajeRespuesta }
+      }, function (err, response) {
+        if (err) {
+          return console.log(err);
+        }
+        console.log(response);
+      });
+      */
+
+      /*
+      
+
+      messagebird.conversations.reply('d9d8a497b6ff4f4498bc9503aaae3886',{
+        //'to': '573229562177',
+        //'channelId': '3fb8e8175c8d4220b5b38224631fb0c1' ,
+        'type': 'text',
+        'content': { 'text': mensajeRespuesta }
+      }, function (err, response) {
+        if (err) {
+          return console.log(err);
+        }
+        console.log(response);
+      });*/
   }
 
 

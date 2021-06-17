@@ -23,6 +23,7 @@
     "express": "^4.17.1",
     "ext-name": "^5.0.0",
     "fs": "0.0.1-security",
+    "messagebird": "^3.6.2",
     "moment": "^2.29.1",
     "mysql": "^2.18.1",
     "node-fetch": "^2.6.1",
