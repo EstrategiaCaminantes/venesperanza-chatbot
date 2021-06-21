@@ -32,6 +32,7 @@ const TWILIO_SK = process.env.TWILIO_SK
 const client = require('twilio')(TWILIO_ID, TWILIO_SK);
 
 //NuevoMessageBird
+//0fKBTUzr6BzO99zvbZXihP0Sp
 var messagebird = require('messagebird')("x0fdqCXzhkFWNOVQlIh1t7wKs", null, ["ENABLE_CONVERSATIONSAPI_WHATSAPP_SANDBOX"]);
 
 const connection = mysql.createConnection({
@@ -233,7 +234,8 @@ app.post('/whatsapp', async (req, res) => {
     //console.log('req.body.Body en seleccionar form:', req.body.Body);
 
     try {
-        switch (req.body.Body) {
+        //switch (req.body.message.content.text) {
+        switch (req.body.Body){
 
             //selecciona llenar nuevo form
             case '1':
@@ -269,7 +271,8 @@ app.post('/whatsapp', async (req, res) => {
             3️⃣ Ya te registraste antes y quieres actualizar tus datos de contacto  🙌🏻 `;
 
             //console.log('MENSAJE A ENVIAR::', mensajeRespuesta);
-      client.messages
+            /*
+          client.messages
           .create({
             //from: 'whatsapp:+14155238886',
             from: 'whatsapp:'+process.env.TWILIO_WHATSAPP,
@@ -279,6 +282,21 @@ app.post('/whatsapp', async (req, res) => {
           .then(message => console.log(message.body))
           .catch(e => { console.error('Got an error:', e.code, e.message); });
           break;
+          */
+
+          messagebird.conversations.reply('d9d8a497b6ff4f4498bc9503aaae3886',{
+            //'to': '573229562177',
+            //'channelId': '3fb8e8175c8d4220b5b38224631fb0c1' ,
+            'type': 'text',
+            'content': { 'text': mensajeRespuesta }
+          }, function (err, response) {
+            if (err) {
+              return console.log(err);
+            }
+            console.log(response);
+          });
+
+
         }
     } catch (error) {
       //console.log(error);
@@ -289,6 +307,7 @@ app.post('/whatsapp', async (req, res) => {
             2️⃣ Quieres informar de tu llegada a destino ☝🏻\n
             3️⃣ Ya te registraste antes y quieres actualizar tus datos de contacto  🙌🏻 `;
             //console.log('MENSAJE A ENVIAR::', mensajeRespuesta);
+      /*
       client.messages
           .create({
             //from: 'whatsapp:+14155238886',
@@ -298,6 +317,20 @@ app.post('/whatsapp', async (req, res) => {
           })
           .then(message => console.log(message.body))
           .catch(e => { console.error('Got an error:', e.code, e.message); });
+      */
+
+          messagebird.conversations.reply('d9d8a497b6ff4f4498bc9503aaae3886',{
+            //'to': '573229562177',
+            //'channelId': '3fb8e8175c8d4220b5b38224631fb0c1' ,
+            'type': 'text',
+            'content': { 'text': mensajeRespuesta }
+          }, function (err, response) {
+            if (err) {
+              return console.log(err);
+            }
+            console.log(response);
+          });
+
     }
     
   }
@@ -447,8 +480,9 @@ app.post('/whatsapp', async (req, res) => {
     //reemplazo de emoticones en el nombre de perfil de whatsapp
     //var regex = /(?:[\u2700-\u27bf]|(?:\ud83c[\udde6-\uddff]){2}|[\ud800-\udbff][\udc00-\udfff]|[\u0023-\u0039]\ufe0f?\u20e3|\u3299|\u3297|\u303d|\u3030|\u24c2|\ud83c[\udd70-\udd71]|\ud83c[\udd7e-\udd7f]|\ud83c\udd8e|\ud83c[\udd91-\udd9a]|\ud83c[\udde6-\uddff]|\ud83c[\ude01-\ude02]|\ud83c\ude1a|\ud83c\ude2f|\ud83c[\ude32-\ude3a]|\ud83c[\ude50-\ude51]|\u203c|\u2049|[\u25aa-\u25ab]|\u25b6|\u25c0|[\u25fb-\u25fe]|\u00a9|\u00ae|\u2122|\u2139|\ud83c\udc04|[\u2600-\u26FF]|\u2b05|\u2b06|\u2b07|\u2b1b|\u2b1c|\u2b50|\u2b55|\u231a|\u231b|\u2328|\u23cf|[\u23e9-\u23f3]|[\u23f8-\u23fa]|\ud83c\udccf|\u2934|\u2935|[\u2190-\u21ff])/g;
 
-    var newprofile = params.ProfileName.replace(/[^\ñ\Ñ\ü\Ü\á\Á\é\É\í\Í\ó\Ó\ú\Ú\w\s]/gi, '');
-
+    //var newprofile = params.ProfileName.replace(/[^\ñ\Ñ\ü\Ü\á\Á\é\É\í\Í\ó\Ó\ú\Ú\w\s]/gi, '');
+    //var newprofile = params.params.contact.displayName.replace(/[^\ñ\Ñ\ü\Ü\á\Á\é\É\í\Í\ó\Ó\ú\Ú\w\s]/gi, '');
+    
    //console.log('REEMPLAZO: ', newprofile);
 
     const nuevaencuesta = {
@@ -481,6 +515,7 @@ app.post('/whatsapp', async (req, res) => {
 
       }
 
+      /*
       client.messages
         .create({
           from: 'whatsapp:+14155238886',
@@ -489,6 +524,20 @@ app.post('/whatsapp', async (req, res) => {
         })
         .then(message => console.log(message.body))
         .catch(e => { console.error('Got an error:', e.code, e.message); });
+        */
+
+        messagebird.conversations.reply('d9d8a497b6ff4f4498bc9503aaae3886',{
+          //'to': '573229562177',
+          //'channelId': '3fb8e8175c8d4220b5b38224631fb0c1' ,
+          'type': 'text',
+          'content': { 'text': mensajeRespuesta }
+        }, function (err, response) {
+          if (err) {
+            return console.log(err);
+          }
+          console.log(response);
+        });
+       
 
     });
 
@@ -2172,8 +2221,8 @@ app.post('/whatsapp', async (req, res) => {
       }else{
         try {
           
-          switch(req.body.message.content.text){
-          
+          //switch(req.body.message.content.text){
+          switch(req.body.Body){
             case '1':
               conversation.autorizacion = true;
               actualizarConversacion(conversation);
@@ -2200,6 +2249,7 @@ app.post('/whatsapp', async (req, res) => {
 
           
         } catch (error) {
+          //console.log('REQ BODY MESSAGE TEXT:: ',req.body.message.content.text );
           mensajeRespuesta = `Gracias 🙂, ten presente que no puedo reconocer imágenes, audios, ni emojis. Nos podemos comunicar por medio de texto o digitando el número de las opciones que te indico en mi pregunta.
           Para iniciar este chat 💬 debes autorizar el uso de tus datos. ✅ 
           Responde:
@@ -2229,7 +2279,9 @@ app.post('/whatsapp', async (req, res) => {
       }
 
     }
-    /*client.messages
+
+    /*
+    client.messages
       .create({
         //from: 'whatsapp:+14155238886',
         from: 'whatsapp:'+process.env.TWILIO_WHATSAPP,
@@ -2237,15 +2289,15 @@ app.post('/whatsapp', async (req, res) => {
         to: req.body.From
       })
       .then(message => console.log(message.body))
-      .catch(e => { console.error('Got an error:', e.code, e.message); });*/
-      
+      .catch(e => { console.error('Got an error:', e.code, e.message); });
+      */
 
       //NUEVO MESASGE BIRD
       //LO QUE VOY A RESPONDER::
-      console.log('TO::: ', '+'+req.body.contact.msisdn);
-      console.log('CHANNELID:: ', req.body.message.channelId);
-      console.log('CONTENT TEXT:: ', mensajeRespuesta);
-      console.log('CONVERSATION ID:: ', req.body.conversation.id)
+      //console.log('TO::: ', '+'+req.body.contact.msisdn);
+      //console.log('CHANNELID:: ', req.body.message.channelId);
+      //console.log('CONTENT TEXT:: ', mensajeRespuesta);
+      //console.log('CONVERSATION ID:: ', req.body.conversation.id)
     
       /*
       messagebird.conversations.reply(req.body.conversation.id,
@@ -2262,41 +2314,82 @@ app.post('/whatsapp', async (req, res) => {
           console.log(response);
         },
       );*/
-        var toNumber = '+'+req.body.contact.msisdn;
+        
+      //var toNumber = '+'+req.body.contact.msisdn;
+     /*
+      messagebird.conversations.reply(
+        'd9d8a497b6ff4f4498bc9503aaae3886',
+        {
+          type: 'text',
+          content: {
+            text: 'OIGAAAA',
+          },
+        },
+        function(err, response) {
+          if (err) {
+            return console.log(err);
+          }
+          console.log(response);
+        },
+      );*/
 
-        /*
-        messagebird.conversations.start({
-          'to': req.body.contact.msisdn,
-          'channelId': req.body.message.channelId,
-          'type': 'hsm',
-          'type':'text',
-            'content': {
-              'text': mensajeRespuesta,
-              'hsm': {
-                'namespace': '5f62b497_b385_47b5_956e_b86523ea56dd',
-                'templateName': 'support',
-                'language': {
-                  'policy': 'deterministic',
-                  'code': 'en'
-                },
-                'params': [
-                  {"default": "Roberto"},
-                  {"default": "123"},
-                  {"default": "new coffee machine"},
-                  {"default": "MessageBird, Trompenburgstraat 2C, 1079TX Amsterdam"}
-                ]
+      messagebird.conversations.reply('d9d8a497b6ff4f4498bc9503aaae3886', {
+        'type': 'text',
+        'content': {
+          'text': mensajeRespuesta 
+
+          /*
+          'hsm': {
+            'namespace': '5ba2d0b7_f2c6_433b_a66e_57b009ceb6ff',
+            'templateName': 'options',
+            'language': {
+              'policy': 'deterministic',
+              'code': 'en'
+            },
+            'params': [
+              { 'default': 'Bob' },
+              { 'default': 'tomorrow!' }
+            ]
+          }*/
+        }
+      }, function (err, response) {
+        if (err) {
+          return console.log(err);
+        }
+        console.log(response);
+      });
+
+          /*
+          messagebird.conversations.reply({
+            'to': '573229562177',
+            'channelId': '3fb8e8175c8d4220b5b38224631fb0c1',
+            'type': 'hsm',
+              'content': {
+                'hsm': {
+                  'namespace': '5f62b497_b385_47b5_956e_b86523ea56dd',
+                  'templateName': 'notifications',
+                  'language': {
+                    'policy': 'deterministic',
+                    'code': 'en'
+                  },
+                  'params': [
+                    {"default": "100 stroopwafels"},
+                    {"default": "SnackBird"},
+                    {"default": "19.00"},
+                    {"default": "https://messagebird.com"}
+                  ]
+                }
               }
-            }
-          }, function (err, response) {
-            if (err) {
-              return console.log(err);
-            }
-            console.log(response);
-          });*/
+            }, function (err, response) {
+              if (err) {
+                return console.log(err);
+              }
+              console.log(response);
+            });*/
       
       
       var params = {
-        'to':  '+573229562177',
+        'to':  '573229562177',
         'type': 'text',
         'from': '3fb8e8175c8d4220b5b38224631fb0c1',
         'content': {
@@ -2304,14 +2397,16 @@ app.post('/whatsapp', async (req, res) => {
               }
       }
 
+      
+      /*
       messagebird.conversations.send(params, function (err, response) {
         if (err) {
-        return console.log(err);
+        return console.log('EL ERROR::: ', err);
         }
         console.log(response);
       });
     
-      /*
+      
       messagebird.conversations.start({
         'to': '573229562177',
         'channelId': '3fb8e8175c8d4220b5b38224631fb0c1' ,
@@ -2325,9 +2420,8 @@ app.post('/whatsapp', async (req, res) => {
       });
       */
 
-      /*
       
-
+      /*
       messagebird.conversations.reply('d9d8a497b6ff4f4498bc9503aaae3886',{
         //'to': '573229562177',
         //'channelId': '3fb8e8175c8d4220b5b38224631fb0c1' ,
@@ -2339,6 +2433,7 @@ app.post('/whatsapp', async (req, res) => {
         }
         console.log(response);
       });*/
+      
   }
 
 
