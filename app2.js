@@ -140,13 +140,59 @@ app.post('/whatsapp', async (req, res) => {
       mensajeRespuesta = '';
       if (error) throw error;
 
-      if (existeEncuesta.length > 0) { 
-
+      if (existeEncuesta.length > 0) {
         mensajeRespuesta = `Ya has respondido el formulario. Gracias!
-        Ahora por favor respóndeme con el número correspondiente a lo que quieres hacer:\n
-              1️⃣ Quieres diligenciar el formulario de registro ✍🏻\n
-              2️⃣ Quieres informar de tu llegada a destino ☝🏻\n
-              3️⃣ Ya te registraste antes y quieres actualizar tus datos de contacto  🙌🏻 `;
+Ahora por favor respóndeme con el número correspondiente a lo que quieres hacer:\n
+1️⃣ Quieres diligenciar el formulario de registro ✍🏻\n
+2️⃣ Quieres informar de tu llegada a destino ☝🏻\n
+3️⃣ Ya te registraste antes y quieres actualizar tus datos de contacto  🙌🏻 `;
+
+        client.messages
+          .create({
+            //from: 'whatsapp:+14155238886',
+            from: "whatsapp:" + process.env.TWILIO_WHATSAPP,
+            body: mensajeRespuesta,
+            to: req.body.From,
+          })
+          .then((message) => console.log(message.body))
+          .catch((e) => {
+            console.error("Error enviando mensaje:", e.code, e.message);
+          });
+      } else {
+        //conversacion.tipo_formulario = 1;
+        //actualizarConversacion(conversacion);
+        crearEncuesta(conversacion);
+        //mensajeRespuesta = `Por favor escribe tu primer nombre. Sólo puedo leer texto, no utilices audio, imágenes o emojis.`;
+      }
+      
+    });
+  }
+
+  //funcion consulta si existe llegada a destino para actualizar o crear uno nuevo
+  async function consultaExisteLlegadaADestino(conversacion){
+    const sqlConsultarLlegadaDestino = `SELECT * FROM llegadas where waId = '${conversacion.waId}'`;
+
+    connection.query(sqlConsultarLlegadaDestino, (error, existeLlegadaADestino) => {
+      mensajeRespuesta = '';
+      if (error) throw error;
+
+      if (existeLlegadaADestino.length > 0) { 
+
+        conversacion.tipo_formulario = 2;
+        actualizarConversacion(conversacion);
+
+        existeLlegadaADestino[0].pregunta = 1;
+        //actualizarDatosContacto(existeLlegadaADestino[0]);
+        actualizarLlegadaEncuesta(existeLlegadaADestino[0]);
+
+        mensajeRespuesta = `A continuación responde a las preguntas para registrar tu llegada a destino como teléfono u otros:
+        Tipo de documento 📇 Responde con el número de acuerdo a la opción correspondiente:
+        1️⃣ Acta de Nacimiento
+        2️⃣ Cédula de Identidad (venezolana)
+        3️⃣ Cédula de Ciudadanía (colombiana)
+        4️⃣ Pasaporte
+        5️⃣ Cédula de Extranjería
+        6️⃣ Otro`;
 
         client.messages
           .create({
@@ -161,12 +207,15 @@ app.post('/whatsapp', async (req, res) => {
       }else{
         //conversacion.tipo_formulario = 1;
         //actualizarConversacion(conversacion);
-        crearEncuesta(conversacion);
+        //crearDatosActualizados(conversacion);
+        crearLlegadaADestino(conversacion);
         //mensajeRespuesta = `Por favor escribe tu primer nombre. Sólo puedo leer texto, no utilices audio, imágenes o emojis.`;
 
       }
       
     });
+    
+
   }
 
   async function consultaExisteDatosActualizados(conversacion){
@@ -190,8 +239,7 @@ app.post('/whatsapp', async (req, res) => {
         3️⃣ Cédula de Ciudadanía (colombiana)
         4️⃣ Pasaporte
         5️⃣ Cédula de Extranjería
-        6️⃣ Indocumentado
-        7️⃣ Otro`;
+        6️⃣ Otro`;
 
         client.messages
           .create({
@@ -212,11 +260,9 @@ app.post('/whatsapp', async (req, res) => {
       }
       
     });
-    
 
   }
 
-  
 
   //funcion seleccion de formulario a responder
   async function seleccionarFormulario(conversation){
@@ -236,7 +282,8 @@ app.post('/whatsapp', async (req, res) => {
             
             case '2':
               //crea actualizar datos
-              crearLlegadaADestino(conversation);
+              //crearLlegadaADestino(conversation);
+              consultaExisteLlegadaADestino(conversation)
 
             break;
 
@@ -255,10 +302,10 @@ app.post('/whatsapp', async (req, res) => {
             3️⃣ Ya te registraste antes y quieres actualizar tus datos de contacto  🙌🏻 `*/
             mensajeRespuesta = `Gracias 🙂, ten presente que no puedo reconocer imágenes, audios, ni emojis. Nos podemos comunicar por medio de texto o digitando el número de las opciones que te indico en mi pregunta. 
             
-            Por favor respóndeme con el número correspondiente a lo que quieres hacer:\n
-            1️⃣ Quieres diligenciar el formulario de registro ✍🏻\n
-            2️⃣ Quieres informar de tu llegada a destino ☝🏻\n
-            3️⃣ Ya te registraste antes y quieres actualizar tus datos de contacto  🙌🏻 `;
+Por favor respóndeme con el número correspondiente a lo que quieres hacer:\n
+1️⃣ Quieres diligenciar el formulario de registro ✍🏻\n
+2️⃣ Quieres informar de tu llegada a destino ☝🏻\n
+3️⃣ Ya te registraste antes y quieres actualizar tus datos de contacto  🙌🏻 `;
 
             //console.log('MENSAJE A ENVIAR::', mensajeRespuesta);
       client.messages
@@ -276,10 +323,10 @@ app.post('/whatsapp', async (req, res) => {
       //console.log(error);
       mensajeRespuesta = `Gracias 🙂, ten presente que no puedo reconocer imágenes, audios, ni emojis. Nos podemos comunicar por medio de texto o digitando el número de las opciones que te indico en mi pregunta. 
       
-      Por favor respóndeme con el número correspondiente a lo que quieres hacer:\n
-            1️⃣ Quieres diligenciar el formulario de registro ✍🏻\n
-            2️⃣ Quieres informar de tu llegada a destino ☝🏻\n
-            3️⃣ Ya te registraste antes y quieres actualizar tus datos de contacto  🙌🏻 `;
+Por favor respóndeme con el número correspondiente a lo que quieres hacer:\n
+1️⃣ Quieres diligenciar el formulario de registro ✍🏻\n
+2️⃣ Quieres informar de tu llegada a destino ☝🏻\n
+3️⃣ Ya te registraste antes y quieres actualizar tus datos de contacto  🙌🏻 `;
             //console.log('MENSAJE A ENVIAR::', mensajeRespuesta);
       client.messages
           .create({
@@ -343,7 +390,7 @@ app.post('/whatsapp', async (req, res) => {
           to: req.body.From
         })
         .then(message => console.log(message.body))
-        .catch(e => { console.error('Got an error:', e.code, e.message); });
+        .catch(e => { console.error('Error enviando mensaje:', e.code, e.message); });
       }else{
         //console.log('RESULTS QUERY NUEVO: ', results);
         consultaConversacion(nuevaconversacion.waId);
@@ -460,9 +507,9 @@ app.post('/whatsapp', async (req, res) => {
     connection.query(sqlnuevaencuesta, nuevaencuesta, (error, results) => {
       if (error){
         mensajeRespuesta = `Disculpa tuvimos un problema en crear Encuesta. Por favor respóndeme con el número correspondiente a lo que quieres hacer:\n
-        1️⃣ Quieres diligenciar el formulario de registro ✍🏻\n
-        2️⃣ Quieres informar de tu llegada a destino ☝🏻\n
-        3️⃣ Ya te registraste antes y quieres actualizar tus datos de contacto  🙌🏻 `;
+1️⃣ Quieres diligenciar el formulario de registro ✍🏻\n
+2️⃣ Quieres informar de tu llegada a destino ☝🏻\n
+3️⃣ Ya te registraste antes y quieres actualizar tus datos de contacto  🙌🏻 `;
 
         
       }else{
@@ -503,9 +550,9 @@ app.post('/whatsapp', async (req, res) => {
     connection.query(sqlnuevaLlegada, nuevaLlegada, (error, results) => {
       if (error){
         mensajeRespuesta = `Disculpa tuvimos un problema. Por favor respóndeme con el número correspondiente a lo que quieres hacer:\n
-        1️⃣ Quieres diligenciar el formulario de registro ✍🏻\n
-        2️⃣ Quieres informar de tu llegada a destino ☝🏻\n
-        3️⃣ Ya te registraste antes y quieres actualizar tus datos de contacto  🙌🏻 `;
+1️⃣ Quieres diligenciar el formulario de registro ✍🏻\n
+2️⃣ Quieres informar de tu llegada a destino ☝🏻\n
+3️⃣ Ya te registraste antes y quieres actualizar tus datos de contacto  🙌🏻 `;
       } else{
         $conversation.tipo_formulario = 2;
         actualizarConversacion($conversation);
@@ -517,8 +564,7 @@ app.post('/whatsapp', async (req, res) => {
         3️⃣ Cédula de Ciudadanía (colombiana)
         4️⃣ Pasaporte
         5️⃣ Cédula de Extranjería
-        6️⃣ Indocumentado
-        7️⃣ Otro`;
+        6️⃣ Otro`;
       }
 
       client.messages
@@ -552,9 +598,9 @@ app.post('/whatsapp', async (req, res) => {
     connection.query(sqlnuevoDatosActualizados, nuevoDatosActualizados, (error, results) => {
       if (error){
         mensajeRespuesta = `Disculpa tuvimos un problema. Por favor respóndeme con el número correspondiente a lo que quieres hacer:\n
-        1️⃣ Quieres diligenciar el formulario de registro ✍🏻\n
-        2️⃣ Quieres informar de tu llegada a destino ☝🏻\n
-        3️⃣ Ya te registraste antes y quieres actualizar tus datos de contacto  🙌🏻 `;
+1️⃣ Quieres diligenciar el formulario de registro ✍🏻\n
+2️⃣ Quieres informar de tu llegada a destino ☝🏻\n
+3️⃣ Ya te registraste antes y quieres actualizar tus datos de contacto  🙌🏻 `;
       } else{
 
         $conversation.tipo_formulario = 3;
@@ -567,8 +613,7 @@ app.post('/whatsapp', async (req, res) => {
         3️⃣ Cédula de Ciudadanía (colombiana)
         4️⃣ Pasaporte
         5️⃣ Cédula de Extranjería
-        6️⃣ Indocumentado
-        7️⃣ Otro`;
+        6️⃣ Otro`;
       }
       
       client.messages
@@ -666,6 +711,7 @@ app.post('/whatsapp', async (req, res) => {
     });
   }
 
+  //funcion actualiza llegada
   function actualizarLlegada($llegada) {
 
     //console.log('DATOS QUE LLEGAN A ACTUALIZAR LLEGADA::: ', $llegada)
@@ -690,6 +736,7 @@ app.post('/whatsapp', async (req, res) => {
     });
   }
 
+  //consulta si existe una encuesta con tipo_documento y numero_documento, si existe, asigna el id de encuesta a llegada
   function actualizarLlegadaEncuesta($llegadaEncuesta){
 
     //consulta encuesta con $llegadaEncuesta waId, toma id_encuesta y se lo asigna a llegadas where waid = encuesta.waId;
@@ -715,12 +762,14 @@ app.post('/whatsapp', async (req, res) => {
           .catch(e => { console.error('Got an error:', e.code, e.message); });*/
         
       }else{
+        $llegadaEncuesta.id_encuesta = null;
         actualizarLlegada($llegadaEncuesta);
       }
     });
   }
+  
 
-
+  //funcion actualiza registro datos_actualizados
   function actualizarDatosContacto($datosContactoActualizados){
 
     $datosContactoActualizados.updated_at = new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '') ;
@@ -739,6 +788,7 @@ app.post('/whatsapp', async (req, res) => {
     });
   }
 
+  //consulta si existe una encuesta con tipo_documento y numero_documento, si existe, actualiza el registro de datos_actualizados
   function actualizarDatosContactoEncuesta($datosContactoEncuesta){
 
     console.log('ENTRA A ACTUALIZAR DATOS CONTACTOENCUESTA!!!');
@@ -806,7 +856,7 @@ app.post('/whatsapp', async (req, res) => {
                       //mensajeRespuesta = "*Primer Nombre:* (Ingrese solamente letras, sin emoticones ni caracteres especiales)"
                       mensajeRespuesta = `Gracias 🙂, ten presente que no puedo reconocer imágenes, audios, ni emojis. Nos podemos comunicar por medio de texto o digitando el número de las opciones que te indico en mi pregunta.\n
 
-                      Por favor escribe tu primer nombre. Sólo puedo leer texto, no utilices audio, imágenes o emojis.`;
+Por favor escribe tu primer nombre. Sólo puedo leer texto, no utilices audio, imágenes o emojis.`;
                 
                     }
                   
@@ -816,7 +866,7 @@ app.post('/whatsapp', async (req, res) => {
                     actualizarEncuesta($formulario);
                     mensajeRespuesta = `Gracias 🙂, ten presente que no puedo reconocer imágenes, audios, ni emojis. Nos podemos comunicar por medio de texto o digitando el número de las opciones que te indico en mi pregunta.\n
 
-                    Por favor escribe tu primer nombre. Sólo puedo leer texto, no utilices audio, imágenes o emojis.`;
+Por favor escribe tu primer nombre. Sólo puedo leer texto, no utilices audio, imágenes o emojis.`;
               
                   }
                 break;
@@ -842,7 +892,7 @@ app.post('/whatsapp', async (req, res) => {
                       //mensajeRespuesta = "*Primer Nombre:* (Ingrese solamente letras, sin emoticones ni caracteres especiales)"
                       mensajeRespuesta = `Gracias 🙂, ten presente que no puedo reconocer imágenes, audios, ni emojis. Nos podemos comunicar por medio de texto o digitando el número de las opciones que te indico en mi pregunta.\n
 
-                      Por favor escribe tu segundo nombre, si no tienes segundo nombre escribe NO.`;
+Por favor escribe tu segundo nombre, si no tienes segundo nombre escribe NO.`;
                 
                     }
                     
@@ -852,7 +902,7 @@ app.post('/whatsapp', async (req, res) => {
                     actualizarEncuesta($formulario);
                     mensajeRespuesta = `Gracias 🙂, ten presente que no puedo reconocer imágenes, audios, ni emojis. Nos podemos comunicar por medio de texto o digitando el número de las opciones que te indico en mi pregunta.\n
 
-                    Por favor escribe tu segundo nombre, si no tienes segundo nombre escribe NO.`;
+Por favor escribe tu segundo nombre, si no tienes segundo nombre escribe NO.`;
               
                     
                   }
@@ -875,7 +925,7 @@ app.post('/whatsapp', async (req, res) => {
                       }else{
                         mensajeRespuesta = `Gracias 🙂, ten presente que no puedo reconocer imágenes, audios, ni emojis. Nos podemos comunicar por medio de texto o digitando el número de las opciones que te indico en mi pregunta.\n
 
-                        Por favor escribe tu primer apellido`;
+Por favor escribe tu primer apellido`;
                       }
                       
                     
@@ -885,7 +935,7 @@ app.post('/whatsapp', async (req, res) => {
                     actualizarEncuesta($formulario);
                     mensajeRespuesta = `Gracias 🙂, ten presente que no puedo reconocer imágenes, audios, ni emojis. Nos podemos comunicar por medio de texto o digitando el número de las opciones que te indico en mi pregunta.\n
 
-                        Por favor escribe tu primer apellido`;
+Por favor escribe tu primer apellido`;
                   }
                 break;
 
@@ -901,16 +951,16 @@ app.post('/whatsapp', async (req, res) => {
   
                         actualizarEncuesta($formulario);
                         mensajeRespuesta = `¿Cuál es tu tipo de documento? 📇 Responde con el número de acuerdo a la opción correspondiente:
-                        1️⃣ Acta de Nacimiento
-                        2️⃣ Cédula de Identidad (venezolana)
-                        3️⃣ Cédula de Ciudadanía (colombiana)
-                        4️⃣ Pasaporte
-                        5️⃣ Cédula de Extranjería
-                        6️⃣ Indocumentado
-                        7️⃣ Otro`;
+1️⃣ Acta de Nacimiento
+2️⃣ Cédula de Identidad (venezolana)
+3️⃣ Cédula de Ciudadanía (colombiana)
+4️⃣ Pasaporte
+5️⃣ Cédula de Extranjería
+6️⃣ Indocumentado
+7️⃣ Otro`;
                       }else{
                         mensajeRespuesta = `Gracias 🙂, ten presente que no puedo reconocer imágenes, audios, ni emojis. Nos podemos comunicar por medio de texto o digitando el número de las opciones que te indico en mi pregunta.\n
-                        Por favor escribe tu segundo apellido, si no tienes segundo apellido escribe NO`;
+Por favor escribe tu segundo apellido, si no tienes segundo apellido escribe NO`;
 
                       }
                       
@@ -918,7 +968,7 @@ app.post('/whatsapp', async (req, res) => {
                     $formulario.pregunta = 4;
                     actualizarEncuesta($formulario);
                     mensajeRespuesta = `Gracias 🙂, ten presente que no puedo reconocer imágenes, audios, ni emojis. Nos podemos comunicar por medio de texto o digitando el número de las opciones que te indico en mi pregunta.\n
-                    Por favor escribe tu segundo apellido, si no tienes segundo apellido escribe NO`;
+Por favor escribe tu segundo apellido, si no tienes segundo apellido escribe NO`;
                   }
                 break;
 
@@ -973,13 +1023,13 @@ app.post('/whatsapp', async (req, res) => {
                           $formulario.pregunta += 3;// pregunta 8. Indocumentado no se muestra numero documento
                           actualizarEncuesta($formulario);
                           mensajeRespuesta = `¿Cómo encontraste mi número de WhatsApp? Responde con el número de acuerdo a la opción correspondiente:
-                          1️⃣ Ví un pendón en un albergue
-                          2️⃣ Recibí un volante en el albergue
-                          3️⃣ Recibí una foto con la información
-                          4️⃣ Lo recibí por chat
-                          5️⃣ Lo encontré en Facebook
-                          6️⃣ Una persona conocida me lo envió para que lo llenara
-                          7️⃣ Otro`;;
+1️⃣ Ví un pendón en un albergue
+2️⃣ Recibí un volante en el albergue
+3️⃣ Recibí una foto con la información
+4️⃣ Lo recibí por chat
+5️⃣ Lo encontré en Facebook
+6️⃣ Una persona conocida me lo envió para que lo llenara
+7️⃣ Otro`;;
                         break;
 
                         case '7':
@@ -991,14 +1041,14 @@ app.post('/whatsapp', async (req, res) => {
 
                         default:
                           mensajeRespuesta = `Gracias 🙂, ten presente que no puedo reconocer imágenes, audios, ni emojis. Nos podemos comunicar por medio de texto o digitando el número de las opciones que te indico en mi pregunta.\n
-                          ¿Cuál es tu tipo de documento? 📇 Responde con el número de acuerdo a la opción correspondiente:
-                            1️⃣ Acta de Nacimiento
-                            2️⃣ Cédula de Identidad (venezolana)
-                            3️⃣ Cédula de Ciudadanía (colombiana)
-                            4️⃣ Pasaporte
-                            5️⃣ Cédula de Extranjería
-                            6️⃣ Indocumentado
-                            7️⃣ Otro`;
+¿Cuál es tu tipo de documento? 📇 Responde con el número de acuerdo a la opción correspondiente:
+1️⃣ Acta de Nacimiento
+2️⃣ Cédula de Identidad (venezolana)
+3️⃣ Cédula de Ciudadanía (colombiana)
+4️⃣ Pasaporte
+5️⃣ Cédula de Extranjería
+6️⃣ Indocumentado
+7️⃣ Otro`;
                           break;
                       
   
@@ -1008,14 +1058,14 @@ app.post('/whatsapp', async (req, res) => {
                     $formulario.pregunta = 5; //vuelve a entrar a pregunta 5
                     actualizarEncuesta($formulario);
                     mensajeRespuesta = `Gracias 🙂, ten presente que no puedo reconocer imágenes, audios, ni emojis. Nos podemos comunicar por medio de texto o digitando el número de las opciones que te indico en mi pregunta.\n
-                    ¿Cuál es tu tipo de documento? 📇 Responde con el número de acuerdo a la opción correspondiente:
-                            1️⃣ Acta de Nacimiento
-                            2️⃣ Cédula de Identidad (venezolana)
-                            3️⃣ Cédula de Ciudadanía (colombiana)
-                            4️⃣ Pasaporte
-                            5️⃣ Cédula de Extranjería
-                            6️⃣ Indocumentado
-                            7️⃣ Otro`;
+¿Cuál es tu tipo de documento? 📇 Responde con el número de acuerdo a la opción correspondiente:
+1️⃣ Acta de Nacimiento
+2️⃣ Cédula de Identidad (venezolana)
+3️⃣ Cédula de Ciudadanía (colombiana)
+4️⃣ Pasaporte
+5️⃣ Cédula de Extranjería
+6️⃣ Indocumentado
+7️⃣ Otro`;
                   }
                 break;
 
@@ -1036,14 +1086,14 @@ app.post('/whatsapp', async (req, res) => {
 
                     }else{
                       mensajeRespuesta = `Gracias 🙂, ten presente que no puedo reconocer imágenes, audios, ni emojis. Nos podemos comunicar por medio de texto o digitando el número de las opciones que te indico en mi pregunta.\n
-                       ¿Cuál otro tipo de documento? (Indicar tipo, ejemplo: pasaporte)`;
+¿Cuál otro tipo de documento? (Indicar tipo, ejemplo: pasaporte)`;
                     }
                     
                   } catch (error) {
                     $formulario.pregunta = 6; //vuelve a entrar a paso 6
                     actualizarEncuesta($formulario);
                     mensajeRespuesta = `Gracias 🙂, ten presente que no puedo reconocer imágenes, audios, ni emojis. Nos podemos comunicar por medio de texto o digitando el número de las opciones que te indico en mi pregunta.\n
-                    ¿Cuál otro tipo de documento? (Indicar tipo, ejemplo: pasaporte)`;
+¿Cuál otro tipo de documento? (Indicar tipo, ejemplo: pasaporte)`;
   
                   }
 
@@ -1061,16 +1111,16 @@ app.post('/whatsapp', async (req, res) => {
                     $formulario.pregunta += 1;// pregunta 8. 
                     actualizarEncuesta($formulario);
                     mensajeRespuesta = `¿Cómo encontraste mi número de WhatsApp? Responde con el número de acuerdo a la opción correspondiente:
-                      1️⃣ Ví un pendón en un albergue
-                      2️⃣ Recibí un volante en el albergue
-                      3️⃣ Recibí una foto con la información
-                      4️⃣ Lo recibí por chat
-                      5️⃣ Lo encontré en Facebook
-                      6️⃣ Una persona conocida me lo envió para que lo llenara
-                      7️⃣ Otro`;
+1️⃣ Ví un pendón en un albergue
+2️⃣ Recibí un volante en el albergue
+3️⃣ Recibí una foto con la información
+4️⃣ Lo recibí por chat
+5️⃣ Lo encontré en Facebook
+6️⃣ Una persona conocida me lo envió para que lo llenara
+7️⃣ Otro`;
                     }else{
                       mensajeRespuesta = `Gracias 🙂, ten presente que no puedo reconocer imágenes, audios, ni emojis. Nos podemos comunicar por medio de texto o digitando el número de las opciones que te indico en mi pregunta.\n
-                      Escribe por favor tu número de documento 📇 (no utilices símbolos, solo números) Ejemplo: 123456789`;
+Escribe por favor tu número de documento 📇 (no utilices símbolos, solo números) Ejemplo: 123456789`;
 
                     }
   
@@ -1078,7 +1128,7 @@ app.post('/whatsapp', async (req, res) => {
                     $formulario.pregunta = 7; //vuelve a entrar a paso 7
                     actualizarEncuesta($formulario);
                     mensajeRespuesta = `Gracias 🙂, ten presente que no puedo reconocer imágenes, audios, ni emojis. Nos podemos comunicar por medio de texto o digitando el número de las opciones que te indico en mi pregunta.\n
-                    Escribe por favor tu número de documento 📇 (no utilices símbolos, solo números) Ejemplo: 123456789`;
+Escribe por favor tu número de documento 📇 (no utilices símbolos, solo números) Ejemplo: 123456789`;
                 }
                 break;
 
@@ -1149,14 +1199,14 @@ app.post('/whatsapp', async (req, res) => {
                     default:
                       mensajeRespuesta = `Gracias 🙂, ten presente que no puedo reconocer imágenes, audios, ni emojis. Nos podemos comunicar por medio de texto o digitando el número de las opciones que te indico en mi pregunta.\n
 
-                      ¿Cómo encontraste este formulario? - Selecciona entre las siguientes opciones enviando el número de la opción correspondente:\n" +
-                        "*1*: Ví un pendón en un albergue\n" +
-                        "*2*: Recibí un volante en el albergue\n" +
-                        "*3*: Recibí una foto con la información\n" +
-                        "*4*: Recibí el enlache por chat\n" +
-                        "*5*: Encontré el enlace en Facebook\n" +
-                        "*6*: Una persona conocida me lo envió para que lo llenara\n" +
-                        "*7*: Otro\n`;
+¿Cómo encontraste este formulario? - Selecciona entre las siguientes opciones enviando el número de la opción correspondente:\n" +
+1️⃣ Ví un pendón en un albergue
+2️⃣ Recibí un volante en el albergue
+3️⃣ Recibí una foto con la información
+4️⃣ Lo recibí por chat
+5️⃣ Lo encontré en Facebook
+6️⃣ Una persona conocida me lo envió para que lo llenara
+7️⃣ Otro`;
                       break;
                     }
                 
@@ -1165,14 +1215,14 @@ app.post('/whatsapp', async (req, res) => {
                     $formulario.pregunta = 8; //vuelve a entrar a paso 8
                     actualizarEncuesta($formulario);
                     mensajeRespuesta = `Gracias 🙂, ten presente que no puedo reconocer imágenes, audios, ni emojis. Nos podemos comunicar por medio de texto o digitando el número de las opciones que te indico en mi pregunta.\n
-                    ¿Cómo encontraste mi número de WhatsApp? Responde con el número de acuerdo a la opción correspondiente:
-                      1️⃣ Ví un pendón en un albergue
-                      2️⃣ Recibí un volante en el albergue
-                      3️⃣ Recibí una foto con la información
-                      4️⃣ Lo recibí por chat
-                      5️⃣ Lo encontré en Facebook
-                      6️⃣ Una persona conocida me lo envió para que lo llenara
-                      7️⃣ Otro`;
+¿Cómo encontraste mi número de WhatsApp? Responde con el número de acuerdo a la opción correspondiente:
+1️⃣ Ví un pendón en un albergue
+2️⃣ Recibí un volante en el albergue
+3️⃣ Recibí una foto con la información
+4️⃣ Lo recibí por chat
+5️⃣ Lo encontré en Facebook
+6️⃣ Una persona conocida me lo envió para que lo llenara
+7️⃣ Otro`;
                   }
                 break;
 
@@ -1531,14 +1581,14 @@ app.post('/whatsapp', async (req, res) => {
                       conversation.tipo_formulario = null;
                       actualizarConversacion(conversation);
                       mensajeRespuesta = `¡Gracias por participar!
-                      Si eres preseleccionado/a el programa #VenEsperanza se comunicará contigo
-                      Recuerda:
-                      En el programa #VenEsperanza no cobramos ni pedimos remuneración por ningún servicio a la comunidad, no tenemos intermediarios.
+Si eres preseleccionado/a el programa #VenEsperanza se comunicará contigo
+Recuerda:
+En el programa #VenEsperanza no cobramos ni pedimos remuneración por ningún servicio a la comunidad, no tenemos intermediarios.
                       
-                      Ahora por favor respóndeme con el número correspondiente a lo que quieres hacer:\n
-                      1️⃣ Quieres diligenciar el formulario de registro ✍🏻\n
-                      2️⃣ Quieres informar de tu llegada a destino ☝🏻\n
-                      3️⃣ Ya te registraste antes y quieres actualizar tus datos de contacto  🙌🏻 `;
+Ahora por favor respóndeme con el número correspondiente a lo que quieres hacer:\n
+1️⃣ Quieres diligenciar el formulario de registro ✍🏻\n
+2️⃣ Quieres informar de tu llegada a destino ☝🏻\n
+3️⃣ Ya te registraste antes y quieres actualizar tus datos de contacto  🙌🏻 `;
                     
 
                     }else if(emailregex.test(req.body.Body)) {
@@ -1550,18 +1600,18 @@ app.post('/whatsapp', async (req, res) => {
                       //console.log('CONVERSACION ACTUALIZAR:: ', conversation);
                       actualizarConversacion(conversation);
                       mensajeRespuesta = `¡Gracias por participar!
-                      Si eres preseleccionado/a el programa #VenEsperanza se comunicará contigo
-                      Recuerda:
-                      En el programa #VenEsperanza no cobramos ni pedimos remuneración por ningún servicio a la comunidad, no tenemos intermediarios.
+Si eres preseleccionado/a el programa #VenEsperanza se comunicará contigo
+Recuerda:
+En el programa #VenEsperanza no cobramos ni pedimos remuneración por ningún servicio a la comunidad, no tenemos intermediarios.
                       
-                      Ahora por favor respóndeme con el número correspondiente a lo que quieres hacer:\n
-                      1️⃣ Quieres diligenciar el formulario de registro ✍🏻\n
-                      2️⃣ Quieres informar de tu llegada a destino ☝🏻\n
-                      3️⃣ Ya te registraste antes y quieres actualizar tus datos de contacto  🙌🏻 `;
+Ahora por favor respóndeme con el número correspondiente a lo que quieres hacer:\n
+1️⃣ Quieres diligenciar el formulario de registro ✍🏻\n
+2️⃣ Quieres informar de tu llegada a destino ☝🏻\n
+3️⃣ Ya te registraste antes y quieres actualizar tus datos de contacto  🙌🏻 `;
                     
                     }else{
                       mensajeRespuesta = `Gracias 🙂, ten presente que no puedo reconocer imágenes, audios, ni emojis. Nos podemos comunicar por medio de texto o digitando el número de las opciones que te indico en mi pregunta.
-                    ¿Podrías compartirme un correo electrónico 📧 en el que te podamos contactar?  (si no tienes, ¡no te preocupes! escribe NO`;
+¿Podrías compartirme un correo electrónico 📧 en el que te podamos contactar?  (si no tienes, ¡no te preocupes! escribe NO`;
 
                     }
                     
@@ -1569,7 +1619,7 @@ app.post('/whatsapp', async (req, res) => {
                     $formulario.pregunta = 15; //vuelve a 15
                     actualizarEncuesta($formulario);
                     mensajeRespuesta = `Gracias 🙂, ten presente que no puedo reconocer imágenes, audios, ni emojis. Nos podemos comunicar por medio de texto o digitando el número de las opciones que te indico en mi pregunta.
-                    ¿Podrías compartirme un correo electrónico 📧 en el que te podamos contactar?  (si no tienes, ¡no te preocupes! escribe NO`;
+¿Podrías compartirme un correo electrónico 📧 en el que te podamos contactar?  (si no tienes, ¡no te preocupes! escribe NO`;
 
                   }
                 
@@ -1633,15 +1683,6 @@ app.post('/whatsapp', async (req, res) => {
                         break;
 
                       case '6':
-                        $formulario.tipo_documento = "Indocumentado";
-
-                        $formulario.pregunta += 1;// pregunta 2
-                        actualizarLlegada($formulario);
-                        mensajeRespuesta = `Escribe por favor tu número de documento 📇 (no utilices símbolos, solo números) Ejemplo: 123456789`;
-
-                      break;
-
-                      case '7':
                         $formulario.tipo_documento = "Otro";
                         $formulario.pregunta += 1;// pregunta 2
                         actualizarLlegada($formulario);
@@ -1650,14 +1691,13 @@ app.post('/whatsapp', async (req, res) => {
 
                       default:
                         mensajeRespuesta = `Gracias 🙂, ten presente que no puedo reconocer imágenes, audios, ni emojis. Nos podemos comunicar por medio de texto o digitando el número de las opciones que te indico en mi pregunta.\n
-                        ¿Cuál es tu tipo de documento? 📇 Responde con el número de acuerdo a la opción correspondiente:
-                          1️⃣ Acta de Nacimiento
-                          2️⃣ Cédula de Identidad (venezolana)
-                          3️⃣ Cédula de Ciudadanía (colombiana)
-                          4️⃣ Pasaporte
-                          5️⃣ Cédula de Extranjería
-                          6️⃣ Indocumentado
-                          7️⃣ Otro`;
+¿Cuál es tu tipo de documento? 📇 Responde con el número de acuerdo a la opción correspondiente:
+1️⃣ Acta de Nacimiento
+2️⃣ Cédula de Identidad (venezolana)
+3️⃣ Cédula de Ciudadanía (colombiana)
+4️⃣ Pasaporte
+5️⃣ Cédula de Extranjería
+6️⃣ Otro`;
                         break;
                     
 
@@ -1667,14 +1707,13 @@ app.post('/whatsapp', async (req, res) => {
                     $formulario.pregunta = 1; //vuelve a entrar a pregunta 1
                     actualizarLlegada($formulario);
                     mensajeRespuesta = `Gracias 🙂, ten presente que no puedo reconocer imágenes, audios, ni emojis. Nos podemos comunicar por medio de texto o digitando el número de las opciones que te indico en mi pregunta.\n
-                    ¿Cuál es tu tipo de documento? 📇 Responde con el número de acuerdo a la opción correspondiente:
-                            1️⃣ Acta de Nacimiento
-                            2️⃣ Cédula de Identidad (venezolana)
-                            3️⃣ Cédula de Ciudadanía (colombiana)
-                            4️⃣ Pasaporte
-                            5️⃣ Cédula de Extranjería
-                            6️⃣ Indocumentado
-                            7️⃣ Otro`;
+¿Cuál es tu tipo de documento? 📇 Responde con el número de acuerdo a la opción correspondiente:
+1️⃣ Acta de Nacimiento
+2️⃣ Cédula de Identidad (venezolana)
+3️⃣ Cédula de Ciudadanía (colombiana)
+4️⃣ Pasaporte
+5️⃣ Cédula de Extranjería
+6️⃣ Otro`;
                   }
               break;
 
@@ -1700,7 +1739,7 @@ app.post('/whatsapp', async (req, res) => {
 
                     }else{
                       mensajeRespuesta = `Gracias 🙂, ten presente que no puedo reconocer imágenes, audios, ni emojis. Nos podemos comunicar por medio de texto o digitando el número de las opciones que te indico en mi pregunta.\n
-                      Escribe por favor tu número de documento 📇 (no utilices símbolos, solo números) Ejemplo: 123456789`;
+Escribe por favor tu número de documento 📇 (no utilices símbolos, solo números) Ejemplo: 123456789`;
 
                     }
 
@@ -1709,7 +1748,7 @@ app.post('/whatsapp', async (req, res) => {
                     $formulario.pregunta = 2; //vuelve a entrar a paso 2
                     actualizarLlegada($formulario);
                     mensajeRespuesta = `Gracias 🙂, ten presente que no puedo reconocer imágenes, audios, ni emojis. Nos podemos comunicar por medio de texto o digitando el número de las opciones que te indico en mi pregunta.\n
-                    Escribe por favor tu número de documento 📇 (no utilices símbolos, solo números) Ejemplo: 123456789`;
+Escribe por favor tu número de documento 📇 (no utilices símbolos, solo números) Ejemplo: 123456789`;
                 }
 
               break;
@@ -1725,43 +1764,43 @@ app.post('/whatsapp', async (req, res) => {
                     actualizarLlegada($formulario);
 
                     mensajeRespuesta = `Envía el número del Departamento al que llegaste ó el número *1* en caso de que no sepas a qué Departamento llegaste. 1: No sé 
-                          2:	Antioquia
-                          3:	Atlántico
-                          4:	Bogotá D.C.
-                          5:	Bolívar
-                          6:	Boyaca
-                          7:	Caldas
-                          8:	Caqueta
-                          9:	Cauca
-                          10:	Cesar
-                          11:	Córdoba
-                          12:	Cundinamarca
-                          13:	Choco
-                          14:	Huila
-                          15:	La Guajira
-                          16:	Magdalena
-                          17:	Meta
-                          18:	Nariño
-                          19:	Norte de Santander
-                          20:	Quindio
-                          21:	Risaralda
-                          22:	Santander
-                          23:	Sucre
-                          24:	Tolima
-                          25:	Valle del Cauca
-                          26:	Arauca
-                          27:	Casanare
-                          28:	Putumayo
-                          29:	San Andres
-                          30:	Isla de Providencia y Santa Catalina
-                          31:	Amazonas
-                          32:	Guainia
-                          33:	Guaviare
-                          34:	Vaupes
-                          35:	Vichada`;
+2:	Antioquia
+3:	Atlántico
+4:	Bogotá D.C.
+5:	Bolívar
+6:	Boyaca
+7:	Caldas
+8:	Caqueta
+9:	Cauca
+10:	Cesar
+11:	Córdoba
+12:	Cundinamarca
+13:	Choco
+14:	Huila
+15:	La Guajira
+16:	Magdalena
+17:	Meta
+18:	Nariño
+19:	Norte de Santander
+20:	Quindio
+21:	Risaralda
+22:	Santander
+23:	Sucre
+24:	Tolima
+25:	Valle del Cauca
+26:	Arauca
+27:	Casanare
+28:	Putumayo
+29:	San Andres
+30:	Isla de Providencia y Santa Catalina
+31:	Amazonas
+32:	Guainia
+33:	Guaviare
+34:	Vaupes
+35:	Vichada`;
                   }else{
                     mensajeRespuesta = `Gracias 🙂, ten presente que no puedo reconocer imágenes, audios, ni emojis. Nos podemos comunicar por medio de texto o digitando el número de las opciones que te indico en mi pregunta.\n
-                    Escribe tu número de teléfono en números 📞` ;
+Escribe tu número de teléfono en números 📞` ;
 
                   }
                   
@@ -1769,7 +1808,7 @@ app.post('/whatsapp', async (req, res) => {
                   $formulario.pregunta = 3; //vuelve a 3
                     actualizarEncuesta($formulario);
                   mensajeRespuesta = `Gracias 🙂, ten presente que no puedo reconocer imágenes, audios, ni emojis. Nos podemos comunicar por medio de texto o digitando el número de las opciones que te indico en mi pregunta.\n
-                  Escribe tu número de teléfono en números 📞` ;
+Escribe tu número de teléfono en números 📞` ;
                 }
               break;
 
@@ -1783,6 +1822,7 @@ app.post('/whatsapp', async (req, res) => {
                   if (req.body.Body === '1') {
                     //$formulario.pregunta += 1; //va a pregunta 5
                     $formulario.id_departamento = null;
+                    $formulario.pregunta = null;
                     //$formulario.id_municipio_destino_final = null;
                     actualizarLlegada($formulario);
 
@@ -1790,10 +1830,10 @@ app.post('/whatsapp', async (req, res) => {
                     actualizarConversacion(conversation);
 
                     mensajeRespuesta = `Gracias por informar de tu llegada a destino!
-                    Ahora por favor respóndeme con el número correspondiente a lo que quieres hacer:\n
-                    1️⃣ Quieres diligenciar el formulario de registro ✍🏻\n
-                    2️⃣ Quieres informar de tu llegada a destino ☝🏻\n
-                    3️⃣ Ya te registraste antes y quieres actualizar tus datos de contacto  🙌🏻 `;
+Ahora por favor respóndeme con el número correspondiente a lo que quieres hacer:\n
+1️⃣ Quieres diligenciar el formulario de registro ✍🏻\n
+2️⃣ Quieres informar de tu llegada a destino ☝🏻\n
+3️⃣ Ya te registraste antes y quieres actualizar tus datos de contacto  🙌🏻 `;
 
 
                   } else if (opcionesDepartamento.includes(req.body.Body)) {
@@ -1813,20 +1853,20 @@ app.post('/whatsapp', async (req, res) => {
                   } else {
                     mensajeRespuesta = `Gracias 🙂, ten presente que no puedo reconocer imágenes, audios, ni emojis. Nos podemos comunicar por medio de texto o digitando el número de las opciones que te indico en mi pregunta.
 ¿Cuál es tu destino final dentro de Colombia? Envía el número del Departamento correspondiente ó el número *1* en caso de que no tengas definido el Departamento de destino. 1: No sé 
-                    2:	Antioquia
-                    3:	Atlántico
-                    4:	Bogotá D.C.
-                    5:	Bolívar
-                    6:	Boyaca
-                    7:	Caldas
-                    8:	Caqueta
-                    9:	Cauca
-                    10:	Cesar
-                    11:	Córdoba
-                    12:	Cundinamarca
-                    13:	Choco
-                    14:	Huila
-                    15:	La Guajira
+2:	Antioquia
+3:	Atlántico
+4:	Bogotá D.C.
+5:	Bolívar
+6:	Boyaca
+7:	Caldas
+8:	Caqueta
+9:	Cauca
+10:	Cesar
+11:	Córdoba
+12:	Cundinamarca
+13:	Choco
+14:	Huila
+15:	La Guajira
                     16:	Magdalena
                     17:	Meta
                     18:	Nariño
@@ -1956,15 +1996,6 @@ app.post('/whatsapp', async (req, res) => {
                         break;
 
                       case '6':
-                        $formulario.tipo_documento = "Indocumentado";
-
-                        $formulario.pregunta += 1;// pregunta 2
-                        actualizarDatosContacto($formulario);
-                        mensajeRespuesta = `Escribe por favor tu número de documento 📇 (no utilices símbolos, solo números) Ejemplo: 123456789`;
-
-                      break;
-
-                      case '7':
                         $formulario.tipo_documento = "Otro";
                         $formulario.pregunta += 1;// pregunta 2
                         actualizarDatosContacto($formulario);
@@ -1979,8 +2010,7 @@ app.post('/whatsapp', async (req, res) => {
                           3️⃣ Cédula de Ciudadanía (colombiana)
                           4️⃣ Pasaporte
                           5️⃣ Cédula de Extranjería
-                          6️⃣ Indocumentado
-                          7️⃣ Otro`;
+                          6️⃣ Otro`;
                         break;
                     
 
@@ -1996,8 +2026,7 @@ app.post('/whatsapp', async (req, res) => {
                             3️⃣ Cédula de Ciudadanía (colombiana)
                             4️⃣ Pasaporte
                             5️⃣ Cédula de Extranjería
-                            6️⃣ Indocumentado
-                            7️⃣ Otro`;
+                            6️⃣ Otro`;
                   }
               break;
 
@@ -2154,9 +2183,9 @@ app.post('/whatsapp', async (req, res) => {
 
             default:
               mensajeRespuesta = `Ahora por favor respóndeme con el número correspondiente a lo que quieres hacer:\n
-              1️⃣ Quieres diligenciar el formulario de registro ✍🏻\n
-              2️⃣ Quieres informar de tu llegada a destino ☝🏻\n
-              3️⃣ Ya te registraste antes y quieres actualizar tus datos de contacto  🙌🏻 `
+1️⃣ Quieres diligenciar el formulario de registro ✍🏻\n
+2️⃣ Quieres informar de tu llegada a destino ☝🏻\n
+3️⃣ Ya te registraste antes y quieres actualizar tus datos de contacto  🙌🏻 `
             break;
           }
         }
@@ -2171,9 +2200,9 @@ app.post('/whatsapp', async (req, res) => {
               autorizacionTratamientoDatos(conversation);
 
               mensajeRespuesta = `Ahora por favor respóndeme con el número correspondiente a lo que quieres hacer:\n
-              1️⃣ Quieres diligenciar el formulario de registro ✍🏻\n
-              2️⃣ Quieres informar de tu llegada a destino ☝🏻\n
-              3️⃣ Ya te registraste antes y quieres actualizar tus datos de contacto  🙌🏻 `
+1️⃣ Quieres diligenciar el formulario de registro ✍🏻\n
+2️⃣ Quieres informar de tu llegada a destino ☝🏻\n
+3️⃣ Ya te registraste antes y quieres actualizar tus datos de contacto  🙌🏻 `
             break;
   
             case '2':
@@ -2182,20 +2211,20 @@ app.post('/whatsapp', async (req, res) => {
   
             default:
               mensajeRespuesta = `Gracias 🙂, ten presente que no puedo reconocer imágenes, audios, ni emojis. Nos podemos comunicar por medio de texto o digitando el número de las opciones que te indico en mi pregunta.
-              Para iniciar este chat 💬 debes autorizar el uso de tus datos. ✅ 
-              Responde:
-              1️⃣ Si, para aceptar los términos y condiciones del programa #VenEsperanza
-              2️⃣ No, no autorizo`;
+Para iniciar este chat 💬 debes autorizar el uso de tus datos. ✅ 
+Responde:
+1️⃣ Si, para aceptar los términos y condiciones del programa #VenEsperanza
+2️⃣ No, no autorizo`;
             break;
           }
 
           
         } catch (error) {
           mensajeRespuesta = `Gracias 🙂, ten presente que no puedo reconocer imágenes, audios, ni emojis. Nos podemos comunicar por medio de texto o digitando el número de las opciones que te indico en mi pregunta.
-          Para iniciar este chat 💬 debes autorizar el uso de tus datos. ✅ 
-          Responde:
-          1️⃣ Si, para aceptar los términos y condiciones del programa #VenEsperanza
-          2️⃣ No, no autorizo`;
+Para iniciar este chat 💬 debes autorizar el uso de tus datos. ✅ 
+Responde:
+1️⃣ Si, para aceptar los términos y condiciones del programa #VenEsperanza
+2️⃣ No, no autorizo`;
         }
       }
     }else {
@@ -2207,11 +2236,11 @@ app.post('/whatsapp', async (req, res) => {
         //console.log('CONVERSATION EN START FALSE:', conversation);
         actualizarConversacion(conversation);
         mensajeRespuesta = `Hola, soy Esperanza 👩🏻, la asistente virtual del programa VenEsperanza. ¡Es un gusto  atenderte! 😊
-        Tus datos personales recolectados serán tratados para gestionar nuestros servicios 🤝, conoce nuestra Política de Tratamiento de Datos 🗒️ en este enlace https://bit.ly/3uftBaQ en el que encontrarás tus derechos.
-        Para iniciar este chat 💬 debes autorizar el uso de tus datos. ✅ 
-        Responde:
-        1️⃣ Si, para aceptar los términos y condiciones del programa #VenEsperanza
-        2️⃣ No, no autorizo`;
+Tus datos personales recolectados serán tratados para gestionar nuestros servicios 🤝, conoce nuestra Política de Tratamiento de Datos 🗒️ en este enlace https://bit.ly/3uftBaQ en el que encontrarás tus derechos.
+Para iniciar este chat 💬 debes autorizar el uso de tus datos. ✅ 
+Responde:
+1️⃣ Si, para aceptar los términos y condiciones del programa #VenEsperanza
+2️⃣ No, no autorizo`;
 
 
       } catch (error) {
