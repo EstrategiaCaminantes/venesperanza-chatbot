@@ -68,7 +68,7 @@ function sendMessageWhatsapp(params){
     if (err) {
     return console.log('EL ERROR::: ', err);
     }
-    console.log(response);
+    //console.log(response);
     });
 }
 
@@ -76,14 +76,12 @@ app.post('/whatsapp', async (req, res) => {
 
 
   
-  console.log(req.body);
+  //console.log(req.body);
   //console.log('JSON:::', JSON.parse(req.body));
 
   //consultaConversacion(req.body.WaId, 0); //version twilio
-  
-
   //version messagebird
-  console.log('FROM:::::',req.body['contact.firstName']);
+  //console.log('FROM:::::',req.body['contact.firstName']);
   //if(req.body.message.from !== '+447418310508'){
    // console.log('ENTRA A FROM');
     //consultaConversacion(req.body.contact.msisdn,0);
@@ -97,9 +95,8 @@ app.post('/whatsapp', async (req, res) => {
     //const sql = `SELECT * FROM encuesta where waId = '${whatsappID}'`;
     //const sql = `SELECT * FROM conversacion_chatbot where waId = '${whatsappID}'`;
 
-    const sql = `SELECT conversacion_chatbot.*, conversacion_request.request_id AS REQUESTID
+    const sql = `SELECT conversacion_chatbot.*
     FROM conversacion_chatbot 
-    LEFT JOIN conversacion_request ON conversacion_chatbot.id = conversacion_request.id_conversacion
      WHERE waId = '${whatsappID}'`;
     
     connection.query(sql, (error, results) => {
@@ -107,152 +104,97 @@ app.post('/whatsapp', async (req, res) => {
       if (error) throw error;
 
       if (results.length > 0) { 
-
-        var $conversation = results[0];
-
-        var indexRequestId = results.find( (conv) => conv.REQUESTID === req.body.messageBirdRequestId);
-
-        if(indexRequestId){
-          console.log('REQUEST ID YA EXISTE')
-            //Ignorar
-            return;
-        } else {
-          /*
-          console.log(':::ENTRA A ACTUALIZAR MESSAGEBIRD REQUEST::::', req.body.messageBirdRequestId);
-          const sqlConversacion = `UPDATE conversacion_chatbot SET messageBirdRequestId = '${req.body.messageBirdRequestId}' where id = ${$conversation.id}`;
-          connection.query(sqlConversacion, (error, res) => {
-            if (error) console.log('ERROR: ', error);
-          });*/
-          const sqlRequest = 'INSERT INTO conversacion_request SET ?';
-
-          const nuevoRequest = {
-            id_conversacion: $conversation.id,
-            request_id: req.body.messageBirdRequestId
-          }
-          //console.log('NUEVA CONVERSACION: ', nuevaconversacion);
-      
-          connection.query(sqlRequest, nuevoRequest, (error, results) => {
-          
-            if (error) console.log(':::ERROR REQUEST:: ', error);
-          });
-
-          if(!$conversation.conversation_start){
-
-            //$conversation.conversation_start = 1;
-            //actualizarConversacion($conversation);
-            conversacion($conversation);
-  
-  
-          }else if(!$conversation.autorizacion){
-  
-            conversacion($conversation);
-  
-            //$conversation.autorizacion = 1;
-            //actualizarConversacion($conversation);
-            //autorizacionTratamientoDatos($conversation)
-          }else if(!$conversation.tipo_formulario){
-  
-            seleccionarFormulario($conversation);
-          
-          }else if($conversation.tipo_formulario == 1){
-            const sqlencuesta = `SELECT * FROM encuesta where waId = '${whatsappID}'`;
-  
-            connection.query(sqlencuesta, (error, encuesta) => {
-              if (error) throw error;
-  
-              if (encuesta.length > 0) { 
-                
-                //console.log('ENCUESTA ES: ', encuesta[0]);
-                conversacion($conversation,encuesta[0]);
-              }
-  
-            });
-          }else if($conversation.tipo_formulario == 2){
-            const sqllegadas = `SELECT * FROM llegadas where waId = '${whatsappID}'`;
-  
-            connection.query(sqllegadas, (error, llegadas) => {
-              if (error) throw error;
-  
-              if (llegadas.length > 0) { 
-                //console.log('LLEGADA ES: ', llegadas[0]);
-                conversacion($conversation , llegadas[0]);
-              }
-  
-            });
-          }else if($conversation.tipo_formulario == 3){
-            
-            const sqlactualizardatos = `SELECT * FROM datos_actualizados where waId = '${whatsappID}'`;
-  
-            connection.query(sqlactualizardatos, (error, actualizardatos) => {
-              if (error) throw error;
-  
-              if (actualizardatos.length > 0) { 
-                //console.log('ENCUESTA ES: ', actualizardatos[0]);
-                conversacion($conversation , actualizardatos[0]);
-              }
-  
-            });
-          }
-        }//Termina if que valida messageBirdRequestId
-
-        /*//Afuera del if que valida messageBirdRequestId
-        if(!$conversation.conversation_start){
-
-          //$conversation.conversation_start = 1;
-          //actualizarConversacion($conversation);
-          conversacion($conversation);
-
-
-        }else if(!$conversation.autorizacion){
-
-          conversacion($conversation);
-
-          //$conversation.autorizacion = 1;
-          //actualizarConversacion($conversation);
-          //autorizacionTratamientoDatos($conversation)
-        }else if(!$conversation.tipo_formulario){
-
-          seleccionarFormulario($conversation);
         
-        }else if($conversation.tipo_formulario == 1){
-          const sqlencuesta = `SELECT * FROM encuesta where waId = '${whatsappID}'`;
-
-          connection.query(sqlencuesta, (error, encuesta) => {
-            if (error) throw error;
-
-            if (encuesta.length > 0) { 
-              
-              //console.log('ENCUESTA ES: ', encuesta[0]);
-              conversacion($conversation,encuesta[0]);
-            }
-
-          });
-        }else if($conversation.tipo_formulario == 2){
-          const sqllegadas = `SELECT * FROM llegadas where waId = '${whatsappID}'`;
-
-          connection.query(sqllegadas, (error, llegadas) => {
-            if (error) throw error;
-
-            if (llegadas.length > 0) { 
-              //console.log('LLEGADA ES: ', llegadas[0]);
-              conversacion($conversation , llegadas[0]);
-            }
-
-          });
-        }else if($conversation.tipo_formulario == 3){
+        var $conversation = results[0];
+        //console.log('messageBirdRequestId:::::',req.body.messageBirdRequestId);
+        //console.log('MESG:::::',req.body.incomingMessage);
+        const sqlRequest = `SELECT request_id
+          FROM conversacion_request
+          WHERE id_conversacion = '${$conversation.id}' AND request_id = '${req.body.messageBirdRequestId}'`;
+          connection.query(sqlRequest, (errorResult, resultRequest) => {
+            if (errorResult) throw errorResult;
+            if(resultRequest.length > 0){
+              //console.log('REQUEST ID YA EXISTE')
+                //Ignorar
+                return;
+            } else {
+              /*
+              console.log(':::ENTRA A ACTUALIZAR MESSAGEBIRD REQUEST::::', req.body.messageBirdRequestId);
+              const sqlConversacion = `UPDATE conversacion_chatbot SET messageBirdRequestId = '${req.body.messageBirdRequestId}' where id = ${$conversation.id}`;
+              connection.query(sqlConversacion, (error, res) => {
+                if (error) console.log('ERROR: ', error);
+              });*/
+              const sqlRequestInsert = 'INSERT INTO conversacion_request SET ?';
+    
+              const nuevoRequest = {
+                id_conversacion: $conversation.id,
+                request_id: req.body.messageBirdRequestId
+              }
+              //console.log('NUEVA CONVERSACION: ', nuevaconversacion);
           
-          const sqlactualizardatos = `SELECT * FROM datos_actualizados where waId = '${whatsappID}'`;
-
-          connection.query(sqlactualizardatos, (error, actualizardatos) => {
-            if (error) throw error;
-
-            if (actualizardatos.length > 0) { 
-              //console.log('ENCUESTA ES: ', actualizardatos[0]);
-              conversacion($conversation , actualizardatos[0]);
+              connection.query(sqlRequestInsert, nuevoRequest, (error, results) => {
+                if (error) throw error;
+              });
+    
+              if(!$conversation.conversation_start){
+    
+                //$conversation.conversation_start = 1;
+                //actualizarConversacion($conversation);
+                conversacion($conversation);
+      
+      
+              }else if(!$conversation.autorizacion){
+      
+                conversacion($conversation);
+      
+                //$conversation.autorizacion = 1;
+                //actualizarConversacion($conversation);
+                //autorizacionTratamientoDatos($conversation)
+              }else if(!$conversation.tipo_formulario){
+      
+                seleccionarFormulario($conversation);
+              
+              }else if($conversation.tipo_formulario == 1){
+                const sqlencuesta = `SELECT * FROM encuesta where waId = '${whatsappID}'`;
+      
+                connection.query(sqlencuesta, (error, encuesta) => {
+                  if (error) throw error;
+      
+                  if (encuesta.length > 0) { 
+                    
+                    //console.log('ENCUESTA ES: ', encuesta[0]);
+                    conversacion($conversation,encuesta[0]);
+                  }
+      
+                });
+              }else if($conversation.tipo_formulario == 2){
+                const sqllegadas = `SELECT * FROM llegadas where waId = '${whatsappID}'`;
+      
+                connection.query(sqllegadas, (error, llegadas) => {
+                  if (error) throw error;
+      
+                  if (llegadas.length > 0) { 
+                    //console.log('LLEGADA ES: ', llegadas[0]);
+                    conversacion($conversation , llegadas[0]);
+                  }
+      
+                });
+              }else if($conversation.tipo_formulario == 3){
+                
+                const sqlactualizardatos = `SELECT * FROM datos_actualizados where waId = '${whatsappID}'`;
+      
+                connection.query(sqlactualizardatos, (error, actualizardatos) => {
+                  if (error) throw error;
+      
+                  if (actualizardatos.length > 0) { 
+                    //console.log('ENCUESTA ES: ', actualizardatos[0]);
+                    conversacion($conversation , actualizardatos[0]);
+                  }
+      
+                });
+              }
             }
-
           });
-        }*/
         
       } else {
 
@@ -310,6 +252,65 @@ Ahora por favor respóndeme con el número correspondiente a lo que quieres hace
     });
   }
 
+  //funcion consulta si existe llegada a destino para actualizar o crear uno nuevo
+  async function consultaExisteLlegadaADestino(conversacion){
+    const sqlConsultarLlegadaDestino = `SELECT * FROM llegadas where waId = '${conversacion.waId}'`;
+
+    connection.query(sqlConsultarLlegadaDestino, (error, existeLlegadaADestino) => {
+      mensajeRespuesta = '';
+      if (error) throw error;
+
+      if (existeLlegadaADestino.length > 0) { 
+
+        conversacion.tipo_formulario = 2;
+        actualizarConversacion(conversacion);
+
+        existeLlegadaADestino[0].pregunta = 1;
+        //actualizarDatosContacto(existeLlegadaADestino[0]);
+        actualizarLlegadaEncuesta(existeLlegadaADestino[0]);
+
+        mensajeRespuesta = `A continuación responde a las preguntas para registrar tu llegada a destino como teléfono u otros:
+Tipo de documento 📇 Responde con el número de acuerdo a la opción correspondiente:
+1️⃣ Acta de Nacimiento
+2️⃣ Cédula de Identidad (venezolana)
+3️⃣ Cédula de Ciudadanía (colombiana)
+4️⃣ Pasaporte
+5️⃣ Cédula de Extranjería
+6️⃣ Otro`;
+
+        /*//twilio
+        client.messages
+          .create({
+            //from: 'whatsapp:+14155238886',
+            from: 'whatsapp:'+process.env.TWILIO_WHATSAPP,
+            body: mensajeRespuesta,
+            to: req.body.From
+          })
+          .then(message => console.log(message.body))
+          .catch(e => { console.error('Got an error:', e.code, e.message); });*/
+          sendMessageWhatsapp({
+          'to': req.body['message.from'],
+          'from': '9673e34a-1c1e-4a61-be4d-0432abd4a98f',
+          'type': 'text',
+          'content': {
+                  'text': mensajeRespuesta,
+                }
+        });
+        
+      }else{
+        //conversacion.tipo_formulario = 1;
+        //actualizarConversacion(conversacion);
+        //crearDatosActualizados(conversacion);
+        crearLlegadaADestino(conversacion);
+        //mensajeRespuesta = `Por favor escribe tu primer nombre. Sólo puedo leer texto, no utilices audio, imágenes o emojis.`;
+
+      }
+      
+    });
+    
+
+  }
+
   async function consultaExisteDatosActualizados(conversacion){
     const sqlConsultarDatosActualizados = `SELECT * FROM datos_actualizados where waId = '${conversacion.waId}'`;
 
@@ -331,9 +332,16 @@ Tipo de documento 📇 Responde con el número de acuerdo a la opción correspon
 3️⃣ Cédula de Ciudadanía (colombiana)
 4️⃣ Pasaporte
 5️⃣ Cédula de Extranjería
-6️⃣ Indocumentado
-7️⃣ Otro`;
+6️⃣ Otro`;
 
+sendMessageWhatsapp({
+  'to': req.body['message.from'],
+  'from': '9673e34a-1c1e-4a61-be4d-0432abd4a98f',
+  'type': 'text',
+  'content': {
+          'text': mensajeRespuesta,
+        }
+});
         /*
         client.messages
           .create({
@@ -379,7 +387,8 @@ Tipo de documento 📇 Responde con el número de acuerdo a la opción correspon
             
             case '2':
               //crea actualizar datos
-              crearLlegadaADestino(conversation);
+              //crearLlegadaADestino(conversation);
+              consultaExisteLlegadaADestino(conversation);
 
             break;
 
@@ -391,12 +400,8 @@ Tipo de documento 📇 Responde con el número de acuerdo a la opción correspon
             break;
 
           default:
-            /*
-            mensajeRespuesta = `Ahora por favor respóndeme con el número correspondiente a lo que quieres hacer:\n
-            1️⃣ Quieres diligenciar el formulario de registro ✍🏻\n
-            2️⃣ Quieres informar de tu llegada a destino ☝🏻\n
-            3️⃣ Ya te registraste antes y quieres actualizar tus datos de contacto  🙌🏻 `*/
-            mensajeRespuesta = `Seleccionar formulario default Gracias 🙂, ten presente que no puedo reconocer imágenes, audios, ni emojis. Nos podemos comunicar por medio de texto o digitando el número de las opciones que te indico en mi pregunta. 
+          
+            mensajeRespuesta = `Gracias 🙂, ten presente que no puedo reconocer imágenes, audios, ni emojis. Nos podemos comunicar por medio de texto o digitando el número de las opciones que te indico en mi pregunta. 
   
 Por favor respóndeme con el número correspondiente a lo que quieres hacer:\n
 1️⃣ Quieres diligenciar el formulario de registro ✍🏻\n
@@ -426,26 +431,11 @@ Por favor respóndeme con el número correspondiente a lo que quieres hacer:\n
                     'text': mensajeRespuesta,
                   }
           });
-      
-          /*
-          //messagebird
-          messagebird.conversations.reply('d9d8a497b6ff4f4498bc9503aaae3886',{
-            //'to': '573229562177',
-            //'channelId': '3fb8e8175c8d4220b5b38224631fb0c1' ,
-            'type': 'text',
-            'content': { 'text': mensajeRespuesta }
-          }, function (err, response) {
-            if (err) {
-              return console.log(err);
-            }
-            console.log(response);
-          });*/
-
-
+     
         }
     } catch (error) {
       //console.log(error);
-      mensajeRespuesta = `Catch seleccionar formulario Gracias 🙂, ten presente que no puedo reconocer imágenes, audios, ni emojis. Nos podemos comunicar por medio de texto o digitando el número de las opciones que te indico en mi pregunta. 
+      mensajeRespuesta = `Gracias 🙂, ten presente que no puedo reconocer imágenes, audios, ni emojis. Nos podemos comunicar por medio de texto o digitando el número de las opciones que te indico en mi pregunta. 
       
 Por favor respóndeme con el número correspondiente a lo que quieres hacer:\n
 1️⃣ Quieres diligenciar el formulario de registro ✍🏻\n
@@ -473,23 +463,6 @@ Por favor respóndeme con el número correspondiente a lo que quieres hacer:\n
           })
           .then(message => console.log(message.body))
           .catch(e => { console.error('Got an error:', e.code, e.message); });*/
-      
-
-      /*
-      //messagebird
-          messagebird.conversations.reply('d9d8a497b6ff4f4498bc9503aaae3886',{
-            //'to': '573229562177',
-            //'channelId': '3fb8e8175c8d4220b5b38224631fb0c1' ,
-            'type': 'text',
-            'content': { 'text': mensajeRespuesta }
-          }, function (err, response) {
-            if (err) {
-              return console.log(err);
-            }
-            console.log(response);
-          });
-          */
-
     }
     
   }
@@ -501,15 +474,10 @@ Por favor respóndeme con el número correspondiente a lo que quieres hacer:\n
 
     //console.log('PARAMS NUEVA CONVERSA: ', req.body);
     const params = req.body;
-    //console.log('PARAMS SON: ', params);
-
-    //console.log('ANTES DE REEMPLAZAR EMOTICONES:: ', params.ProfileName);
-    //reemplazo de emoticones en el nombre de perfil de whatsapp
-    //var regex = /(?:[\u2700-\u27bf]|(?:\ud83c[\udde6-\uddff]){2}|[\ud800-\udbff][\udc00-\udfff]|[\u0023-\u0039]\ufe0f?\u20e3|\u3299|\u3297|\u303d|\u3030|\u24c2|\ud83c[\udd70-\udd71]|\ud83c[\udd7e-\udd7f]|\ud83c\udd8e|\ud83c[\udd91-\udd9a]|\ud83c[\udde6-\uddff]|\ud83c[\ude01-\ude02]|\ud83c\ude1a|\ud83c\ude2f|\ud83c[\ude32-\ude3a]|\ud83c[\ude50-\ude51]|\u203c|\u2049|[\u25aa-\u25ab]|\u25b6|\u25c0|[\u25fb-\u25fe]|\u00a9|\u00ae|\u2122|\u2139|\ud83c\udc04|[\u2600-\u26FF]|\u2b05|\u2b06|\u2b07|\u2b1b|\u2b1c|\u2b50|\u2b55|\u231a|\u231b|\u2328|\u23cf|[\u23e9-\u23f3]|[\u23f8-\u23fa]|\ud83c\udccf|\u2934|\u2935|[\u2190-\u21ff])/g;
-
+    //console.log(':::PARAMS:::', params);
    //var newprofile = params.ProfileName.replace(/[^\ñ\Ñ\ü\Ü\á\Á\é\É\í\Í\ó\Ó\ú\Ú\w\s]/gi, ''); //version twilio
-    var newprofile = params.conversationContactId.replace(/[^\ñ\Ñ\ü\Ü\á\Á\é\É\í\Í\ó\Ó\ú\Ú\w\s]/gi, ''); //version messagebird
-   //console.log('REEMPLAZO: ', newprofile);
+    //var newprofile = params.conversationContactId.replace(/[^\ñ\Ñ\ü\Ü\á\Á\é\É\í\Í\ó\Ó\ú\Ú\w\s]/gi, ''); //version messagebird
+    var newprofile = params['contact.displayName'].replace(/[^\ñ\Ñ\ü\Ü\á\Á\é\É\í\Í\ó\Ó\ú\Ú\w\s]/gi, ''); //version messagebird
 
     const nuevaconversacion = {
       //waId: params.WaId,
@@ -520,14 +488,7 @@ Por favor respóndeme con el número correspondiente a lo que quieres hacer:\n
       autorizacion: false,
       tipo_formulario: null,
       created_at: new Date()
-      //encuesta: true,
-      //encuesta_chatbot: false,
-      //fecha_nacimiento: new Date("1900-01-01"),
-      //actualizar: false,
-      //reportar: false 
-      //paso_chatbot: null,
-      //pregunta: null,
-      //fuente: 1
+
     }
     //console.log('NUEVA CONVERSACION: ', nuevaconversacion);
 
@@ -567,7 +528,6 @@ Por favor respóndeme con el número correspondiente a lo que quieres hacer:\n
     
     $conversa.updated_at = new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '') ;
 
-    //console.log('UPDATED: ', $conversa.updated_at);
     //$conversa.updated_at = dateFormat($conversa.updated_at, "yyyy-mm-dd hh");
 
     const sqlConversacion = `UPDATE conversacion_chatbot SET conversation_start = ${$conversa.conversation_start}, 
@@ -608,13 +568,9 @@ Por favor respóndeme con el número correspondiente a lo que quieres hacer:\n
     }
   }
 
-
   function autorizacionTratamientoDatos($conversa) {
 
     const sqlAutorizacion = 'INSERT INTO autorizaciones SET ?';
-
-    //console.log('NUEVA AUTORIZACION: ', $conversa);
-    //console.log('PARAMS SON: ', params);
 
     const nuevaAutorizacion = {
       //id_encuesta: $conversa.id,
@@ -632,34 +588,22 @@ Por favor respóndeme con el número correspondiente a lo que quieres hacer:\n
     });
   }
 
-
   //funcion crear encuesta
   function crearEncuesta($conversation) {
 
     const sqlnuevaencuesta = 'INSERT INTO encuesta SET ?';
 
-    //console.log('PARAMS NUEVA CONVERSA: ', req.body);
     const params = req.body;
-    //console.log('PARAMS SON: ', params);
-
-    //console.log('ANTES DE REEMPLAZAR EMOTICONES:: ', params.ProfileName);
     //reemplazo de emoticones en el nombre de perfil de whatsapp
     //var regex = /(?:[\u2700-\u27bf]|(?:\ud83c[\udde6-\uddff]){2}|[\ud800-\udbff][\udc00-\udfff]|[\u0023-\u0039]\ufe0f?\u20e3|\u3299|\u3297|\u303d|\u3030|\u24c2|\ud83c[\udd70-\udd71]|\ud83c[\udd7e-\udd7f]|\ud83c\udd8e|\ud83c[\udd91-\udd9a]|\ud83c[\udde6-\uddff]|\ud83c[\ude01-\ude02]|\ud83c\ude1a|\ud83c\ude2f|\ud83c[\ude32-\ude3a]|\ud83c[\ude50-\ude51]|\u203c|\u2049|[\u25aa-\u25ab]|\u25b6|\u25c0|[\u25fb-\u25fe]|\u00a9|\u00ae|\u2122|\u2139|\ud83c\udc04|[\u2600-\u26FF]|\u2b05|\u2b06|\u2b07|\u2b1b|\u2b1c|\u2b50|\u2b55|\u231a|\u231b|\u2328|\u23cf|[\u23e9-\u23f3]|[\u23f8-\u23fa]|\ud83c\udccf|\u2934|\u2935|[\u2190-\u21ff])/g;
 
     //var newprofile = params.ProfileName.replace(/[^\ñ\Ñ\ü\Ü\á\Á\é\É\í\Í\ó\Ó\ú\Ú\w\s]/gi, '');//twilio
     var newprofile = params['contact.firstName'].replace(/[^\ñ\Ñ\ü\Ü\á\Á\é\É\í\Í\ó\Ó\ú\Ú\w\s]/gi, '');
     
-   //console.log('REEMPLAZO: ', newprofile);
-
     const nuevaencuesta = {
       waId: $conversation.waId,
       //profileName: newprofile,
       profileName: $conversation.profileName,
-      
-      //encuesta: true,
-      //encuesta_chatbot: false,
-      //fecha_nacimiento: new Date("1900-01-01"),
-      //paso_chatbot: null,
       created_at: new Date(),
       pregunta: 1,
       fuente: 1
@@ -668,7 +612,7 @@ Por favor respóndeme con el número correspondiente a lo que quieres hacer:\n
 
     connection.query(sqlnuevaencuesta, nuevaencuesta, (error, results) => {
       if (error){
-        mensajeRespuesta = `Disculpa tuvimos un problema en crear Encuesta. Por favor respóndeme con el número correspondiente a lo que quieres hacer:\n
+        mensajeRespuesta = `Disculpa tuvimos un problema en crear la encuesta. Por favor respóndeme con el número correspondiente a lo que quieres hacer:\n
 1️⃣ Quieres diligenciar el formulario de registro ✍🏻\n
 2️⃣ Quieres informar de tu llegada a destino ☝🏻\n
 3️⃣ Ya te registraste antes y quieres actualizar tus datos de contacto  🙌🏻 `;
@@ -681,7 +625,6 @@ Por favor respóndeme con el número correspondiente a lo que quieres hacer:\n
 
       }
 
-      
       /*
       client.messages
         .create({
@@ -701,20 +644,6 @@ Por favor respóndeme con el número correspondiente a lo que quieres hacer:\n
                   'text': mensajeRespuesta,
                 }
         });
-
-        /*
-        messagebird.conversations.reply('d9d8a497b6ff4f4498bc9503aaae3886',{
-          //'to': '573229562177',
-          //'channelId': '3fb8e8175c8d4220b5b38224631fb0c1' ,
-          'type': 'text',
-          'content': { 'text': mensajeRespuesta }
-        }, function (err, response) {
-          if (err) {
-            return console.log(err);
-          }
-          console.log(response);
-        });*/
-       
 
     });
 
@@ -753,8 +682,7 @@ Tipo de documento 📇 Responde con el número de acuerdo a la opción correspon
 3️⃣ Cédula de Ciudadanía (colombiana)
 4️⃣ Pasaporte
 5️⃣ Cédula de Extranjería
-6️⃣ Indocumentado
-7️⃣ Otro`;
+6️⃣ Otro`;
       }
 
       sendMessageWhatsapp({
@@ -808,11 +736,11 @@ Tipo de documento 📇 Responde con el número de acuerdo a la opción correspon
         mensajeRespuesta = `A continuación responde a las preguntas para actualizar tus datos de contacto como teléfono u otros:
 Tipo de documento 📇 Responde con el número de acuerdo a la opción correspondiente:
 1️⃣ Acta de Nacimiento
-2️⃣ Cédula de Identidad (venezolana)3️⃣ Cédula de Ciudadanía (colombiana)
+2️⃣ Cédula de Identidad (venezolana)
+3️⃣ Cédula de Ciudadanía (colombiana)
 4️⃣ Pasaporte
 5️⃣ Cédula de Extranjería
-6️⃣ Indocumentado
-7️⃣ Otro`;
+6️⃣ Otro`;
       }
       /*
       client.messages
@@ -837,18 +765,11 @@ Tipo de documento 📇 Responde con el número de acuerdo a la opción correspon
   }
 
   function actualizarEncuesta($encuesta) {
-    //console.log('CONVERSA EN CREAR ENCUESTA: ', $conversa);
-   
-    //console.log('CREAR ENCUESTA CONVERSA::', $conversa);
-    //console.log('CREAR ENCUESTA FECHA::', $conversa.fecha_nacimiento);
-   
+ 
     /*
     if(!$encuesta.fecha_nacimiento){
-      //$conversa.fecha_nacimiento = NULL;
-      //console.log('CONVERSA NULL::', $conversa.fecha_nacimiento);
       $encuesta.fecha_nacimiento = "1900-01-01";
     }else if(typeof($encuesta.fecha_nacimiento) != 'string'){
-      //console.log('CONVERSA NO ES NULL');
       $encuesta.fecha_nacimiento = $encuesta.fecha_nacimiento.toISOString();
       $encuesta.fecha_nacimiento = $encuesta.fecha_nacimiento.substring(0,10);
     }*/
@@ -883,33 +804,6 @@ Tipo de documento 📇 Responde con el número de acuerdo a la opción correspon
      updated_at = '${$encuesta.updated_at}'
      WHERE id = ${$encuesta.id}`;
 
-    //version anterior
-    /*const sqlCreaEncuesta = `UPDATE encuesta SET conversation_start = ${$conversa.conversation_start}, 
-    encuesta_chatbot = ${$conversa.encuesta_chatbot}, paso_chatbot = ${$conversa.paso_chatbot}, pregunta = ${$conversa.pregunta},
-    primer_nombre = '${$conversa.primer_nombre}', segundo_nombre = '${$conversa.segundo_nombre}', primer_apellido = '${$conversa.primer_apellido}', segundo_apellido = '${$conversa.segundo_apellido}',
-    sexo = '${$conversa.sexo}', fecha_nacimiento = '${$conversa.fecha_nacimiento}', codigo_encuesta = '${$conversa.codigo_encuesta}',
-    nacionalidad = '${$conversa.nacionalidad}', cual_otro_nacionalidad = '${$conversa.cual_otro_nacionalidad}', tipo_documento = '${$conversa.tipo_documento}',
-    cual_otro_tipo_documento = '${$conversa.cual_otro_tipo_documento}', numero_documento = '${$conversa.numero_documento}',
-    compartir_foto_documento_encuestado = ${$conversa.compartir_foto_documento_encuestado}, url_foto_documento_encuestado = '${$conversa.url_foto_documento_encuestado}',
-    como_llego_al_formulario = '${$conversa.como_llego_al_formulario}', donde_encontro_formulario = '${$conversa.donde_encontro_formulario}', fecha_llegada_pais = '${$conversa.fecha_llegada_pais}',
-    estar_dentro_colombia = ${$conversa.estar_dentro_colombia}, id_departamento_destino_final = ${$conversa.id_departamento_destino_final},
-    id_municipio_destino_final = ${$conversa.id_municipio_destino_final}, 
-    nombre_municipio_destino_final = '${$conversa.nombre_municipio_destino_final}',
-     razon_elegir_destino_final = '${$conversa.razon_elegir_destino_final}', otra_razon_elegir_destino_final = '${$conversa.otra_razon_elegir_destino_final}',
-     recibe_transporte_humanitario = ${$conversa.recibe_transporte_humanitario},
-     pais_destino_final = '${$conversa.pais_destino_final}',
-     total_miembros_hogar = ${$conversa.total_miembros_hogar}, miembro_hogar_preguntando = ${$conversa.miembro_hogar_preguntando},
-     id_departamento = ${$conversa.id_departamento}, ubicacion = '${$conversa.ubicacion}', numero_entregado_venesperanza = ${$conversa.numero_entregado_venesperanza},
-     numero_contacto = '${$conversa.numero_contacto}', linea_contacto_propia = ${$conversa.linea_contacto_propia},
-     linea_asociada_whatsapp = ${$conversa.linea_asociada_whatsapp}, numero_whatsapp_principal = '${$conversa.numero_whatsapp_principal}',
-     numero_alternativo = '${$conversa.numero_alternativo}', linea_contacto_alternativo = ${$conversa.linea_contacto_alternativo},
-     linea_alternativa_asociada_whatsapp = ${$conversa.linea_alternativa_asociada_whatsapp}, correo_electronico = '${$conversa.correo_electronico}',
-     tiene_cuenta_facebook = ${$conversa.tiene_cuenta_facebook}, cuenta_facebook = '${$conversa.cuenta_facebook}',
-     podemos_contactarte = ${$conversa.podemos_contactarte}, forma_contactarte = '${$conversa.forma_contactarte}',
-     otra_forma_contactarte = '${$conversa.otra_forma_contactarte}', comentario = '${$conversa.comentario}'
-     where id = ${$conversa.id}`;*/
-     //console.log('VALOR SQL', sqlCreaEncuesta);
-
     connection.query(sqlCreaEncuesta, (error, res) => {
       if (error) throw error;
 
@@ -922,7 +816,7 @@ Tipo de documento 📇 Responde con el número de acuerdo a la opción correspon
 
     //console.log('DATOS QUE LLEGAN A ACTUALIZAR LLEGADA::: ', $llegada)
     //campos finales
-    console.log('ESTOY EN ACTUALIZAR LLEGADA', $llegada);
+    //console.log('ESTOY EN ACTUALIZAR LLEGADA', $llegada);
     $llegada.updated_at = new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '') ;
 
     const sqlLlegada = `UPDATE llegadas SET pregunta = ${$llegada.pregunta},
@@ -954,7 +848,7 @@ Tipo de documento 📇 Responde con el número de acuerdo a la opción correspon
       if (error) console.log('ERROR EN ACTUALIZAR LLEGADA ENCUESTA:: ', error);
 
       if (encuesta.length > 0) { 
-        console.log('SI ENCONTRO UNA ENCUESTA CON EL WAID::');
+        //console.log('SI ENCONTRO UNA ENCUESTA CON EL WAID::');
         $llegadaEncuesta.id_encuesta = encuesta[0]['id'];
         actualizarLlegada($llegadaEncuesta);
         //mensajeRespuesta = `Ya has respondido el formulario. Gracias`;
@@ -994,7 +888,7 @@ Tipo de documento 📇 Responde con el número de acuerdo a la opción correspon
 
   function actualizarDatosContactoEncuesta($datosContactoEncuesta){
 
-    console.log('ENTRA A ACTUALIZAR DATOS CONTACTOENCUESTA!!!');
+    //console.log('ENTRA A ACTUALIZAR DATOS CONTACTOENCUESTA!!!');
     //consulta encuesta con $llegadaEncuesta waId, toma id_encuesta y se lo asigna a llegadas where waid = encuesta.waId;
     const sqlConsultaEncuesta = `SELECT id FROM encuesta WHERE waId = '${$datosContactoEncuesta.waId}' AND tipo_documento = '${$datosContactoEncuesta.tipo_documento}' AND numero_documento = '${$datosContactoEncuesta.numero_documento}'`;
 
@@ -1003,7 +897,7 @@ Tipo de documento 📇 Responde con el número de acuerdo a la opción correspon
       if (error) console.log('ERROR EN ACTUALIZAR DATOS CONTACTO ENCUESTA:: ', error);
 
       if (encuesta.length > 0) { 
-        console.log('SI ENCONTRO UNA ENCUESTA CON EL WAID EN ACTUALIZAR DATOS CONTACTO::');
+        //console.log('SI ENCONTRO UNA ENCUESTA CON EL WAID EN ACTUALIZAR DATOS CONTACTO::');
         $datosContactoEncuesta.id_encuesta = encuesta[0]['id'];
         actualizarDatosContacto($datosContactoEncuesta);
        
@@ -1905,7 +1799,10 @@ Escribe tu número de contacto en números 📞` ;
                     emailregex = /^(?:[^<>()[\].,;:\s@"]+(\.[^<>()[\].,;:\s@"]+)*|"[^\n"]+")@(?:[^<>()[\].,;:\s@"]+\.)+[^<>()[\]\.,;:\s@"]{2,63}$/i;
                     //console.log('TEST EMAIL:: ', emailregex.test(req.body.Body));
                     //if(req.body.Body === 'NO'){
-                    if(req.body.incomingMessage === 'NO'){
+                    newVariableIncomingMessage = req.body.incomingMessage.toLowerCase();
+
+                    //if(req.body.incomingMessage === 'NO'){
+                    if(newVariableIncomingMessage === 'no'){
                       $formulario.pregunta += 1;
                       actualizarEncuesta($formulario);
                       conversation.tipo_formulario = null;
@@ -2008,15 +1905,6 @@ En el programa #VenEsperanza no cobramos ni pedimos remuneración por ningún se
                         break;
 
                       case '6':
-                        $formulario.tipo_documento = "Indocumentado";
-
-                        $formulario.pregunta += 1;// pregunta 2
-                        actualizarLlegada($formulario);
-                        mensajeRespuesta = `Escribe por favor tu número de documento 📇 (no utilices símbolos, solo números) Ejemplo: 123456789`;
-
-                      break;
-
-                      case '7':
                         $formulario.tipo_documento = "Otro";
                         $formulario.pregunta += 1;// pregunta 2
                         actualizarLlegada($formulario);
@@ -2031,8 +1919,7 @@ En el programa #VenEsperanza no cobramos ni pedimos remuneración por ningún se
 3️⃣ Cédula de Ciudadanía (colombiana)
 4️⃣ Pasaporte
 5️⃣ Cédula de Extranjería
-6️⃣ Indocumentado
-7️⃣ Otro`;
+6️⃣ Otro`;
                         break;
                     
 
@@ -2048,8 +1935,7 @@ En el programa #VenEsperanza no cobramos ni pedimos remuneración por ningún se
 3️⃣ Cédula de Ciudadanía (colombiana)
 4️⃣ Pasaporte
 5️⃣ Cédula de Extranjería
-6️⃣ Indocumentado
-7️⃣ Otro`;
+6️⃣ Otro`;
                   }
               break;
 
@@ -2173,7 +2059,7 @@ Escribe el nombre del jefe de hogar`;
                       if(pattern.test(req.body.incomingMessage)){
 
                         //$formulario.telefono = req.body.Body;
-                        $formulario.numero_contacto
+                        $formulario.numero_contacto = req.body.incomingMessage;
                             $formulario.pregunta += 1; //va a pregunta 5
       
                             actualizarLlegada($formulario);
@@ -2265,35 +2151,11 @@ Escribe tu número de teléfono en números 📞`;
 
               break;
 
-
-
-              
               case 6:
+
                 try {
 
-                  //console.log('LO QUE HAY EN BODY 28: ', req.body.Body);
-                  //const opcionesDepartamento = ['2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15', '16',
-                    //'17', '18', '19', '20', '21', '22', '23', '24', '25', '26', '27', '28', '29', '30', '31', '32', '33', '34', '35'];
-
                   const opcionesSeleccion= ['1','2','3','4','5','6','7','8','9','10','11','12','13'];
-
-
-                  //if (req.body.Body === '1') {
-                    /*
-                  if(req.body.incomingMessage === '1'){
-                    //$formulario.pregunta += 1; //va a pregunta 5
-                    $formulario.id_departamento = null;
-                    //$formulario.id_municipio_destino_final = null;
-                    actualizarLlegada($formulario);
-
-                    conversation.tipo_formulario = null;
-                    actualizarConversacion(conversation);
-
-                    mensajeRespuesta = `Gracias por informar de tu llegada a destino!
-                    Ahora por favor respóndeme con el número correspondiente a lo que quieres hacer:\n
-                    1️⃣ Quieres diligenciar el formulario de registro ✍🏻\n
-                    2️⃣ Quieres informar de tu llegada a destino ☝🏻\n
-                    3️⃣ Ya te registraste antes y quieres actualizar tus datos de contacto  🙌🏻 `;*/
                   
                     if (opcionesSeleccion.includes(req.body.incomingMessage)) {
                       
@@ -2306,7 +2168,7 @@ Escribe tu número de teléfono en números 📞`;
                           $formulario.donde_te_encuentras = 'Otro';
                           actualizarLlegada($formulario);
                           //mensajeRespuesta = `Escribe tu número de contacto en números 📞 `;
-                          mensajeRespuesta = `Cuál?`;
+                          mensajeRespuesta = `En cuál otro lugar te encuentras`;
                         break;
 
                         case '2':
@@ -2316,11 +2178,10 @@ Escribe tu número de teléfono en números 📞`;
                           conversation.tipo_formulario = null;
                           actualizarConversacion(conversation);
                           //mensajeRespuesta = `Escribe tu número de contacto en números 📞 `;
-                          mensajeRespuesta = `Gracias por informar de tu llegada a destino!
-Ahora por favor respóndeme con el número correspondiente a lo que quieres hacer:\n
-1️⃣ Quieres diligenciar el formulario de registro ✍🏻\n
-2️⃣ Quieres informar de tu llegada a destino ☝🏻\n
-3️⃣ Ya te registraste antes y quieres actualizar tus datos de contacto  🙌🏻 `;
+                          mensajeRespuesta = `¡Gracias por reportar tu llegada al destino!
+Si eres preseleccionado/a el programa #VenEsperanza se comunicará contigo
+Recuerda:
+En el programa #VenEsperanza no cobramos ni pedimos remuneración por ningún servicio a la comunidad, no tenemos intermediarios.`;
                         break;
 
                         case '3':
@@ -2330,11 +2191,10 @@ Ahora por favor respóndeme con el número correspondiente a lo que quieres hace
                           conversation.tipo_formulario = null;
                           actualizarConversacion(conversation);
                           //mensajeRespuesta = `Escribe tu número de contacto en números 📞 `;
-                          mensajeRespuesta = `Gracias por informar de tu llegada a destino!
-Ahora por favor respóndeme con el número correspondiente a lo que quieres hacer:\n
-1️⃣ Quieres diligenciar el formulario de registro ✍🏻\n
-2️⃣ Quieres informar de tu llegada a destino ☝🏻\n
-3️⃣ Ya te registraste antes y quieres actualizar tus datos de contacto  🙌🏻`;
+                          mensajeRespuesta = `¡Gracias por reportar tu llegada al destino!
+Si eres preseleccionado/a el programa #VenEsperanza se comunicará contigo
+Recuerda:
+En el programa #VenEsperanza no cobramos ni pedimos remuneración por ningún servicio a la comunidad, no tenemos intermediarios.`;
                         break;
 
                         case '4':
@@ -2344,11 +2204,10 @@ Ahora por favor respóndeme con el número correspondiente a lo que quieres hace
                           conversation.tipo_formulario = null;
                           actualizarConversacion(conversation);
                           //mensajeRespuesta = `Escribe tu número de contacto en números 📞 `;
-                          mensajeRespuesta = `Gracias por informar de tu llegada a destino!
-Ahora por favor respóndeme con el número correspondiente a lo que quieres hacer:\n
-1️⃣ Quieres diligenciar el formulario de registro ✍🏻\n
-2️⃣ Quieres informar de tu llegada a destino ☝🏻\n
-3️⃣ Ya te registraste antes y quieres actualizar tus datos de contacto  🙌🏻`;
+                          mensajeRespuesta = `¡Gracias por reportar tu llegada al destino!
+Si eres preseleccionado/a el programa #VenEsperanza se comunicará contigo
+Recuerda:
+En el programa #VenEsperanza no cobramos ni pedimos remuneración por ningún servicio a la comunidad, no tenemos intermediarios.`;
                         break;
 
                         case '5':
@@ -2358,11 +2217,10 @@ Ahora por favor respóndeme con el número correspondiente a lo que quieres hace
                           conversation.tipo_formulario = null;
                           actualizarConversacion(conversation);
                           //mensajeRespuesta = `Escribe tu número de contacto en números 📞 `;
-                          mensajeRespuesta = `Gracias por informar de tu llegada a destino!
-Ahora por favor respóndeme con el número correspondiente a lo que quieres hacer:\n
-1️⃣ Quieres diligenciar el formulario de registro ✍🏻\n
-2️⃣ Quieres informar de tu llegada a destino ☝🏻\n
-3️⃣ Ya te registraste antes y quieres actualizar tus datos de contacto  🙌🏻`;
+                          mensajeRespuesta = `¡Gracias por reportar tu llegada al destino!
+Si eres preseleccionado/a el programa #VenEsperanza se comunicará contigo
+Recuerda:
+En el programa #VenEsperanza no cobramos ni pedimos remuneración por ningún servicio a la comunidad, no tenemos intermediarios.`;
                         break;
 
                         case '6':
@@ -2372,11 +2230,9 @@ Ahora por favor respóndeme con el número correspondiente a lo que quieres hace
                           conversation.tipo_formulario = null;
                           actualizarConversacion(conversation);
                           //mensajeRespuesta = `Escribe tu número de contacto en números 📞 `;
-                          mensajeRespuesta = `Gracias por informar de tu llegada a destino!
-Ahora por favor respóndeme con el número correspondiente a lo que quieres hacer:\n
-1️⃣ Quieres diligenciar el formulario de registro ✍🏻\n
-2️⃣ Quieres informar de tu llegada a destino ☝🏻\n
-3️⃣ Ya te registraste antes y quieres actualizar tus datos de contacto  🙌🏻`;
+                          mensajeRespuesta = `¡Gracias por reportar tu llegada al destino!
+Si eres preseleccionado/a el programa #VenEsperanza se comunicará contigo
+Recuerda:En el programa #VenEsperanza no cobramos ni pedimos remuneración por ningún servicio a la comunidad, no tenemos intermediarios.`;
                         break;
 
                         case '7':
@@ -2386,11 +2242,10 @@ Ahora por favor respóndeme con el número correspondiente a lo que quieres hace
                           conversation.tipo_formulario = null;
                           actualizarConversacion(conversation);
                           //mensajeRespuesta = `Escribe tu número de contacto en números 📞 `;
-                          mensajeRespuesta = `Gracias por informar de tu llegada a destino!
-Ahora por favor respóndeme con el número correspondiente a lo que quieres hacer:\n
-1️⃣ Quieres diligenciar el formulario de registro ✍🏻\n
-2️⃣ Quieres informar de tu llegada a destino ☝🏻\n
-3️⃣ Ya te registraste antes y quieres actualizar tus datos de contacto  🙌🏻`;
+                          mensajeRespuesta = `¡Gracias por reportar tu llegada al destino!
+Si eres preseleccionado/a el programa #VenEsperanza se comunicará contigo
+Recuerda:
+En el programa #VenEsperanza no cobramos ni pedimos remuneración por ningún servicio a la comunidad, no tenemos intermediarios.`;
                         break;
 
                         case '8':
@@ -2400,11 +2255,10 @@ Ahora por favor respóndeme con el número correspondiente a lo que quieres hace
                           conversation.tipo_formulario = null;
                           actualizarConversacion(conversation);
                           //mensajeRespuesta = `Escribe tu número de contacto en números 📞 `;
-                          mensajeRespuesta = `Gracias por informar de tu llegada a destino!
-Ahora por favor respóndeme con el número correspondiente a lo que quieres hacer:\n
-1️⃣ Quieres diligenciar el formulario de registro ✍🏻\n
-2️⃣ Quieres informar de tu llegada a destino ☝🏻\n
-3️⃣ Ya te registraste antes y quieres actualizar tus datos de contacto  🙌🏻`;
+                          mensajeRespuesta = `¡Gracias por reportar tu llegada al destino!
+Si eres preseleccionado/a el programa #VenEsperanza se comunicará contigo
+Recuerda:
+En el programa #VenEsperanza no cobramos ni pedimos remuneración por ningún servicio a la comunidad, no tenemos intermediarios.`;
                           
                         break;
 
@@ -2415,11 +2269,10 @@ Ahora por favor respóndeme con el número correspondiente a lo que quieres hace
                           conversation.tipo_formulario = null;
                           actualizarConversacion(conversation);
                           //mensajeRespuesta = `Escribe tu número de contacto en números 📞 `;
-                          mensajeRespuesta = `Gracias por informar de tu llegada a destino!
-Ahora por favor respóndeme con el número correspondiente a lo que quieres hacer:\n
-1️⃣ Quieres diligenciar el formulario de registro ✍🏻\n
-2️⃣ Quieres informar de tu llegada a destino ☝🏻\n
-3️⃣ Ya te registraste antes y quieres actualizar tus datos de contacto  🙌🏻`;
+                          mensajeRespuesta = `¡Gracias por reportar tu llegada al destino!
+Si eres preseleccionado/a el programa #VenEsperanza se comunicará contigo
+Recuerda:
+En el programa #VenEsperanza no cobramos ni pedimos remuneración por ningún servicio a la comunidad, no tenemos intermediarios.`;
                         break;
 
                         case '10':
@@ -2429,11 +2282,10 @@ Ahora por favor respóndeme con el número correspondiente a lo que quieres hace
                           conversation.tipo_formulario = null;
                           actualizarConversacion(conversation);
                           //mensajeRespuesta = `Escribe tu número de contacto en números 📞 `;
-                          mensajeRespuesta = `Gracias por informar de tu llegada a destino!
-Ahora por favor respóndeme con el número correspondiente a lo que quieres hacer:\n
-1️⃣ Quieres diligenciar el formulario de registro ✍🏻\n
-2️⃣ Quieres informar de tu llegada a destino ☝🏻\n
-3️⃣ Ya te registraste antes y quieres actualizar tus datos de contacto  🙌🏻`;
+                          mensajeRespuesta = `¡Gracias por reportar tu llegada al destino!
+Si eres preseleccionado/a el programa #VenEsperanza se comunicará contigo
+Recuerda:
+En el programa #VenEsperanza no cobramos ni pedimos remuneración por ningún servicio a la comunidad, no tenemos intermediarios.`;
                         break;
 
                         case '11':
@@ -2443,11 +2295,10 @@ Ahora por favor respóndeme con el número correspondiente a lo que quieres hace
                           conversation.tipo_formulario = null;
                           actualizarConversacion(conversation);
                           //mensajeRespuesta = `Escribe tu número de contacto en números 📞 `;
-                          mensajeRespuesta = `Gracias por informar de tu llegada a destino!
-Ahora por favor respóndeme con el número correspondiente a lo que quieres hacer:\n
-1️⃣ Quieres diligenciar el formulario de registro ✍🏻\n
-2️⃣ Quieres informar de tu llegada a destino ☝🏻\n
-3️⃣ Ya te registraste antes y quieres actualizar tus datos de contacto  🙌🏻`;
+                          mensajeRespuesta = `¡Gracias por reportar tu llegada al destino!
+Si eres preseleccionado/a el programa #VenEsperanza se comunicará contigo
+Recuerda:
+En el programa #VenEsperanza no cobramos ni pedimos remuneración por ningún servicio a la comunidad, no tenemos intermediarios.`;
                         break;
 
                         case '12':
@@ -2457,11 +2308,10 @@ Ahora por favor respóndeme con el número correspondiente a lo que quieres hace
                           conversation.tipo_formulario = null;
                           actualizarConversacion(conversation);
                           //mensajeRespuesta = `Escribe tu número de contacto en números 📞 `;
-                          mensajeRespuesta = `Gracias por informar de tu llegada a destino!
-Ahora por favor respóndeme con el número correspondiente a lo que quieres hacer:\n
-1️⃣ Quieres diligenciar el formulario de registro ✍🏻\n
-2️⃣ Quieres informar de tu llegada a destino ☝🏻\n
-3️⃣ Ya te registraste antes y quieres actualizar tus datos de contacto  🙌🏻`;
+                          mensajeRespuesta = `¡Gracias por reportar tu llegada al destino!
+Si eres preseleccionado/a el programa #VenEsperanza se comunicará contigo
+Recuerda: 
+En el programa #VenEsperanza no cobramos ni pedimos remuneración por ningún servicio a la comunidad, no tenemos intermediarios.`;
                         break;
                       
                         default:
@@ -2609,11 +2459,10 @@ Ahora por favor respóndeme con el número correspondiente a lo que quieres hace
                           actualizarLlegada($formulario);
                           conversation.tipo_formulario = null;
                           actualizarConversacion(conversation);
-                          mensajeRespuesta = `Gracias por informar de tu llegada a destino!
-Ahora por favor respóndeme con el número correspondiente a lo que quieres hacer:\n
-1️⃣ Quieres diligenciar el formulario de registro ✍🏻\n
-2️⃣ Quieres informar de tu llegada a destino ☝🏻\n
-3️⃣ Ya te registraste antes y quieres actualizar tus datos de contacto  🙌🏻`;
+                          mensajeRespuesta = `¡Gracias por reportar tu llegada al destino!
+Si eres preseleccionado/a el programa #VenEsperanza se comunicará contigo
+Recuerda:
+En el programa #VenEsperanza no cobramos ni pedimos remuneración por ningún servicio a la comunidad, no tenemos intermediarios.`;
                 }catch{
                   mensajeRespuesta = `Gracias 🙂, ten presente que no puedo reconocer imágenes, audios, ni emojis. Nos podemos comunicar por medio de texto o digitando el número de las opciones que te indico en mi pregunta.\n
 En cuál otro lugar te encuentras?`;
@@ -2686,15 +2535,6 @@ En cuál otro lugar te encuentras?`;
                         break;
 
                       case '6':
-                        $formulario.tipo_documento = "Indocumentado";
-
-                        $formulario.pregunta += 1;// pregunta 2
-                        actualizarDatosContacto($formulario);
-                        mensajeRespuesta = `Escribe por favor tu número de documento 📇 (no utilices símbolos, solo números) Ejemplo: 123456789`;
-
-                      break;
-
-                      case '7':
                         $formulario.tipo_documento = "Otro";
                         $formulario.pregunta += 1;// pregunta 2
                         actualizarDatosContacto($formulario);
@@ -2709,8 +2549,7 @@ En cuál otro lugar te encuentras?`;
 3️⃣ Cédula de Ciudadanía (colombiana)
 4️⃣ Pasaporte
 5️⃣ Cédula de Extranjería
-6️⃣ Indocumentado
-7️⃣ Otro`;
+6️⃣ Otro`;
                         break;
                     
 
@@ -2726,8 +2565,7 @@ En cuál otro lugar te encuentras?`;
 3️⃣ Cédula de Ciudadanía (colombiana)
 4️⃣ Pasaporte
 5️⃣ Cédula de Extranjería
-6️⃣ Indocumentado
-7️⃣ Otro`;
+6️⃣ Otro`;
                   }
               break;
 
@@ -2740,7 +2578,7 @@ En cuál otro lugar te encuentras?`;
                   const pattern = new RegExp('^[0-9]+$', 'i');
 
                   if(pattern.test($formulario.numero_documento)){
-                    console.log('CUMPLE CON PATTERN EN REPORTELLEGADA');
+                    //console.log('CUMPLE CON PATTERN EN REPORTELLEGADA');
                   //if($formulario.numero_documento.length>0){
                   
                     $formulario.pregunta += 1;// pregunta 3. 
@@ -2759,7 +2597,7 @@ Escribe por favor tu número de documento 📇 (no utilices símbolos, solo núm
                     }
 
                 } catch (error) {
-                  console.log('EL ERROR EN PASO 2 REPORTE LLEGADA: : ', error);
+                  //console.log('EL ERROR EN PASO 2 REPORTE LLEGADA: : ', error);
                     $formulario.pregunta = 2; //vuelve a entrar a paso 2
                     actualizarDatosContacto($formulario);
                     mensajeRespuesta = `Gracias 🙂, ten presente que no puedo reconocer imágenes, audios, ni emojis. Nos podemos comunicar por medio de texto o digitando el número de las opciones que te indico en mi pregunta.\n
@@ -2802,16 +2640,18 @@ Escribe tu número de teléfono en números 📞` ;
                   emailregex = /^(?:[^<>()[\].,;:\s@"]+(\.[^<>()[\].,;:\s@"]+)*|"[^\n"]+")@(?:[^<>()[\].,;:\s@"]+\.)+[^<>()[\]\.,;:\s@"]{2,63}$/i;
                   //console.log('TEST EMAIL:: ', emailregex.test(req.body.Body));
                   //if(req.body.Body === 'NO'){
-                  if(req.body.incomingMessage === 'NO'){
+                  newVariableIncomingMessage = req.body.incomingMessage.toLowerCase();
+
+                    //if(req.body.incomingMessage === 'NO'){
+                  if(newVariableIncomingMessage === 'no'){
                     $formulario.pregunta = null;
                     actualizarDatosContacto($formulario);
                     conversation.tipo_formulario = null;
                     actualizarConversacion(conversation);
-                    mensajeRespuesta = `¡Gracias por actualizar tus Datos!
-Ahora por favor respóndeme con el número correspondiente a lo que quieres hacer:\n
-1️⃣ Quieres diligenciar el formulario de registro ✍🏻\n
-2️⃣ Quieres informar de tu llegada a destino ☝🏻\n
-3️⃣ Ya te registraste antes y quieres actualizar tus datos de contacto  🙌🏻 `;
+                    mensajeRespuesta = `¡Gracias por actualizar tus datos!
+Si eres preseleccionado/a el programa #VenEsperanza se comunicará contigo
+Recuerda:
+En el programa #VenEsperanza no cobramos ni pedimos remuneración por ningún servicio a la comunidad, no tenemos intermediarios.`;
                   
 
                   //}else if(emailregex.test(req.body.Body)) {
@@ -2821,16 +2661,15 @@ Ahora por favor respóndeme con el número correspondiente a lo que quieres hace
                     
                     //$formulario.correo_electronico = req.body.Body;
                     $formulario.correo_electronico = req.body.incomingMessage;
-                    console.log('correo a guardar: ', $formulario.correo_electronico);
+                    //console.log('correo a guardar: ', $formulario.correo_electronico);
                     actualizarDatosContacto($formulario);
                     conversation.tipo_formulario = null;
                     //console.log('CONVERSACION ACTUALIZAR:: ', conversation);
                     actualizarConversacion(conversation);
                     mensajeRespuesta = `¡Gracias por actualizar tus datos!
-Por favor respóndeme con el número correspondiente a lo que quieres hacer:\n
-1️⃣ Quieres diligenciar el formulario de registro ✍🏻\n
-2️⃣ Quieres informar de tu llegada a destino ☝🏻\n
-3️⃣ Ya te registraste antes y quieres actualizar tus datos de contacto  🙌🏻 `;
+Si eres preseleccionado/a el programa #VenEsperanza se comunicará contigo
+Recuerda:
+En el programa #VenEsperanza no cobramos ni pedimos remuneración por ningún servicio a la comunidad, no tenemos intermediarios.`;
                   
                   }else{
                     mensajeRespuesta = `Gracias 🙂, ten presente que no puedo reconocer imágenes, audios, ni emojis. Nos podemos comunicar por medio de texto o digitando el número de las opciones que te indico en mi pregunta.
@@ -2918,7 +2757,7 @@ Por favor respóndeme con el número correspondiente a lo que quieres hacer:\n
             break;
   
             default:
-              mensajeRespuesta = `Autorizacion default Gracias 🙂, ten presente que no puedo reconocer imágenes, audios, ni emojis. Nos podemos comunicar por medio de texto o digitando el número de las opciones que te indico en mi pregunta.
+              mensajeRespuesta = `Gracias 🙂, ten presente que no puedo reconocer imágenes, audios, ni emojis. Nos podemos comunicar por medio de texto o digitando el número de las opciones que te indico en mi pregunta.
 Para iniciar este chat 💬 debes autorizar el uso de tus datos. ✅ 
 Responde:
 1️⃣ Si, para aceptar los términos y condiciones del programa #VenEsperanza
@@ -2929,7 +2768,7 @@ Responde:
           
         } catch (error) {
           //console.log('REQ BODY MESSAGE TEXT:: ',req.body.message.content.text );
-          mensajeRespuesta = `Autorizacion catch Gracias 🙂, ten presente que no puedo reconocer imágenes, audios, ni emojis. Nos podemos comunicar por medio de texto o digitando el número de las opciones que te indico en mi pregunta.
+          mensajeRespuesta = `Gracias 🙂, ten presente que no puedo reconocer imágenes, audios, ni emojis. Nos podemos comunicar por medio de texto o digitando el número de las opciones que te indico en mi pregunta.
 Para iniciar este chat 💬 debes autorizar el uso de tus datos. ✅ 
 Responde:
 1️⃣ Si, para aceptar los términos y condiciones del programa #VenEsperanza
@@ -2960,7 +2799,6 @@ Responde:
     }
 
     //twilio
-    
     /*
     client.messages
       .create({
@@ -2973,134 +2811,12 @@ Responde:
       .catch(e => { console.error('Got an error:', e.code, e.message); });
 
       */
-      
 
-      //NUEVO MESASGE BIRD
-      //LO QUE VOY A RESPONDER::
-
-       
-      console.log(':::::LO QUE VOY A RESPONDER::::', mensajeRespuesta);
+      //console.log(':::::LO QUE VOY A RESPONDER::::', mensajeRespuesta);
       //console.log(':::TO::: ', '+'+req.body.contact.msisdn);
       //console.log('CHANNELID:: ', req.body.message.channelId);
       //console.log('::::CONVERSATION ID:::: ', req.body.conversation.id)
-      
-    
-     /*
-      messagebird.conversations.reply('6634985ef9c4481bb254a1e612317c31',
-        {
-          type: 'text',
-          content: {
-            text: mensajeRespuesta,
-          },
-        },
-        function(err, response) {
-          if (err) {
-            return console.log(err);
-          }
-          console.log(':::LA RESPUESTA ENVIADA A USUARIO:::',response);
-        },
-      );*/
-      
-        
-      //var toNumber = '+'+req.body.contact.msisdn;
-     /*
-      messagebird.conversations.reply(
-        'd9d8a497b6ff4f4498bc9503aaae3886',
-        {
-          type: 'text',
-          content: {
-            text: 'OIGAAAA',
-          },
-        },
-        function(err, response) {
-          if (err) {
-            return console.log(err);
-          }
-          console.log(response);
-        },
-      );
-      */
-
-
-      /*
-
-      messagebird.conversations.reply('d9d8a497b6ff4f4498bc9503aaae3886', {
-        'type': 'text',
-        'content': {
-          'text': mensajeRespuesta 
-
-          
-          'hsm': {
-            'namespace': '5ba2d0b7_f2c6_433b_a66e_57b009ceb6ff',
-            'templateName': 'options',
-            'language': {
-              'policy': 'deterministic',
-              'code': 'en'
-            },
-            'params': [
-              { 'default': 'Bob' },
-              { 'default': 'tomorrow!' }
-            ]
-          }
-        }
-      }, function (err, response) {
-        if (err) {
-          return console.log(err);
-        }
-        console.log(response);
-      });
-      */
-
-          /*
-          messagebird.conversations.reply({
-            'to': '573229562177',
-            'channelId': '3fb8e8175c8d4220b5b38224631fb0c1',
-            'type': 'hsm',
-              'content': {
-                'hsm': {
-                  'namespace': '5f62b497_b385_47b5_956e_b86523ea56dd',
-                  'templateName': 'notifications',
-                  'language': {
-                    'policy': 'deterministic',
-                    'code': 'en'
-                  },
-                  'params': [
-                    {"default": "100 stroopwafels"},
-                    {"default": "SnackBird"},
-                    {"default": "19.00"},
-                    {"default": "https://messagebird.com"}
-                  ]
-                }
-              }
-            }, function (err, response) {
-              if (err) {
-                return console.log(err);
-              }
-              console.log(response);
-            });*/
-      
-      /*
-      var params = {
-        //'to':  '+573229562177',
-        //'to': '573175049604',
-        'to': req.body['message.from'],
-        //'from': '3fb8e8175c8d4220b5b38224631fb0c1',
-        'from': '9673e34a-1c1e-4a61-be4d-0432abd4a98f',
-        //'from': '+447418310508',
-        'type': 'text',
-        'content': {
-                'text': mensajeRespuesta,
-              }
-      }*/
-
-      
-      /*
-      messagebird.conversations.send(params, function (err, response) {
-        if (err) {
-        return console.log('EL ERROR::: ', err);
-        }
-        console.log(response);
-      });*/
+     
       sendMessageWhatsapp({
         'to': req.body['message.from'],
         'from': '9673e34a-1c1e-4a61-be4d-0432abd4a98f',
@@ -3109,44 +2825,7 @@ Responde:
                 'text': mensajeRespuesta,
               }
       });
-      //ERROR NOT IMPLEMENTED STATUS CODE 501
-      
-    
-      
-      /*
-      messagebird.conversations.start({
-        //'to': '573229562177',
-        'to': '573175049604',
-        'channelId': '3fb8e8175c8d4220b5b38224631fb0c1' ,
-        'type': 'text',
-        'content': { 'text': mensajeRespuesta }
-      }, function (err, response) {
-        if (err) {
-          return console.log(err);
-        }
-        console.log(response);
-      });
-      */
-      
 
-      
-      
-      //9673e34a-1c1e-4a61-be4d-0432abd4a98f
-      /*
-      messagebird.conversations.reply('9673e34a-1c1e-4a61-be4d-0432abd4a98f',{
-        'to': '+31687654321',
-        //'to':'+573175049604',
-        //'channelId': '3fb8e8175c8d4220b5b38224631fb0c1' ,
-        'type': 'text',
-        'content': { 'text': mensajeRespuesta }
-      }, function (err, response) {
-        if (err) {
-          return console.log(err);
-        }
-        console.log(response);
-      });*/
-
-      
   }
 
 
@@ -3154,12 +2833,12 @@ Responde:
 
 connection.connect(error => {
   if (error) throw error;
-  console.log('Database server running OK');
+  //console.log('Database server running OK');
 });
 
 //puerto de despliegue
 //app.listen(3000, function () {
 app.listen(process.env.APP_PORT, function(){
-  console.log('Example app listening on port '+process.env.APP_PORT+'!');
+  //console.log('Example app listening on port '+process.env.APP_PORT+'!');
   //console.log('Example app listening on port 3000!');
 });
