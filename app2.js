@@ -1241,7 +1241,7 @@ Escribe por favor tu número de documento 📇 (no utilices símbolos, solo núm
                       $formulario.como_llego_al_formulario = "Ví un pendón en un albergue";
                       $formulario.donde_encontro_formulario = null;
                       actualizarEncuesta($formulario);
-                      mensajeRespuesta = `¿En qué fecha tu y tu grupo familiar llegaron al país?. Envía la fecha en formato AAAA-MM-DD para (Año-Mes-Día. Ejemplo: 2000-10-26)`;
+                      mensajeRespuesta = `¿En qué fecha tÚ y tu grupo familiar llegaron al país🇨🇴?. Envía la fecha de esta manera AAAA-MM-DD para (Año-Mes-Día. Ejemplo: 2000-10-26)`;
 
                       break;
 
@@ -1250,7 +1250,7 @@ Escribe por favor tu número de documento 📇 (no utilices símbolos, solo núm
                       $formulario.como_llego_al_formulario = "Recibí un volante en el albergue";
                       $formulario.donde_encontro_formulario = null;
                       actualizarEncuesta($formulario);
-                      mensajeRespuesta = `¿En qué fecha tu y tu grupo familiar llegaron al país?. Envía la fecha en formato AAAA-MM-DD para (Año-Mes-Día. Ejemplo: 2000-10-26)`;
+                      mensajeRespuesta = `¿En qué fecha tÚ y tu grupo familiar llegaron al país🇨🇴?. Envía la fecha de esta manera AAAA-MM-DD para (Año-Mes-Día. Ejemplo: 2000-10-26)`;
 
                       break;
 
@@ -1259,7 +1259,7 @@ Escribe por favor tu número de documento 📇 (no utilices símbolos, solo núm
                       $formulario.como_llego_al_formulario = "Recibí una foto con la información";
                       $formulario.donde_encontro_formulario = null;
                       actualizarEncuesta($formulario);
-                      mensajeRespuesta = `¿En qué fecha tu y tu grupo familiar llegaron al país?. Envía la fecha en formato AAAA-MM-DD para (Año-Mes-Día. Ejemplo: 2000-10-26)`;
+                      mensajeRespuesta = `¿En qué fecha tÚ y tu grupo familiar llegaron al país🇨🇴?. Envía la fecha de esta manera AAAA-MM-DD para (Año-Mes-Día. Ejemplo: 2000-10-26)`;
 
                       break;
 
@@ -1268,7 +1268,7 @@ Escribe por favor tu número de documento 📇 (no utilices símbolos, solo núm
                       $formulario.como_llego_al_formulario = "Recibí el enlache por chat";
                       $formulario.donde_encontro_formulario = null;
                       actualizarEncuesta($formulario);
-                      mensajeRespuesta = `¿En qué fecha tu y tu grupo familiar llegaron al país?. Envía la fecha en formato AAAA-MM-DD para (Año-Mes-Día. Ejemplo: 2000-10-26)`;
+                      mensajeRespuesta = `¿En qué fecha tÚ y tu grupo familiar llegaron al país🇨🇴?. Envía la fecha de esta manera AAAA-MM-DD para (Año-Mes-Día. Ejemplo: 2000-10-26)`;
 
                       break;
 
@@ -1277,7 +1277,7 @@ Escribe por favor tu número de documento 📇 (no utilices símbolos, solo núm
                       $formulario.como_llego_al_formulario = "Encontré el enlace en Facebook";
                       $formulario.donde_encontro_formulario = null;
                       actualizarEncuesta($formulario);
-                      mensajeRespuesta = `¿En qué fecha tu y tu grupo familiar llegaron al país?. Envía la fecha en formato AAAA-MM-DD para (Año-Mes-Día. Ejemplo: 2000-10-26)`;
+                      mensajeRespuesta = `¿En qué fecha tÚ y tu grupo familiar llegaron al país🇨🇴?. Envía la fecha de esta manera AAAA-MM-DD para (Año-Mes-Día. Ejemplo: 2000-10-26)`;
 
                       break;
 
@@ -1286,7 +1286,7 @@ Escribe por favor tu número de documento 📇 (no utilices símbolos, solo núm
                       $formulario.como_llego_al_formulario = "Una persona conocida me lo envió para que lo llenara";
                       $formulario.donde_encontro_formulario = null;
                       actualizarEncuesta($formulario);
-                      mensajeRespuesta = `¿En qué fecha tu y tu grupo familiar llegaron al país?. Envía la fecha en formato AAAA-MM-DD para (Año-Mes-Día. Ejemplo: 2000-10-26)`;
+                      mensajeRespuesta = `¿En qué fecha tÚ y tu grupo familiar llegaron al país🇨🇴?. Envía la fecha de esta manera AAAA-MM-DD para (Año-Mes-Día. Ejemplo: 2000-10-26)`;
 
                       break;
 
@@ -1294,7 +1294,7 @@ Escribe por favor tu número de documento 📇 (no utilices símbolos, solo núm
                       $formulario.pregunta += 1; //va a pregunta 9
                       $formulario.como_llego_al_formulario = "Otro";
                       actualizarEncuesta($formulario);
-                      mensajeRespuesta = `¿En qué fecha tu y tu grupo familiar llegaron al país?. Envía la fecha en formato AAAA-MM-DD para (Año-Mes-Día. Ejemplo: 2000-10-26)`;
+                      mensajeRespuesta = `¿En qué fecha tÚ y tu grupo familiar llegaron al país🇨🇴?. Envía la fecha de esta manera AAAA-MM-DD para (Año-Mes-Día. Ejemplo: 2000-10-26)`;
                       break;
 
                     default:
@@ -1423,7 +1423,7 @@ Escribe por favor tu número de documento 📇 (no utilices símbolos, solo núm
     
                         } else {
                           mensajeRespuesta = `Gracias 🙂, ten presente que no puedo reconocer imágenes, audios, ni emojis. Nos podemos comunicar por medio de texto o digitando el número de las opciones que te indico en mi pregunta.\n
-                          ¿En qué fecha tu y tu grupo familiar llegaron al país?. Envía la fecha en formato AAAA-MM-DD para (Año-Mes-Día. Ejemplo: 2000-10-26)`;
+¿En qué fecha tÚ y tu grupo familiar llegaron al país🇨🇴?. Envía la fecha de esta manera AAAA-MM-DD para (Año-Mes-Día. Ejemplo: 2000-10-26)`;
     
                         }
     
@@ -1434,7 +1434,7 @@ Escribe por favor tu número de documento 📇 (no utilices símbolos, solo núm
                       }*/
                     }else{
                       mensajeRespuesta = `Gracias 🙂, ten presente que no puedo reconocer imágenes, audios, ni emojis. Nos podemos comunicar por medio de texto o digitando el número de las opciones que te indico en mi pregunta.\n
-¿En qué fecha tu y tu grupo familiar llegaron al país?. Envía la fecha en formato AAAA-MM-DD para (Año-Mes-Día. Ejemplo: 2000-10-26)`;
+¿En qué fecha tÚ y tu grupo familiar llegaron al país🇨🇴?. Envía la fecha de esta manera AAAA-MM-DD para (Año-Mes-Día. Ejemplo: 2000-10-26)`;
     
                     }
   
@@ -1442,7 +1442,7 @@ Escribe por favor tu número de documento 📇 (no utilices símbolos, solo núm
                   $formulario.pregunta = 9; //vuelve a 9
                     actualizarEncuesta($formulario);
                     mensajeRespuesta = `Gracias 🙂, ten presente que no puedo reconocer imágenes, audios, ni emojis. Nos podemos comunicar por medio de texto o digitando el número de las opciones que te indico en mi pregunta.\n
-¿En qué fecha tu y tu grupo familiar llegaron al país?. Envía la fecha en formato AAAA-MM-DD para (Año-Mes-Día. Ejemplo: 2000-10-26)`;
+¿En qué fecha tÚ y tu grupo familiar llegaron al país🇨🇴?. Envía la fecha de esta manera AAAA-MM-DD para (Año-Mes-Día. Ejemplo: 2000-10-26)`;
     
                 }
                 break;
@@ -1765,14 +1765,14 @@ Escribe tu número de contacto en números 📞` ;
                         $formulario.linea_asociada_whatsapp = true;
                         $formulario.pregunta += 1; //Va a pregunta 15
                         actualizarEncuesta($formulario);
-                        mensajeRespuesta = `¿Podrías compartirme un correo electrónico 📧 en el que te podamos contactar?  (si no tienes, ¡no te preocupes! escribe NO`;
+                        mensajeRespuesta = `¿Podrías compartirme un correo electrónico 📧 en el que te podamos contactar? Si no ❌ tienes, ¡no te preocupes! escribe NO`;
                       break;
 
                       case '2':
                         $formulario.linea_asociada_whatsapp = false;
                         $formulario.pregunta += 1; //Va a pregunta 15
                         actualizarEncuesta($formulario);
-                        mensajeRespuesta = `¿Podrías compartirme un correo electrónico 📧 en el que te podamos contactar?  (si no tienes, ¡no te preocupes! escribe NO`;
+                        mensajeRespuesta = `¿Podrías compartirme un correo electrónico 📧 en el que te podamos contactar? Si no ❌ tienes, ¡no te preocupes! escribe NO`;
                       break;
 
                       default:
@@ -1808,10 +1808,10 @@ Escribe tu número de contacto en números 📞` ;
                       conversation.tipo_formulario = null;
                       //conversation.autorizacion = null;
                       actualizarConversacion(conversation);
-                      mensajeRespuesta = `¡Gracias por participar!
-Si eres preseleccionado/a el programa #VenEsperanza se comunicará contigo
-Recuerda:
-En el programa #VenEsperanza no cobramos ni pedimos remuneración por ningún servicio a la comunidad, no tenemos intermediarios.`;
+                      mensajeRespuesta = `¡Gracias por participar! 👩🏻
+                      Si eres preseleccionado/a el programa #VenEsperanza se comunicará contigo a través de una llamada 📞
+                      ⚠️Recuerda:
+                      Todos nuestros servicios son GRATUITOS, no tenemos intermediarios ni tramitadores. No caigas en la trampa ❗ La ayuda humanitaria es gratuita.`;
                     
 
                     //}else if(emailregex.test(req.body.Body)) {
@@ -1824,14 +1824,14 @@ En el programa #VenEsperanza no cobramos ni pedimos remuneración por ningún se
                       conversation.tipo_formulario = null;
                       //console.log('CONVERSACION ACTUALIZAR:: ', conversation);
                       actualizarConversacion(conversation);
-                      mensajeRespuesta = `¡Gracias por participar!
-Si eres preseleccionado/a el programa #VenEsperanza se comunicará contigo
-Recuerda:
-En el programa #VenEsperanza no cobramos ni pedimos remuneración por ningún servicio a la comunidad, no tenemos intermediarios.`;
+                      mensajeRespuesta = `¡Gracias por participar! 👩🏻
+Si eres preseleccionado/a el programa #VenEsperanza se comunicará contigo a través de una llamada 📞
+⚠️Recuerda:
+Todos nuestros servicios son GRATUITOS, no tenemos intermediarios ni tramitadores. No caigas en la trampa ❗ La ayuda humanitaria es gratuita.`;
                     
                     }else{
                       mensajeRespuesta = `Gracias 🙂, ten presente que no puedo reconocer imágenes, audios, ni emojis. Nos podemos comunicar por medio de texto o digitando el número de las opciones que te indico en mi pregunta.
-¿Podrías compartirme un correo electrónico 📧 en el que te podamos contactar?  (si no tienes, ¡no te preocupes! escribe NO`;
+¿Podrías compartirme un correo electrónico 📧 en el que te podamos contactar? Si no ❌ tienes, ¡no te preocupes! escribe NO`;
 
                     }
                     
@@ -1839,7 +1839,7 @@ En el programa #VenEsperanza no cobramos ni pedimos remuneración por ningún se
                     $formulario.pregunta = 15; //vuelve a 15
                     actualizarEncuesta($formulario);
                     mensajeRespuesta = `Gracias 🙂, ten presente que no puedo reconocer imágenes, audios, ni emojis. Nos podemos comunicar por medio de texto o digitando el número de las opciones que te indico en mi pregunta.
-¿Podrías compartirme un correo electrónico 📧 en el que te podamos contactar?  (si no tienes, ¡no te preocupes! escribe NO`;
+¿Podrías compartirme un correo electrónico 📧 en el que te podamos contactar? Si no ❌ tienes, ¡no te preocupes! escribe NO`;
 
                   }
                 
@@ -2178,10 +2178,10 @@ Escribe tu número de teléfono en números 📞`;
                           conversation.tipo_formulario = null;
                           actualizarConversacion(conversation);
                           //mensajeRespuesta = `Escribe tu número de contacto en números 📞 `;
-                          mensajeRespuesta = `¡Gracias por reportar tu llegada al destino!
-Si eres preseleccionado/a el programa #VenEsperanza se comunicará contigo
-Recuerda:
-En el programa #VenEsperanza no cobramos ni pedimos remuneración por ningún servicio a la comunidad, no tenemos intermediarios.`;
+                          mensajeRespuesta = `¡Gracias por reportar tu llegada al destino! 👩🏻
+Si eres preseleccionado/a el programa #VenEsperanza se comunicará contigo a través de una llamada 📞
+⚠️Recuerda:
+Todos nuestros servicios son GRATUITOS, no tenemos intermediarios ni tramitadores. No caigas en la trampa ❗ La ayuda humanitaria es gratuita.`;
                         break;
 
                         case '3':
@@ -2191,10 +2191,11 @@ En el programa #VenEsperanza no cobramos ni pedimos remuneración por ningún se
                           conversation.tipo_formulario = null;
                           actualizarConversacion(conversation);
                           //mensajeRespuesta = `Escribe tu número de contacto en números 📞 `;
-                          mensajeRespuesta = `¡Gracias por reportar tu llegada al destino!
-Si eres preseleccionado/a el programa #VenEsperanza se comunicará contigo
-Recuerda:
-En el programa #VenEsperanza no cobramos ni pedimos remuneración por ningún servicio a la comunidad, no tenemos intermediarios.`;
+                          mensajeRespuesta = `¡Gracias por reportar tu llegada al destino! 👩🏻
+Si eres preseleccionado/a el programa #VenEsperanza se comunicará contigo a través de una llamada 📞
+⚠️Recuerda:
+Todos nuestros servicios son GRATUITOS, no tenemos intermediarios ni tramitadores. No caigas en la trampa ❗ La ayuda humanitaria es gratuita.`;
+                        
                         break;
 
                         case '4':
@@ -2204,10 +2205,10 @@ En el programa #VenEsperanza no cobramos ni pedimos remuneración por ningún se
                           conversation.tipo_formulario = null;
                           actualizarConversacion(conversation);
                           //mensajeRespuesta = `Escribe tu número de contacto en números 📞 `;
-                          mensajeRespuesta = `¡Gracias por reportar tu llegada al destino!
-Si eres preseleccionado/a el programa #VenEsperanza se comunicará contigo
-Recuerda:
-En el programa #VenEsperanza no cobramos ni pedimos remuneración por ningún servicio a la comunidad, no tenemos intermediarios.`;
+                          mensajeRespuesta = `¡Gracias por reportar tu llegada al destino! 👩🏻
+Si eres preseleccionado/a el programa #VenEsperanza se comunicará contigo a través de una llamada 📞
+⚠️Recuerda:
+Todos nuestros servicios son GRATUITOS, no tenemos intermediarios ni tramitadores. No caigas en la trampa ❗ La ayuda humanitaria es gratuita.`;
                         break;
 
                         case '5':
@@ -2217,10 +2218,10 @@ En el programa #VenEsperanza no cobramos ni pedimos remuneración por ningún se
                           conversation.tipo_formulario = null;
                           actualizarConversacion(conversation);
                           //mensajeRespuesta = `Escribe tu número de contacto en números 📞 `;
-                          mensajeRespuesta = `¡Gracias por reportar tu llegada al destino!
-Si eres preseleccionado/a el programa #VenEsperanza se comunicará contigo
-Recuerda:
-En el programa #VenEsperanza no cobramos ni pedimos remuneración por ningún servicio a la comunidad, no tenemos intermediarios.`;
+                          mensajeRespuesta = `¡Gracias por reportar tu llegada al destino! 👩🏻
+Si eres preseleccionado/a el programa #VenEsperanza se comunicará contigo a través de una llamada 📞
+⚠️Recuerda:
+Todos nuestros servicios son GRATUITOS, no tenemos intermediarios ni tramitadores. No caigas en la trampa ❗ La ayuda humanitaria es gratuita.`;
                         break;
 
                         case '6':
@@ -2230,9 +2231,10 @@ En el programa #VenEsperanza no cobramos ni pedimos remuneración por ningún se
                           conversation.tipo_formulario = null;
                           actualizarConversacion(conversation);
                           //mensajeRespuesta = `Escribe tu número de contacto en números 📞 `;
-                          mensajeRespuesta = `¡Gracias por reportar tu llegada al destino!
-Si eres preseleccionado/a el programa #VenEsperanza se comunicará contigo
-Recuerda:En el programa #VenEsperanza no cobramos ni pedimos remuneración por ningún servicio a la comunidad, no tenemos intermediarios.`;
+                          mensajeRespuesta = `¡Gracias por reportar tu llegada al destino! 👩🏻
+Si eres preseleccionado/a el programa #VenEsperanza se comunicará contigo a través de una llamada 📞
+⚠️Recuerda:
+Todos nuestros servicios son GRATUITOS, no tenemos intermediarios ni tramitadores. No caigas en la trampa ❗ La ayuda humanitaria es gratuita.`;
                         break;
 
                         case '7':
@@ -2242,10 +2244,10 @@ Recuerda:En el programa #VenEsperanza no cobramos ni pedimos remuneración por n
                           conversation.tipo_formulario = null;
                           actualizarConversacion(conversation);
                           //mensajeRespuesta = `Escribe tu número de contacto en números 📞 `;
-                          mensajeRespuesta = `¡Gracias por reportar tu llegada al destino!
-Si eres preseleccionado/a el programa #VenEsperanza se comunicará contigo
-Recuerda:
-En el programa #VenEsperanza no cobramos ni pedimos remuneración por ningún servicio a la comunidad, no tenemos intermediarios.`;
+                          mensajeRespuesta = `¡Gracias por reportar tu llegada al destino! 👩🏻
+Si eres preseleccionado/a el programa #VenEsperanza se comunicará contigo a través de una llamada 📞
+⚠️Recuerda:
+Todos nuestros servicios son GRATUITOS, no tenemos intermediarios ni tramitadores. No caigas en la trampa ❗ La ayuda humanitaria es gratuita.`;
                         break;
 
                         case '8':
@@ -2255,10 +2257,10 @@ En el programa #VenEsperanza no cobramos ni pedimos remuneración por ningún se
                           conversation.tipo_formulario = null;
                           actualizarConversacion(conversation);
                           //mensajeRespuesta = `Escribe tu número de contacto en números 📞 `;
-                          mensajeRespuesta = `¡Gracias por reportar tu llegada al destino!
-Si eres preseleccionado/a el programa #VenEsperanza se comunicará contigo
-Recuerda:
-En el programa #VenEsperanza no cobramos ni pedimos remuneración por ningún servicio a la comunidad, no tenemos intermediarios.`;
+                          mensajeRespuesta = `¡Gracias por reportar tu llegada al destino! 👩🏻
+Si eres preseleccionado/a el programa #VenEsperanza se comunicará contigo a través de una llamada 📞
+⚠️Recuerda:
+Todos nuestros servicios son GRATUITOS, no tenemos intermediarios ni tramitadores. No caigas en la trampa ❗ La ayuda humanitaria es gratuita.`;
                           
                         break;
 
@@ -2269,10 +2271,10 @@ En el programa #VenEsperanza no cobramos ni pedimos remuneración por ningún se
                           conversation.tipo_formulario = null;
                           actualizarConversacion(conversation);
                           //mensajeRespuesta = `Escribe tu número de contacto en números 📞 `;
-                          mensajeRespuesta = `¡Gracias por reportar tu llegada al destino!
-Si eres preseleccionado/a el programa #VenEsperanza se comunicará contigo
-Recuerda:
-En el programa #VenEsperanza no cobramos ni pedimos remuneración por ningún servicio a la comunidad, no tenemos intermediarios.`;
+                          mensajeRespuesta = `¡Gracias por reportar tu llegada al destino! 👩🏻
+Si eres preseleccionado/a el programa #VenEsperanza se comunicará contigo a través de una llamada 📞
+⚠️Recuerda:
+Todos nuestros servicios son GRATUITOS, no tenemos intermediarios ni tramitadores. No caigas en la trampa ❗ La ayuda humanitaria es gratuita.`;
                         break;
 
                         case '10':
@@ -2282,10 +2284,10 @@ En el programa #VenEsperanza no cobramos ni pedimos remuneración por ningún se
                           conversation.tipo_formulario = null;
                           actualizarConversacion(conversation);
                           //mensajeRespuesta = `Escribe tu número de contacto en números 📞 `;
-                          mensajeRespuesta = `¡Gracias por reportar tu llegada al destino!
-Si eres preseleccionado/a el programa #VenEsperanza se comunicará contigo
-Recuerda:
-En el programa #VenEsperanza no cobramos ni pedimos remuneración por ningún servicio a la comunidad, no tenemos intermediarios.`;
+                          mensajeRespuesta = `¡Gracias por reportar tu llegada al destino! 👩🏻
+Si eres preseleccionado/a el programa #VenEsperanza se comunicará contigo a través de una llamada 📞
+⚠️Recuerda:
+Todos nuestros servicios son GRATUITOS, no tenemos intermediarios ni tramitadores. No caigas en la trampa ❗ La ayuda humanitaria es gratuita.`;
                         break;
 
                         case '11':
@@ -2295,10 +2297,10 @@ En el programa #VenEsperanza no cobramos ni pedimos remuneración por ningún se
                           conversation.tipo_formulario = null;
                           actualizarConversacion(conversation);
                           //mensajeRespuesta = `Escribe tu número de contacto en números 📞 `;
-                          mensajeRespuesta = `¡Gracias por reportar tu llegada al destino!
-Si eres preseleccionado/a el programa #VenEsperanza se comunicará contigo
-Recuerda:
-En el programa #VenEsperanza no cobramos ni pedimos remuneración por ningún servicio a la comunidad, no tenemos intermediarios.`;
+                          mensajeRespuesta = `¡Gracias por reportar tu llegada al destino! 👩🏻
+Si eres preseleccionado/a el programa #VenEsperanza se comunicará contigo a través de una llamada 📞
+⚠️Recuerda:
+Todos nuestros servicios son GRATUITOS, no tenemos intermediarios ni tramitadores. No caigas en la trampa ❗ La ayuda humanitaria es gratuita.`;
                         break;
 
                         case '12':
@@ -2308,10 +2310,10 @@ En el programa #VenEsperanza no cobramos ni pedimos remuneración por ningún se
                           conversation.tipo_formulario = null;
                           actualizarConversacion(conversation);
                           //mensajeRespuesta = `Escribe tu número de contacto en números 📞 `;
-                          mensajeRespuesta = `¡Gracias por reportar tu llegada al destino!
-Si eres preseleccionado/a el programa #VenEsperanza se comunicará contigo
-Recuerda: 
-En el programa #VenEsperanza no cobramos ni pedimos remuneración por ningún servicio a la comunidad, no tenemos intermediarios.`;
+                          mensajeRespuesta = `¡Gracias por reportar tu llegada al destino! 👩🏻
+Si eres preseleccionado/a el programa #VenEsperanza se comunicará contigo a través de una llamada 📞
+⚠️Recuerda:
+Todos nuestros servicios son GRATUITOS, no tenemos intermediarios ni tramitadores. No caigas en la trampa ❗ La ayuda humanitaria es gratuita.`;
                         break;
                       
                         default:
@@ -2459,10 +2461,10 @@ En el programa #VenEsperanza no cobramos ni pedimos remuneración por ningún se
                           actualizarLlegada($formulario);
                           conversation.tipo_formulario = null;
                           actualizarConversacion(conversation);
-                          mensajeRespuesta = `¡Gracias por reportar tu llegada al destino!
-Si eres preseleccionado/a el programa #VenEsperanza se comunicará contigo
-Recuerda:
-En el programa #VenEsperanza no cobramos ni pedimos remuneración por ningún servicio a la comunidad, no tenemos intermediarios.`;
+                          mensajeRespuesta = `¡Gracias por reportar tu llegada al destino! 👩🏻
+Si eres preseleccionado/a el programa #VenEsperanza se comunicará contigo a través de una llamada 📞
+⚠️Recuerda:
+Todos nuestros servicios son GRATUITOS, no tenemos intermediarios ni tramitadores. No caigas en la trampa ❗ La ayuda humanitaria es gratuita.`;
                 }catch{
                   mensajeRespuesta = `Gracias 🙂, ten presente que no puedo reconocer imágenes, audios, ni emojis. Nos podemos comunicar por medio de texto o digitando el número de las opciones que te indico en mi pregunta.\n
 En cuál otro lugar te encuentras?`;
@@ -2618,7 +2620,7 @@ Escribe por favor tu número de documento 📇 (no utilices símbolos, solo núm
                     $formulario.pregunta += 1; //va a 4
                     actualizarDatosContacto($formulario);
 
-                    mensajeRespuesta = `¿Podrías compartirme un correo electrónico 📧 en el que te podamos contactar?  (si no tienes, ¡no te preocupes! escribe NO`;
+                    mensajeRespuesta = `¿Podrías compartirme un correo electrónico 📧 en el que te podamos contactar? Si no ❌ tienes, ¡no te preocupes! escribe NO`;
                   }else{
                     mensajeRespuesta = `Gracias 🙂, ten presente que no puedo reconocer imágenes, audios, ni emojis. Nos podemos comunicar por medio de texto o digitando el número de las opciones que te indico en mi pregunta.\n
 Escribe tu número de teléfono en números 📞` ;
@@ -2648,10 +2650,10 @@ Escribe tu número de teléfono en números 📞` ;
                     actualizarDatosContacto($formulario);
                     conversation.tipo_formulario = null;
                     actualizarConversacion(conversation);
-                    mensajeRespuesta = `¡Gracias por actualizar tus datos!
-Si eres preseleccionado/a el programa #VenEsperanza se comunicará contigo
-Recuerda:
-En el programa #VenEsperanza no cobramos ni pedimos remuneración por ningún servicio a la comunidad, no tenemos intermediarios.`;
+                    mensajeRespuesta = `¡Gracias por actualizar tus datos! 👩🏻
+Si eres preseleccionado/a el programa #VenEsperanza se comunicará contigo a través de una llamada 📞
+⚠️Recuerda:
+Todos nuestros servicios son GRATUITOS, no tenemos intermediarios ni tramitadores. No caigas en la trampa ❗ La ayuda humanitaria es gratuita.`;
                   
 
                   //}else if(emailregex.test(req.body.Body)) {
@@ -2666,14 +2668,14 @@ En el programa #VenEsperanza no cobramos ni pedimos remuneración por ningún se
                     conversation.tipo_formulario = null;
                     //console.log('CONVERSACION ACTUALIZAR:: ', conversation);
                     actualizarConversacion(conversation);
-                    mensajeRespuesta = `¡Gracias por actualizar tus datos!
-Si eres preseleccionado/a el programa #VenEsperanza se comunicará contigo
-Recuerda:
-En el programa #VenEsperanza no cobramos ni pedimos remuneración por ningún servicio a la comunidad, no tenemos intermediarios.`;
+                    mensajeRespuesta = `¡Gracias por actualizar tus datos! 👩🏻
+Si eres preseleccionado/a el programa #VenEsperanza se comunicará contigo a través de una llamada 📞
+⚠️Recuerda:
+Todos nuestros servicios son GRATUITOS, no tenemos intermediarios ni tramitadores. No caigas en la trampa ❗ La ayuda humanitaria es gratuita.`;
                   
                   }else{
                     mensajeRespuesta = `Gracias 🙂, ten presente que no puedo reconocer imágenes, audios, ni emojis. Nos podemos comunicar por medio de texto o digitando el número de las opciones que te indico en mi pregunta.
-¿Podrías compartirme un correo electrónico 📧 en el que te podamos contactar?  (si no tienes, ¡no te preocupes! escribe NO`;
+¿Podrías compartirme un correo electrónico 📧 en el que te podamos contactar? Si no ❌ tienes, ¡no te preocupes! escribe NO`;
 
                   }
                   
@@ -2681,7 +2683,7 @@ En el programa #VenEsperanza no cobramos ni pedimos remuneración por ningún se
                   $formulario.pregunta = 4; //vuelve a 4
                   actualizarDatosContacto($formulario);
                   mensajeRespuesta = `Gracias 🙂, ten presente que no puedo reconocer imágenes, audios, ni emojis. Nos podemos comunicar por medio de texto o digitando el número de las opciones que te indico en mi pregunta.
-¿Podrías compartirme un correo electrónico 📧 en el que te podamos contactar?  (si no tienes, ¡no te preocupes! escribe NO`;
+¿Podrías compartirme un correo electrónico 📧 en el que te podamos contactar? Si no ❌ tienes, ¡no te preocupes! escribe NO`;
 
                 }
 
