@@ -76,7 +76,7 @@ app.post('/whatsapp', async (req, res) => {
 
 
   
-  console.log(req);
+  console.log(req.body);
   //console.log('JSON:::', JSON.parse(req.body));
 
   //consultaConversacion(req.body.WaId, 0); //version twilio
@@ -95,8 +95,13 @@ app.post('/whatsapp', async (req, res) => {
   function consultaConversacion(whatsappID, $bandera) {
 
     //const sql = `SELECT * FROM encuesta where waId = '${whatsappID}'`;
-    const sql = `SELECT * FROM conversacion_chatbot where waId = '${whatsappID}'`;
+    //const sql = `SELECT * FROM conversacion_chatbot where waId = '${whatsappID}'`;
 
+    const sql = `SELECT conversacion_chatbot.*, conversacion_request.request_id AS REQUESTID
+    FROM conversacion_chatbot 
+    LEFT JOIN conversacion_request ON conversacion_chatbot.id = conversacion_request.id_conversacion
+     WHERE waId = '${whatsappID}'`;
+    
     connection.query(sql, (error, results) => {
 
       if (error) throw error;
@@ -104,6 +109,93 @@ app.post('/whatsapp', async (req, res) => {
       if (results.length > 0) { 
 
         var $conversation = results[0];
+
+        var indexRequestId = results.find( (conv) => conv.REQUESTID === req.body.messageBirdRequestId);
+
+        if(indexRequestId){
+          console.log('REQUEST ID YA EXISTE')
+            //Ignorar
+            return;
+        } else {
+          /*
+          console.log(':::ENTRA A ACTUALIZAR MESSAGEBIRD REQUEST::::', req.body.messageBirdRequestId);
+          const sqlConversacion = `UPDATE conversacion_chatbot SET messageBirdRequestId = '${req.body.messageBirdRequestId}' where id = ${$conversation.id}`;
+          connection.query(sqlConversacion, (error, res) => {
+            if (error) console.log('ERROR: ', error);
+          });*/
+          const sqlRequest = 'INSERT INTO conversacion_request SET ?';
+
+          const nuevoRequest = {
+            id_conversacion: $conversation.id,
+            request_id: req.body.messageBirdRequestId
+          }
+          //console.log('NUEVA CONVERSACION: ', nuevaconversacion);
+      
+          connection.query(sqlRequest, nuevoRequest, (error, results) => {
+          
+            if (error) console.log(':::ERROR REQUEST:: ', error);
+          });
+
+          if(!$conversation.conversation_start){
+
+            //$conversation.conversation_start = 1;
+            //actualizarConversacion($conversation);
+            conversacion($conversation);
+  
+  
+          }else if(!$conversation.autorizacion){
+  
+            conversacion($conversation);
+  
+            //$conversation.autorizacion = 1;
+            //actualizarConversacion($conversation);
+            //autorizacionTratamientoDatos($conversation)
+          }else if(!$conversation.tipo_formulario){
+  
+            seleccionarFormulario($conversation);
+          
+          }else if($conversation.tipo_formulario == 1){
+            const sqlencuesta = `SELECT * FROM encuesta where waId = '${whatsappID}'`;
+  
+            connection.query(sqlencuesta, (error, encuesta) => {
+              if (error) throw error;
+  
+              if (encuesta.length > 0) { 
+                
+                //console.log('ENCUESTA ES: ', encuesta[0]);
+                conversacion($conversation,encuesta[0]);
+              }
+  
+            });
+          }else if($conversation.tipo_formulario == 2){
+            const sqllegadas = `SELECT * FROM llegadas where waId = '${whatsappID}'`;
+  
+            connection.query(sqllegadas, (error, llegadas) => {
+              if (error) throw error;
+  
+              if (llegadas.length > 0) { 
+                //console.log('LLEGADA ES: ', llegadas[0]);
+                conversacion($conversation , llegadas[0]);
+              }
+  
+            });
+          }else if($conversation.tipo_formulario == 3){
+            
+            const sqlactualizardatos = `SELECT * FROM datos_actualizados where waId = '${whatsappID}'`;
+  
+            connection.query(sqlactualizardatos, (error, actualizardatos) => {
+              if (error) throw error;
+  
+              if (actualizardatos.length > 0) { 
+                //console.log('ENCUESTA ES: ', actualizardatos[0]);
+                conversacion($conversation , actualizardatos[0]);
+              }
+  
+            });
+          }
+        }//Termina if que valida messageBirdRequestId
+
+        /*//Afuera del if que valida messageBirdRequestId
         if(!$conversation.conversation_start){
 
           //$conversation.conversation_start = 1;
@@ -160,7 +252,7 @@ app.post('/whatsapp', async (req, res) => {
             }
 
           });
-        }
+        }*/
         
       } else {
 
@@ -186,6 +278,7 @@ Ahora por favor respóndeme con el número correspondiente a lo que quieres hace
 2️⃣ Quieres informar de tu llegada a destino ☝🏻\n
 3️⃣ Ya te registraste antes y quieres actualizar tus datos de contacto  🙌🏻 `;
 
+        /*
         client.messages
           .create({
             //from: 'whatsapp:+14155238886',
@@ -194,7 +287,15 @@ Ahora por favor respóndeme con el número correspondiente a lo que quieres hace
             to: req.body.From
           })
           .then(message => console.log(message.body))
-          .catch(e => { console.error('Got an error:', e.code, e.message); });
+          .catch(e => { console.error('Got an error:', e.code, e.message); });*/
+          sendMessageWhatsapp({
+            'to': req.body['message.from'],
+            'from': '9673e34a-1c1e-4a61-be4d-0432abd4a98f',
+            'type': 'text',
+            'content': {
+                    'text': mensajeRespuesta,
+                  }
+          });
 
          
         
@@ -233,6 +334,7 @@ Tipo de documento 📇 Responde con el número de acuerdo a la opción correspon
 6️⃣ Indocumentado
 7️⃣ Otro`;
 
+        /*
         client.messages
           .create({
             //from: 'whatsapp:+14155238886',
@@ -242,6 +344,7 @@ Tipo de documento 📇 Responde con el número de acuerdo a la opción correspon
           })
           .then(message => console.log(message.body))
           .catch(e => { console.error('Got an error:', e.code, e.message); });
+          */
         
       }else{
         //conversacion.tipo_formulario = 1;
@@ -264,7 +367,8 @@ Tipo de documento 📇 Responde con el número de acuerdo a la opción correspon
 
     try {
         //switch (req.body.message.content.text) {
-        switch (req.body.Body){
+        //switch (req.body.Body){
+        switch(req.body.incomingMessage){
 
             //selecciona llenar nuevo form
             case '1':
@@ -415,7 +519,7 @@ Por favor respóndeme con el número correspondiente a lo que quieres hacer:\n
       conversation_start: false,
       autorizacion: false,
       tipo_formulario: null,
-      created_at: new Date(),
+      created_at: new Date()
       //encuesta: true,
       //encuesta_chatbot: false,
       //fecha_nacimiento: new Date("1900-01-01"),
@@ -542,8 +646,8 @@ Por favor respóndeme con el número correspondiente a lo que quieres hacer:\n
     //reemplazo de emoticones en el nombre de perfil de whatsapp
     //var regex = /(?:[\u2700-\u27bf]|(?:\ud83c[\udde6-\uddff]){2}|[\ud800-\udbff][\udc00-\udfff]|[\u0023-\u0039]\ufe0f?\u20e3|\u3299|\u3297|\u303d|\u3030|\u24c2|\ud83c[\udd70-\udd71]|\ud83c[\udd7e-\udd7f]|\ud83c\udd8e|\ud83c[\udd91-\udd9a]|\ud83c[\udde6-\uddff]|\ud83c[\ude01-\ude02]|\ud83c\ude1a|\ud83c\ude2f|\ud83c[\ude32-\ude3a]|\ud83c[\ude50-\ude51]|\u203c|\u2049|[\u25aa-\u25ab]|\u25b6|\u25c0|[\u25fb-\u25fe]|\u00a9|\u00ae|\u2122|\u2139|\ud83c\udc04|[\u2600-\u26FF]|\u2b05|\u2b06|\u2b07|\u2b1b|\u2b1c|\u2b50|\u2b55|\u231a|\u231b|\u2328|\u23cf|[\u23e9-\u23f3]|[\u23f8-\u23fa]|\ud83c\udccf|\u2934|\u2935|[\u2190-\u21ff])/g;
 
-    var newprofile = params.ProfileName.replace(/[^\ñ\Ñ\ü\Ü\á\Á\é\É\í\Í\ó\Ó\ú\Ú\w\s]/gi, '');//twilio
-    //var newprofile = params.params.contact.displayName.replace(/[^\ñ\Ñ\ü\Ü\á\Á\é\É\í\Í\ó\Ó\ú\Ú\w\s]/gi, '');
+    //var newprofile = params.ProfileName.replace(/[^\ñ\Ñ\ü\Ü\á\Á\é\É\í\Í\ó\Ó\ú\Ú\w\s]/gi, '');//twilio
+    var newprofile = params['contact.firstName'].replace(/[^\ñ\Ñ\ü\Ü\á\Á\é\É\í\Í\ó\Ó\ú\Ú\w\s]/gi, '');
     
    //console.log('REEMPLAZO: ', newprofile);
 
@@ -621,7 +725,8 @@ Por favor respóndeme con el número correspondiente a lo que quieres hacer:\n
     const sqlnuevaLlegada = 'INSERT INTO llegadas SET ?';
 
     const params = req.body;
-    var newprofile = params.ProfileName.replace(/[^\ñ\Ñ\ü\Ü\á\Á\é\É\í\Í\ó\Ó\ú\Ú\w\s]/gi, '');
+    //var newprofile = params.ProfileName.replace(/[^\ñ\Ñ\ü\Ü\á\Á\é\É\í\Í\ó\Ó\ú\Ú\w\s]/gi, ''); //twilio
+    var newprofile = params['contact.firstName'].replace(/[^\ñ\Ñ\ü\Ü\á\Á\é\É\í\Í\ó\Ó\ú\Ú\w\s]/gi, ''); //mmesagebird
 
    //console.log('REEMPLAZO: ', newprofile);
 
@@ -679,8 +784,8 @@ Tipo de documento 📇 Responde con el número de acuerdo a la opción correspon
     const sqlnuevoDatosActualizados = 'INSERT INTO datos_actualizados SET ?';
 
     const params = req.body;
-    var newprofile = params.ProfileName.replace(/[^\ñ\Ñ\ü\Ü\á\Á\é\É\í\Í\ó\Ó\ú\Ú\w\s]/gi, '');
-
+    //var newprofile = params.ProfileName.replace(/[^\ñ\Ñ\ü\Ü\á\Á\é\É\í\Í\ó\Ó\ú\Ú\w\s]/gi, '');
+    var newprofile = params['contact.firstName'].replace(/[^\ñ\Ñ\ü\Ü\á\Á\é\É\í\Í\ó\Ó\ú\Ú\w\s]/gi, '');
    //console.log('REEMPLAZO: ', newprofile);
 
     const nuevoDatosActualizados = {
@@ -822,9 +927,11 @@ Tipo de documento 📇 Responde con el número de acuerdo a la opción correspon
 
     const sqlLlegada = `UPDATE llegadas SET pregunta = ${$llegada.pregunta},
     tipo_documento = '${$llegada.tipo_documento}', numero_documento = '${$llegada.numero_documento}',
-    telefono = ${$llegada.telefono}, id_departamento = ${$llegada.id_departamento},
+    numero_contacto = ${$llegada.numero_contacto}, id_departamento = ${$llegada.id_departamento},
     id_municipio = ${$llegada.id_municipio}, 
-     id_encuesta = ${$llegada.id_encuesta}, updated_at = '${$llegada.updated_at}'
+     id_encuesta = ${$llegada.id_encuesta}, updated_at = '${$llegada.updated_at}',
+     nombre_jefe_hogar = '${$llegada.nombre_jefe_hogar}', numero_contacto_asociado_whatsapp = ${$llegada.numero_contacto_asociado_whatsapp},
+     donde_te_encuentras = '${$llegada.donde_te_encuentras}', otro_donde_te_encuentras = '${$llegada.otro_donde_te_encuentras}'
      WHERE waId = ${$llegada.waId}`;
 
    
@@ -931,7 +1038,8 @@ Tipo de documento 📇 Responde con el número de acuerdo a la opción correspon
                   try {
                     //console.log('ENTRO A PREGUNTA 1 de nuevo formulario::', req.body.Body);
                     //console.log('body primer nombre:: ', req.body.Body);
-                    $formulario.primer_nombre = req.body.Body;//.replace(/[^\aA-zZ\ñ\Ñ\ü\Ü\á\Á\é\É\í\Í\ó\Ó\ú\Ú]/gi, '');
+                    //$formulario.primer_nombre = req.body.Body;//.replace(/[^\aA-zZ\ñ\Ñ\ü\Ü\á\Á\é\É\í\Í\ó\Ó\ú\Ú]/gi, '');
+                    $formulario.primer_nombre = req.body.incomingMessage;
 
                     const pattern = new RegExp('^[aA-zZñÑüÜáÁéÉíÍóÓúÚ]+$', 'i');
 
@@ -951,7 +1059,7 @@ Tipo de documento 📇 Responde con el número de acuerdo a la opción correspon
                       //mensajeRespuesta = "*Primer Nombre:* (Ingrese solamente letras, sin emoticones ni caracteres especiales)"
                       mensajeRespuesta = `Gracias 🙂, ten presente que no puedo reconocer imágenes, audios, ni emojis. Nos podemos comunicar por medio de texto o digitando el número de las opciones que te indico en mi pregunta.\n
 
-                      Por favor escribe tu primer nombre. Sólo puedo leer texto, no utilices audio, imágenes o emojis.`;
+Por favor escribe tu primer nombre. Sólo puedo leer texto, no utilices audio, imágenes o emojis.`;
                 
                     }
                   
@@ -961,7 +1069,7 @@ Tipo de documento 📇 Responde con el número de acuerdo a la opción correspon
                     actualizarEncuesta($formulario);
                     mensajeRespuesta = `Gracias 🙂, ten presente que no puedo reconocer imágenes, audios, ni emojis. Nos podemos comunicar por medio de texto o digitando el número de las opciones que te indico en mi pregunta.\n
 
-                    Por favor escribe tu primer nombre. Sólo puedo leer texto, no utilices audio, imágenes o emojis.`;
+Por favor escribe tu primer nombre. Sólo puedo leer texto, no utilices audio, imágenes o emojis.`;
               
                   }
                 break;
@@ -969,7 +1077,8 @@ Tipo de documento 📇 Responde con el número de acuerdo a la opción correspon
                 case 2: //guardo respuesta pregunta 2
 
                   try {
-                    $formulario.segundo_nombre = req.body.Body;//.replace(/[^\aA-zZ\ñ\Ñ\ü\Ü\á\Á\é\É\í\Í\ó\Ó\ú\Ú]/gi, '');
+                    //$formulario.segundo_nombre = req.body.Body;//.replace(/[^\aA-zZ\ñ\Ñ\ü\Ü\á\Á\é\É\í\Í\ó\Ó\ú\Ú]/gi, '');
+                    $formulario.segundo_nombre = req.body.incomingMessage;
                     //console.log('primer nombre:: ', conversation.primer_nombre);
                     //if($formulario.segundo_nombre.length>0){
                     const pattern = new RegExp('^[aA-zZñÑüÜáÁéÉíÍóÓúÚ]+$', 'i');
@@ -987,7 +1096,7 @@ Tipo de documento 📇 Responde con el número de acuerdo a la opción correspon
                       //mensajeRespuesta = "*Primer Nombre:* (Ingrese solamente letras, sin emoticones ni caracteres especiales)"
                       mensajeRespuesta = `Gracias 🙂, ten presente que no puedo reconocer imágenes, audios, ni emojis. Nos podemos comunicar por medio de texto o digitando el número de las opciones que te indico en mi pregunta.\n
 
-                      Por favor escribe tu segundo nombre, si no tienes segundo nombre escribe NO.`;
+Por favor escribe tu segundo nombre, si no tienes segundo nombre escribe NO.`;
                 
                     }
                     
@@ -997,7 +1106,7 @@ Tipo de documento 📇 Responde con el número de acuerdo a la opción correspon
                     actualizarEncuesta($formulario);
                     mensajeRespuesta = `Gracias 🙂, ten presente que no puedo reconocer imágenes, audios, ni emojis. Nos podemos comunicar por medio de texto o digitando el número de las opciones que te indico en mi pregunta.\n
 
-                    Por favor escribe tu segundo nombre, si no tienes segundo nombre escribe NO.`;
+Por favor escribe tu segundo nombre, si no tienes segundo nombre escribe NO.`;
               
                     
                   }
@@ -1005,8 +1114,8 @@ Tipo de documento 📇 Responde con el número de acuerdo a la opción correspon
                 
                 case 3:
                   try {
-                      $formulario.primer_apellido = req.body.Body;//.replace(/[^\ñ\Ñ\ü\Ü\á\Á\é\É\í\Í\ó\Ó\ú\Ú\w\s]/gi, '');
-                    
+                      //$formulario.primer_apellido = req.body.Body;//.replace(/[^\ñ\Ñ\ü\Ü\á\Á\é\É\í\Í\ó\Ó\ú\Ú\w\s]/gi, '');
+                    $formulario.primer_apellido = req.body.incomingMessage;
                       //if($formulario.primer_apellido.length>0){
                       const pattern = new RegExp('^[aA-zZñÑüÜáÁéÉíÍóÓúÚ ]+$', 'i');
                       //console.log('PATTERN::: ', pattern);
@@ -1020,7 +1129,7 @@ Tipo de documento 📇 Responde con el número de acuerdo a la opción correspon
                       }else{
                         mensajeRespuesta = `Gracias 🙂, ten presente que no puedo reconocer imágenes, audios, ni emojis. Nos podemos comunicar por medio de texto o digitando el número de las opciones que te indico en mi pregunta.\n
 
-                        Por favor escribe tu primer apellido`;
+Por favor escribe tu primer apellido`;
                       }
                       
                     
@@ -1030,14 +1139,14 @@ Tipo de documento 📇 Responde con el número de acuerdo a la opción correspon
                     actualizarEncuesta($formulario);
                     mensajeRespuesta = `Gracias 🙂, ten presente que no puedo reconocer imágenes, audios, ni emojis. Nos podemos comunicar por medio de texto o digitando el número de las opciones que te indico en mi pregunta.\n
 
-                        Por favor escribe tu primer apellido`;
+Por favor escribe tu primer apellido`;
                   }
                 break;
 
                 case 4:
                   try {
-                      $formulario.segundo_apellido = req.body.Body;//.replace(/[^\ñ\Ñ\ü\Ü\á\Á\é\É\í\Í\ó\Ó\ú\Ú\w\s]/gi, '');
-
+                      //$formulario.segundo_apellido = req.body.Body;//.replace(/[^\ñ\Ñ\ü\Ü\á\Á\é\É\í\Í\ó\Ó\ú\Ú\w\s]/gi, '');
+                      $formulario.segundo_apellido = req.body.incomingMessage;
                       //if($formulario.segundo_apellido.length>0){
 
                         const patternsegundoapellido = new RegExp('^[aA-zZñÑüÜáÁéÉíÍóÓúÚ ]+$', 'i');
@@ -1071,7 +1180,8 @@ Por favor escribe tu segundo apellido, si no tienes segundo apellido escribe NO`
                   //cual otro tipo de documento
                   try {
   
-                      switch (req.body.Body) {
+                      //switch (req.body.Body) {
+                      switch (req.body.incomingMessage){
                         case '1':
                           $formulario.tipo_documento = "Acta de Nacimiento";
                           $formulario.pregunta += 2;// pregunta 7
@@ -1166,8 +1276,8 @@ Por favor escribe tu segundo apellido, si no tienes segundo apellido escribe NO`
 
                 case 6:
                   try {
-                    $formulario.cual_otro_tipo_documento = req.body.Body;//.replace(/[^\ñ\Ñ\ü\Ü\á\Á\é\É\í\Í\ó\Ó\ú\Ú\w\s]/gi, '');
-                    
+                    //$formulario.cual_otro_tipo_documento = req.body.Body;//.replace(/[^\ñ\Ñ\ü\Ü\á\Á\é\É\í\Í\ó\Ó\ú\Ú\w\s]/gi, '');
+                    $formulario.cual_otro_tipo_documento = req.body.incomingMessage;
                     //if($formulario.cual_otro_tipo_documento.length>0){
 
                     const pattern = new RegExp('^[aA-zZñÑüÜáÁéÉíÍóÓúÚ ]+$', 'i');
@@ -1196,7 +1306,8 @@ Por favor escribe tu segundo apellido, si no tienes segundo apellido escribe NO`
 
                 case 7:
                   try {
-                    $formulario.numero_documento = req.body.Body;//.replace(/[^\ñ\Ñ\ü\Ü\á\Á\é\É\í\Í\ó\Ó\ú\Ú\-\w]/gi, '');
+                    //$formulario.numero_documento = req.body.Body;//.replace(/[^\ñ\Ñ\ü\Ü\á\Á\é\É\í\Í\ó\Ó\ú\Ú\-\w]/gi, '');
+                    $formulario.numero_documento = req.body.incomingMessage;
 
                     const pattern = new RegExp('^[0-9]+$', 'i');
 
@@ -1229,7 +1340,8 @@ Escribe por favor tu número de documento 📇 (no utilices símbolos, solo núm
 
                 case 8:
                   try {
-                    switch (req.body.Body) {
+                    //switch (req.body.Body) {
+                    switch (req.body.incomingMessage){
                     case '1':
                       $formulario.pregunta += 1; //va a pregunta 9
                       $formulario.como_llego_al_formulario = "Ví un pendón en un albergue";
@@ -1329,14 +1441,16 @@ Escribe por favor tu número de documento 📇 (no utilices símbolos, solo núm
                     patternfecha = /^[0-9]{4}[\-][0-9]{2}[\-][0-9]{2}$/g;
                 
                     //if(patternfecha.test(req.body.Body)){
-                    if(patternfecha.test(req.body.Body)){
+                    //if(patternfecha.test(req.body.Body)){
+                    if(patternfecha.test(req.body.incomingMessage)){
                       //console.log('ES TRUEEE');
                     //if(req.body.Body.match(pattern)){
 
                       //$fechaSinEmoticones = req.body.Body.replace(/[^\-\w\s]/gi, '');
                       //console.log('FECHA SIN EMOTICONES: ', $fechaSinEmoticones);
                       //$fechavalidar = $fechaSinEmoticones.split('-');
-                      $fechavalidar = req.body.Body.split('-');
+                      //$fechavalidar = req.body.Body.split('-');
+                      $fechavalidar = req.body.incomingMessage.split('-');
                       //console.log('FECHA VALIDAR:', $fechavalidar);
     
                       //if ($fechavalidar.length === 3 && $fechavalidar[0].length === 4 && $fechavalidar[1].length === 2 && $fechavalidar[2].length === 2) {
@@ -1356,7 +1470,7 @@ Escribe por favor tu número de documento 📇 (no utilices símbolos, solo núm
                           //console.log('FECHA VALIDA!!');
                           //console.log('TAMAÑO SI ES TRES: ', $fechavalidar.length);
                           $formulario.pregunta += 1; //va a pregunta 10
-                          $formulario.fecha_llegada_pais = req.body.Body;//.replace(/[^\-\w]/gi, '');
+                          $formulario.fecha_llegada_pais = req.body.incomingMessage;//.replace(/[^\-\w]/gi, '');
                           
                           actualizarEncuesta($formulario);
 
@@ -1426,7 +1540,7 @@ Escribe por favor tu número de documento 📇 (no utilices símbolos, solo núm
                       }*/
                     }else{
                       mensajeRespuesta = `Gracias 🙂, ten presente que no puedo reconocer imágenes, audios, ni emojis. Nos podemos comunicar por medio de texto o digitando el número de las opciones que te indico en mi pregunta.\n
-                          ¿En qué fecha tu y tu grupo familiar llegaron al país?. Envía la fecha en formato AAAA-MM-DD para (Año-Mes-Día. Ejemplo: 2000-10-26)`;
+¿En qué fecha tu y tu grupo familiar llegaron al país?. Envía la fecha en formato AAAA-MM-DD para (Año-Mes-Día. Ejemplo: 2000-10-26)`;
     
                     }
   
@@ -1434,7 +1548,7 @@ Escribe por favor tu número de documento 📇 (no utilices símbolos, solo núm
                   $formulario.pregunta = 9; //vuelve a 9
                     actualizarEncuesta($formulario);
                     mensajeRespuesta = `Gracias 🙂, ten presente que no puedo reconocer imágenes, audios, ni emojis. Nos podemos comunicar por medio de texto o digitando el número de las opciones que te indico en mi pregunta.\n
-                          ¿En qué fecha tu y tu grupo familiar llegaron al país?. Envía la fecha en formato AAAA-MM-DD para (Año-Mes-Día. Ejemplo: 2000-10-26)`;
+¿En qué fecha tu y tu grupo familiar llegaron al país?. Envía la fecha en formato AAAA-MM-DD para (Año-Mes-Día. Ejemplo: 2000-10-26)`;
     
                 }
                 break;
@@ -1443,31 +1557,89 @@ Escribe por favor tu número de documento 📇 (no utilices símbolos, solo núm
                   try {
 
                     //console.log('LO QUE HAY EN BODY 28: ', req.body.Body);
-                    const opcionesDepartamento = ['2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15', '16',
-                      '17', '18', '19', '20', '21', '22', '23', '24', '25', '26', '27', '28', '29', '30', '31', '32', '33', '34', '35'];
-  
-                    if (req.body.Body === '1') {
-                      $formulario.pregunta += 1; //va a pregunta 31
-                      $formulario.id_departamento_destino_final = null;
-                      //$formulario.id_municipio_destino_final = null;
+                    //const opcionesDepartamento = ['2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15', '16',
+                    //'17', '18', '19', '20', '21', '22', '23', '24', '25', '26', '27', '28', '29', '30', '31', '32', '33', '34', '35'];
+                    const opcionesSeleccion = ['1','2','3','4','5','6','7','8','9','10','11','12','13'];
+
+                    if (opcionesSeleccion.includes(req.body.incomingMessage)) {
+                      
+                      switch (req.body.incomingMessage) {
+
+                        case '1':
+                          $formulario.pregunta += 1; //va a pregunta 11
+                          $formulario.nombre_municipio_destino_final = 'No estoy seguro/a';
+
+                        break;
+                        
+                        case '2':
+                          $formulario.pregunta += 1; //va a pregunta 11
+                          $formulario.nombre_municipio_destino_final = 'Otro';
+                        break;
+
+                        case '3':
+                          $formulario.pregunta += 1; //va a pregunta 11
+                          $formulario.nombre_municipio_destino_final = 'Arauca';
+                        break;
+
+                        case '4':
+                          $formulario.pregunta += 1; //va a pregunta 11
+                          $formulario.nombre_municipio_destino_final = 'Barranquilla';
+                        break;
+
+                        case '5':
+                          $formulario.pregunta += 1; //va a pregunta 11
+                          $formulario.nombre_municipio_destino_final = 'Bogotá';
+                        break;
+
+                        case '6':
+                          $formulario.pregunta += 1; //va a pregunta 11
+                          $formulario.nombre_municipio_destino_final = 'Bucaramanga';
+                        break;
+
+                        case '7':
+                          $formulario.pregunta += 1; //va a pregunta 11
+                          $formulario.nombre_municipio_destino_final = 'Cali';
+                        break;
+
+                        case '8':
+                          $formulario.pregunta += 1; //va a pregunta 11
+                          $formulario.nombre_municipio_destino_final = 'Cartagena';
+                        break;
+
+                        case '9':
+                          $formulario.pregunta += 1; //va a pregunta 11
+                          $formulario.nombre_municipio_destino_final = 'Cúcuta';
+                        break;
+
+                        case '10':
+                          $formulario.pregunta += 1; //va a pregunta 11
+                          $formulario.nombre_municipio_destino_final = 'Medellín';
+                        break;
+
+                        case '11':
+                          $formulario.pregunta += 1; //va a pregunta 11
+                          $formulario.nombre_municipio_destino_final = 'Riohacha';
+                        break;
+
+                        case '12':
+                          $formulario.pregunta += 1; //va a pregunta 11
+                          $formulario.nombre_municipio_destino_final = 'Pasto';
+                        break;
+
+                        case '13':
+                          $formulario.pregunta += 1; //va a pregunta 11
+                          $formulario.nombre_municipio_destino_final = 'Valledupar';
+                        break;
+                      
+                        default:
+                          break;
+
+                      }
+
                       actualizarEncuesta($formulario);
                       mensajeRespuesta = `Escribe tu número de contacto en números 📞 `;
   
   
-                    } else if (opcionesDepartamento.includes(req.body.Body)) {
-                      //conversation.pregunta += 1; //va a pregunta 29
-                      //conversation.id_departamento_destino_final =  parseInt(req.body.Body);
-                      //crearEncuesta(conversation);
-                      //mensajeRespuesta = "Escriba en mayúscula el nombre del Municipio ó la palabra *NO SE* en caso de que no tenta definido el Municipio de destino.\n"+
-                      //"En el siguiente link puede consultar el nombre de los Municipios: https://docs.google.com/spreadsheets/d/1AwkvC905X-yddB_FB526e-_2f3CIOYdQF7TUfDYjvWk/edit#gid=1717145484";
-                      $idDepartamentoRecibido = parseInt(req.body.Body);
-                  
-                      $formulario.pregunta += 1;
-                      $formulario.id_departamento_destino_final = $idDepartamentoRecibido;
-  
-                      actualizarEncuesta($formulario);
-                      mensajeRespuesta = `Escribe tu número de contacto en números 📞` ;
-                      
                     } else {
 
                       mensajeRespuesta = `Gracias 🙂, ten presente que no puedo reconocer imágenes, audios, ni emojis. Nos podemos comunicar por medio de texto o digitando el número de las opciones que te indico en mi pregunta.
@@ -1595,14 +1767,14 @@ Escribe por favor tu número de documento 📇 (no utilices símbolos, solo núm
 
                     const pattern = new RegExp('^[0-9]+$', 'i');
 
-                    if(pattern.test(req.body.Body)){
-                      $formulario.numero_contacto = req.body.Body;
+                    if(pattern.test(req.body.incomingMessage)){
+                      $formulario.numero_contacto = req.body.incomingMessage;
                       $formulario.pregunta += 1; //va a 12
                       actualizarEncuesta($formulario);
                       mensajeRespuesta = `¿Este número de contacto fue entregado por el programa VenEsperanza? Responde con el número según la opción: 1️⃣ Sí 2️⃣ No`;
                     }else{
                       mensajeRespuesta = `Gracias 🙂, ten presente que no puedo reconocer imágenes, audios, ni emojis. Nos podemos comunicar por medio de texto o digitando el número de las opciones que te indico en mi pregunta.\n
-                      Escribe tu número de contacto en números 📞` ;
+Escribe tu número de contacto en números 📞` ;
 
                     }
                     
@@ -1610,7 +1782,7 @@ Escribe por favor tu número de documento 📇 (no utilices símbolos, solo núm
                     $formulario.pregunta = 11; //vuelve a 11
                       actualizarEncuesta($formulario);
                     mensajeRespuesta = `Gracias 🙂, ten presente que no puedo reconocer imágenes, audios, ni emojis. Nos podemos comunicar por medio de texto o digitando el número de las opciones que te indico en mi pregunta.\n
-                      Escribe tu número de contacto en números 📞` ;
+Escribe tu número de contacto en números 📞` ;
                   }
                 
                 break;
@@ -1618,7 +1790,8 @@ Escribe por favor tu número de documento 📇 (no utilices símbolos, solo núm
                 case 12:
                   try {
                     
-                    switch(req.body.Body){
+                    //switch(req.body.Body){
+                    switch(req.body.incomingMessage){
                       case '1':
                         $formulario.numero_entregado_venesperanza = true;
                         $formulario.pregunta += 1; //Va a pregunta 13
@@ -1639,7 +1812,7 @@ Escribe por favor tu número de documento 📇 (no utilices símbolos, solo núm
 
                       default:
                         mensajeRespuesta = `Gracias 🙂, ten presente que no puedo reconocer imágenes, audios, ni emojis. Nos podemos comunicar por medio de texto o digitando el número de las opciones que te indico en mi pregunta.
-                        ¿Este número de contacto fue entregado por el programa VenEsperanza? Responde con el número según la opción: 1️⃣ Sí 2️⃣ No`;
+¿Este número de contacto fue entregado por el programa VenEsperanza? Responde con el número según la opción: 1️⃣ Sí 2️⃣ No`;
     
                       break;
                     }
@@ -1648,7 +1821,7 @@ Escribe por favor tu número de documento 📇 (no utilices símbolos, solo núm
                     $formulario.pregunta = 12; //vuelve a 12
                     actualizarEncuesta($formulario);
                     mensajeRespuesta = `Gracias 🙂, ten presente que no puedo reconocer imágenes, audios, ni emojis. Nos podemos comunicar por medio de texto o digitando el número de las opciones que te indico en mi pregunta.
-                    ¿Este número de contacto fue entregado por el programa VenEsperanza? Responde con el número según la opción: 1️⃣ Sí 2️⃣ No`;
+¿Este número de contacto fue entregado por el programa VenEsperanza? Responde con el número según la opción: 1️⃣ Sí 2️⃣ No`;
 
                   }
                 break;
@@ -1656,7 +1829,8 @@ Escribe por favor tu número de documento 📇 (no utilices símbolos, solo núm
 
                 case 13:
                   try {
-                    switch(req.body.Body){
+                    //switch(req.body.Body){
+                    switch(req.body.incomingMessage){
                       case '1':
                         $formulario.linea_contacto_propia = true;
                         $formulario.pregunta += 1; //Va a pregunta 14
@@ -1673,7 +1847,7 @@ Escribe por favor tu número de documento 📇 (no utilices símbolos, solo núm
 
                       default:
                         mensajeRespuesta = `Gracias 🙂, ten presente que no puedo reconocer imágenes, audios, ni emojis. Nos podemos comunicar por medio de texto o digitando el número de las opciones que te indico en mi pregunta.
-                        ¿Este número de contacto es tuyo? Responde con el número según la opción: 1️⃣ Sí 2️⃣ No`
+¿Este número de contacto es tuyo? Responde con el número según la opción: 1️⃣ Sí 2️⃣ No`
                     
                       break;
                     }
@@ -1682,7 +1856,7 @@ Escribe por favor tu número de documento 📇 (no utilices símbolos, solo núm
                     $formulario.pregunta = 13; //vuelve a 13
                     actualizarEncuesta($formulario);
                     mensajeRespuesta = `Gracias 🙂, ten presente que no puedo reconocer imágenes, audios, ni emojis. Nos podemos comunicar por medio de texto o digitando el número de las opciones que te indico en mi pregunta.
-                    ¿Este número de contacto es tuyo? Responde con el número según la opción: 1️⃣ Sí 2️⃣ No`
+¿Este número de contacto es tuyo? Responde con el número según la opción: 1️⃣ Sí 2️⃣ No`
                     
                   }
                 
@@ -1690,7 +1864,9 @@ Escribe por favor tu número de documento 📇 (no utilices símbolos, solo núm
 
                 case 14:
                   try {
-                    switch(req.body.Body){
+                    //switch(req.body.Body){
+                    switch(req.body.incomingMessage){
+
                       case '1':
                         $formulario.linea_asociada_whatsapp = true;
                         $formulario.pregunta += 1; //Va a pregunta 15
@@ -1707,7 +1883,7 @@ Escribe por favor tu número de documento 📇 (no utilices símbolos, solo núm
 
                       default:
                         mensajeRespuesta = `Gracias 🙂, ten presente que no puedo reconocer imágenes, audios, ni emojis. Nos podemos comunicar por medio de texto o digitando el número de las opciones que te indico en mi pregunta.
-                     ¿Este número de contacto tiene WhatsApp? Responde con el número según la opción: 1️⃣ Sí 2️⃣ No`;
+¿Este número de contacto tiene WhatsApp? Responde con el número según la opción: 1️⃣ Sí 2️⃣ No`;
                     
                     
                       break;
@@ -1717,7 +1893,7 @@ Escribe por favor tu número de documento 📇 (no utilices símbolos, solo núm
                     $formulario.pregunta = 14; //vuelve a 14
                     actualizarEncuesta($formulario);
                     mensajeRespuesta = `Gracias 🙂, ten presente que no puedo reconocer imágenes, audios, ni emojis. Nos podemos comunicar por medio de texto o digitando el número de las opciones que te indico en mi pregunta.
-                    ¿Este número de contacto tiene WhatsApp? Responde con el número según la opción: 1️⃣ Sí 2️⃣ No`;
+¿Este número de contacto tiene WhatsApp? Responde con el número según la opción: 1️⃣ Sí 2️⃣ No`;
                     
                   }
                 
@@ -1728,43 +1904,37 @@ Escribe por favor tu número de documento 📇 (no utilices símbolos, solo núm
 
                     emailregex = /^(?:[^<>()[\].,;:\s@"]+(\.[^<>()[\].,;:\s@"]+)*|"[^\n"]+")@(?:[^<>()[\].,;:\s@"]+\.)+[^<>()[\]\.,;:\s@"]{2,63}$/i;
                     //console.log('TEST EMAIL:: ', emailregex.test(req.body.Body));
-                    if(req.body.Body === 'NO'){
+                    //if(req.body.Body === 'NO'){
+                    if(req.body.incomingMessage === 'NO'){
                       $formulario.pregunta += 1;
                       actualizarEncuesta($formulario);
                       conversation.tipo_formulario = null;
+                      //conversation.autorizacion = null;
                       actualizarConversacion(conversation);
                       mensajeRespuesta = `¡Gracias por participar!
-                      Si eres preseleccionado/a el programa #VenEsperanza se comunicará contigo
-                      Recuerda:
-                      En el programa #VenEsperanza no cobramos ni pedimos remuneración por ningún servicio a la comunidad, no tenemos intermediarios.
-                      
-                      Ahora por favor respóndeme con el número correspondiente a lo que quieres hacer:\n
-                      1️⃣ Quieres diligenciar el formulario de registro ✍🏻\n
-                      2️⃣ Quieres informar de tu llegada a destino ☝🏻\n
-                      3️⃣ Ya te registraste antes y quieres actualizar tus datos de contacto  🙌🏻 `;
+Si eres preseleccionado/a el programa #VenEsperanza se comunicará contigo
+Recuerda:
+En el programa #VenEsperanza no cobramos ni pedimos remuneración por ningún servicio a la comunidad, no tenemos intermediarios.`;
                     
 
-                    }else if(emailregex.test(req.body.Body)) {
+                    //}else if(emailregex.test(req.body.Body)) {
+                    }else if(emailregex.test(req.body.incomingMessage)){
                       //console.log('TEST SI');
                       $formulario.pregunta += 1;
-                      $formulario.correo_electronico = req.body.Body;
+                      //$formulario.correo_electronico = req.body.Body;
+                      $formulario.correo_electronico = req.body.incomingMessage;
                       actualizarEncuesta($formulario);
                       conversation.tipo_formulario = null;
                       //console.log('CONVERSACION ACTUALIZAR:: ', conversation);
                       actualizarConversacion(conversation);
                       mensajeRespuesta = `¡Gracias por participar!
-                      Si eres preseleccionado/a el programa #VenEsperanza se comunicará contigo
-                      Recuerda:
-                      En el programa #VenEsperanza no cobramos ni pedimos remuneración por ningún servicio a la comunidad, no tenemos intermediarios.
-                      
-                      Ahora por favor respóndeme con el número correspondiente a lo que quieres hacer:\n
-                      1️⃣ Quieres diligenciar el formulario de registro ✍🏻\n
-                      2️⃣ Quieres informar de tu llegada a destino ☝🏻\n
-                      3️⃣ Ya te registraste antes y quieres actualizar tus datos de contacto  🙌🏻 `;
+Si eres preseleccionado/a el programa #VenEsperanza se comunicará contigo
+Recuerda:
+En el programa #VenEsperanza no cobramos ni pedimos remuneración por ningún servicio a la comunidad, no tenemos intermediarios.`;
                     
                     }else{
                       mensajeRespuesta = `Gracias 🙂, ten presente que no puedo reconocer imágenes, audios, ni emojis. Nos podemos comunicar por medio de texto o digitando el número de las opciones que te indico en mi pregunta.
-                    ¿Podrías compartirme un correo electrónico 📧 en el que te podamos contactar?  (si no tienes, ¡no te preocupes! escribe NO`;
+¿Podrías compartirme un correo electrónico 📧 en el que te podamos contactar?  (si no tienes, ¡no te preocupes! escribe NO`;
 
                     }
                     
@@ -1772,7 +1942,7 @@ Escribe por favor tu número de documento 📇 (no utilices símbolos, solo núm
                     $formulario.pregunta = 15; //vuelve a 15
                     actualizarEncuesta($formulario);
                     mensajeRespuesta = `Gracias 🙂, ten presente que no puedo reconocer imágenes, audios, ni emojis. Nos podemos comunicar por medio de texto o digitando el número de las opciones que te indico en mi pregunta.
-                    ¿Podrías compartirme un correo electrónico 📧 en el que te podamos contactar?  (si no tienes, ¡no te preocupes! escribe NO`;
+¿Podrías compartirme un correo electrónico 📧 en el que te podamos contactar?  (si no tienes, ¡no te preocupes! escribe NO`;
 
                   }
                 
@@ -1794,7 +1964,9 @@ Escribe por favor tu número de documento 📇 (no utilices símbolos, solo núm
               case 1: //guardo respuesta pregunta 1
                   try {
       
-                    switch (req.body.Body) {
+                    //switch (req.body.Body) {
+                    switch (req.body.incomingMessage){
+
                       case '1':
                         $formulario.tipo_documento = "Acta de Nacimiento";
                         $formulario.pregunta += 1;// pregunta 2
@@ -1884,7 +2056,8 @@ Escribe por favor tu número de documento 📇 (no utilices símbolos, solo núm
               case 2: //guardo respuesta pregunta 2
 
                 try {
-                  $formulario.numero_documento = req.body.Body;//.replace(/[^\ñ\Ñ\ü\Ü\á\Á\é\É\í\Í\ó\Ó\ú\Ú\-\w]/gi, '');
+                  //$formulario.numero_documento = req.body.Body;//.replace(/[^\ñ\Ñ\ü\Ü\á\Á\é\É\í\Í\ó\Ó\ú\Ú\-\w]/gi, '');
+                  $formulario.numero_documento = req.body.incomingMessage;
 
                   const pattern = new RegExp('^[0-9]+$', 'i');
 
@@ -1904,7 +2077,7 @@ Escribe por favor tu número de documento 📇 (no utilices símbolos, solo núm
 
                     }else{
                       mensajeRespuesta = `Gracias 🙂, ten presente que no puedo reconocer imágenes, audios, ni emojis. Nos podemos comunicar por medio de texto o digitando el número de las opciones que te indico en mi pregunta.\n
-                      Escribe por favor tu número de documento 📇 (no utilices símbolos, solo números) Ejemplo: 123456789`;
+Escribe por favor tu número de documento 📇 (no utilices símbolos, solo números) Ejemplo: 123456789`;
 
                     }
 
@@ -1913,7 +2086,7 @@ Escribe por favor tu número de documento 📇 (no utilices símbolos, solo núm
                     $formulario.pregunta = 2; //vuelve a entrar a paso 2
                     actualizarLlegada($formulario);
                     mensajeRespuesta = `Gracias 🙂, ten presente que no puedo reconocer imágenes, audios, ni emojis. Nos podemos comunicar por medio de texto o digitando el número de las opciones que te indico en mi pregunta.\n
-                    Escribe por favor tu número de documento 📇 (no utilices símbolos, solo números) Ejemplo: 123456789`;
+Escribe por favor tu número de documento 📇 (no utilices símbolos, solo números) Ejemplo: 123456789`;
                 }
 
               break;
@@ -1922,13 +2095,15 @@ Escribe por favor tu número de documento 📇 (no utilices símbolos, solo núm
                 try {
 
                   //const pattern = new RegExp('^[0-9]+$', 'i');
-                  $formulario.nombre_jefe_hogar = req.body.Body;
+                  //$formulario.nombre_jefe_hogar = req.body.Body;
+                  $formulario.nombre_jefe_hogar = req.body.incomingMessage;
                   const pattern = new RegExp('^[aA-zZñÑüÜáÁéÉíÍóÓúÚ ]+$', 'i');
                   
                   if(pattern.test($formulario.nombre_jefe_hogar)){
                   //if(pattern.test(req.body.Body)){
 
-                    $formulario.nombre_jefe_hogar = req.body.Body;
+                    //$formulario.nombre_jefe_hogar = req.body.Body;
+                    $formulario.nombre_jefe_hogar = req.body.incomingMessage;
                     //$formulario.telefono = req.body.Body;
                     $formulario.pregunta += 1; //va a 4
                     actualizarLlegada($formulario);
@@ -1976,7 +2151,7 @@ Escribe por favor tu número de documento 📇 (no utilices símbolos, solo núm
                     //mensajeRespuesta = `Gracias 🙂, ten presente que no puedo reconocer imágenes, audios, ni emojis. Nos podemos comunicar por medio de texto o digitando el número de las opciones que te indico en mi pregunta.\n
                     //Escribe tu número de teléfono en números 📞` ;
                     mensajeRespuesta = `Gracias 🙂, ten presente que no puedo reconocer imágenes, audios, ni emojis. Nos podemos comunicar por medio de texto o digitando el número de las opciones que te indico en mi pregunta.\n
-                    Escribe el nombre del jefe de hogar`;
+Escribe el nombre del jefe de hogar`;
 
                   }
                   
@@ -1986,7 +2161,7 @@ Escribe por favor tu número de documento 📇 (no utilices símbolos, solo núm
                   //mensajeRespuesta = `Gracias 🙂, ten presente que no puedo reconocer imágenes, audios, ni emojis. Nos podemos comunicar por medio de texto o digitando el número de las opciones que te indico en mi pregunta.\n
                   //Escribe tu número de teléfono en números 📞` ;
                   mensajeRespuesta = `Gracias 🙂, ten presente que no puedo reconocer imágenes, audios, ni emojis. Nos podemos comunicar por medio de texto o digitando el número de las opciones que te indico en mi pregunta.\n
-                    Escribe el nombre del jefe de hogar`;
+Escribe el nombre del jefe de hogar`;
                 }
               break;
 
@@ -1994,20 +2169,22 @@ Escribe por favor tu número de documento 📇 (no utilices símbolos, solo núm
                   try {
                       const pattern = new RegExp('^[0-9]+$', 'i');
                       
-                      if(pattern.test(req.body.Body)){
+                      //if(pattern.test(req.body.Body)){
+                      if(pattern.test(req.body.incomingMessage)){
 
-                        $formulario.telefono = req.body.Body;
+                        //$formulario.telefono = req.body.Body;
+                        $formulario.numero_contacto
                             $formulario.pregunta += 1; //va a pregunta 5
       
                             actualizarLlegada($formulario);
                             mensajeRespuesta = `¿Esta línea de contacto está asociada a WhatsApp? Responde con el número de acuerdo a la opción correspondiente:
-                            1️⃣ Sí
-                            2️⃣ No`;
+1️⃣ Sí
+2️⃣ No`;
                             
                           }else{
                             mensajeRespuesta = `Gracias 🙂, ten presente que no puedo reconocer imágenes, audios, ni emojis. Nos podemos comunicar por medio de texto o digitando el número de las opciones que te indico en mi pregunta.\n
 
-                            Escribe tu número de teléfono en números 📞`;
+Escribe tu número de teléfono en números 📞`;
                           }
                       
                     
@@ -2017,7 +2194,7 @@ Escribe por favor tu número de documento 📇 (no utilices símbolos, solo núm
                     actualizarLlegada($formulario);
                     mensajeRespuesta = `Gracias 🙂, ten presente que no puedo reconocer imágenes, audios, ni emojis. Nos podemos comunicar por medio de texto o digitando el número de las opciones que te indico en mi pregunta.\n
 
-                    Escribe tu número de teléfono en números 📞`;
+Escribe tu número de teléfono en números 📞`;
                   }
                 break;
 
@@ -2025,9 +2202,10 @@ Escribe por favor tu número de documento 📇 (no utilices símbolos, solo núm
 
                 try {
                   
-                  switch (req.body.Body) {
+                  //switch (req.body.Body) {
+                  switch(req.body.incomingMessage){
                     case '1':
-                      formulario.numero_contacto_asociado_whatsapp = 1;
+                      $formulario.numero_contacto_asociado_whatsapp = '1';
                       $formulario.pregunta += 1; //va a pregunta 6
         
                       actualizarLlegada($formulario);
@@ -2049,7 +2227,7 @@ Escribe por favor tu número de documento 📇 (no utilices símbolos, solo núm
                       
 
                     case '2':
-                      formulario.numero_contacto_asociado_whatsapp = 2;
+                      $formulario.numero_contacto_asociado_whatsapp = '2';
                       $formulario.pregunta += 1; //va a pregunta 6
         
                       actualizarLlegada($formulario);
@@ -2070,19 +2248,19 @@ Escribe por favor tu número de documento 📇 (no utilices símbolos, solo núm
                   
                     default:
                       mensajeRespuesta = `Gracias 🙂, ten presente que no puedo reconocer imágenes, audios, ni emojis. Nos podemos comunicar por medio de texto o digitando el número de las opciones que te indico en mi pregunta.\n
-                      ¿Esta línea de contacto está asociada a WhatsApp? Responde con el número de acuerdo a la opción correspondiente:
-                      1️⃣ Sí
-                      2️⃣ No`;
+¿Esta línea de contacto está asociada a WhatsApp? Responde con el número de acuerdo a la opción correspondiente:
+1️⃣ Sí
+2️⃣ No`;
                       break;
                   }
                   
                 } catch (error) {
                     $formulario.pregunta = 5;
-                      actualizarEncuesta($formulario);
+                    actualizarLlegada($formulario);
                       mensajeRespuesta = `Gracias 🙂, ten presente que no puedo reconocer imágenes, audios, ni emojis. Nos podemos comunicar por medio de texto o digitando el número de las opciones que te indico en mi pregunta.\n
-                      ¿Esta línea de contacto está asociada a WhatsApp? Responde con el número de acuerdo a la opción correspondiente:
-                      1️⃣ Sí
-                      2️⃣ No`;
+¿Esta línea de contacto está asociada a WhatsApp? Responde con el número de acuerdo a la opción correspondiente:
+1️⃣ Sí
+2️⃣ No`;
                 }
 
               break;
@@ -2094,10 +2272,15 @@ Escribe por favor tu número de documento 📇 (no utilices símbolos, solo núm
                 try {
 
                   //console.log('LO QUE HAY EN BODY 28: ', req.body.Body);
-                  const opcionesDepartamento = ['2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15', '16',
-                    '17', '18', '19', '20', '21', '22', '23', '24', '25', '26', '27', '28', '29', '30', '31', '32', '33', '34', '35'];
+                  //const opcionesDepartamento = ['2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15', '16',
+                    //'17', '18', '19', '20', '21', '22', '23', '24', '25', '26', '27', '28', '29', '30', '31', '32', '33', '34', '35'];
 
-                  if (req.body.Body === '1') {
+                  const opcionesSeleccion= ['1','2','3','4','5','6','7','8','9','10','11','12','13'];
+
+
+                  //if (req.body.Body === '1') {
+                    /*
+                  if(req.body.incomingMessage === '1'){
                     //$formulario.pregunta += 1; //va a pregunta 5
                     $formulario.id_departamento = null;
                     //$formulario.id_municipio_destino_final = null;
@@ -2110,10 +2293,184 @@ Escribe por favor tu número de documento 📇 (no utilices símbolos, solo núm
                     Ahora por favor respóndeme con el número correspondiente a lo que quieres hacer:\n
                     1️⃣ Quieres diligenciar el formulario de registro ✍🏻\n
                     2️⃣ Quieres informar de tu llegada a destino ☝🏻\n
-                    3️⃣ Ya te registraste antes y quieres actualizar tus datos de contacto  🙌🏻 `;
+                    3️⃣ Ya te registraste antes y quieres actualizar tus datos de contacto  🙌🏻 `;*/
+                  
+                    if (opcionesSeleccion.includes(req.body.incomingMessage)) {
+                      
+                      switch (req.body.incomingMessage) {
+
+                        
+                        case '1':
+                          
+                          $formulario.pregunta += 1; //va a pregunta 7
+                          $formulario.donde_te_encuentras = 'Otro';
+                          actualizarLlegada($formulario);
+                          //mensajeRespuesta = `Escribe tu número de contacto en números 📞 `;
+                          mensajeRespuesta = `Cuál?`;
+                        break;
+
+                        case '2':
+                          $formulario.pregunta += 2; //va a pregunta 11
+                          $formulario.donde_te_encuentras = 'Arauca';
+                          actualizarLlegada($formulario);
+                          conversation.tipo_formulario = null;
+                          actualizarConversacion(conversation);
+                          //mensajeRespuesta = `Escribe tu número de contacto en números 📞 `;
+                          mensajeRespuesta = `Gracias por informar de tu llegada a destino!
+Ahora por favor respóndeme con el número correspondiente a lo que quieres hacer:\n
+1️⃣ Quieres diligenciar el formulario de registro ✍🏻\n
+2️⃣ Quieres informar de tu llegada a destino ☝🏻\n
+3️⃣ Ya te registraste antes y quieres actualizar tus datos de contacto  🙌🏻 `;
+                        break;
+
+                        case '3':
+                          $formulario.pregunta += 2; //va a pregunta 11
+                          $formulario.donde_te_encuentras = 'Barranquilla';
+                          actualizarLlegada($formulario);
+                          conversation.tipo_formulario = null;
+                          actualizarConversacion(conversation);
+                          //mensajeRespuesta = `Escribe tu número de contacto en números 📞 `;
+                          mensajeRespuesta = `Gracias por informar de tu llegada a destino!
+Ahora por favor respóndeme con el número correspondiente a lo que quieres hacer:\n
+1️⃣ Quieres diligenciar el formulario de registro ✍🏻\n
+2️⃣ Quieres informar de tu llegada a destino ☝🏻\n
+3️⃣ Ya te registraste antes y quieres actualizar tus datos de contacto  🙌🏻`;
+                        break;
+
+                        case '4':
+                          $formulario.pregunta += 2; //va a pregunta 11
+                          $formulario.donde_te_encuentras = 'Bogotá';
+                          actualizarLlegada($formulario);
+                          conversation.tipo_formulario = null;
+                          actualizarConversacion(conversation);
+                          //mensajeRespuesta = `Escribe tu número de contacto en números 📞 `;
+                          mensajeRespuesta = `Gracias por informar de tu llegada a destino!
+Ahora por favor respóndeme con el número correspondiente a lo que quieres hacer:\n
+1️⃣ Quieres diligenciar el formulario de registro ✍🏻\n
+2️⃣ Quieres informar de tu llegada a destino ☝🏻\n
+3️⃣ Ya te registraste antes y quieres actualizar tus datos de contacto  🙌🏻`;
+                        break;
+
+                        case '5':
+                          $formulario.pregunta += 2; //va a pregunta 11
+                          $formulario.donde_te_encuentras = 'Bucaramanga';
+                          actualizarLlegada($formulario);
+                          conversation.tipo_formulario = null;
+                          actualizarConversacion(conversation);
+                          //mensajeRespuesta = `Escribe tu número de contacto en números 📞 `;
+                          mensajeRespuesta = `Gracias por informar de tu llegada a destino!
+Ahora por favor respóndeme con el número correspondiente a lo que quieres hacer:\n
+1️⃣ Quieres diligenciar el formulario de registro ✍🏻\n
+2️⃣ Quieres informar de tu llegada a destino ☝🏻\n
+3️⃣ Ya te registraste antes y quieres actualizar tus datos de contacto  🙌🏻`;
+                        break;
+
+                        case '6':
+                          $formulario.pregunta += 2; //va a pregunta 11
+                          $formulario.donde_te_encuentras = 'Cali';
+                          actualizarLlegada($formulario);
+                          conversation.tipo_formulario = null;
+                          actualizarConversacion(conversation);
+                          //mensajeRespuesta = `Escribe tu número de contacto en números 📞 `;
+                          mensajeRespuesta = `Gracias por informar de tu llegada a destino!
+Ahora por favor respóndeme con el número correspondiente a lo que quieres hacer:\n
+1️⃣ Quieres diligenciar el formulario de registro ✍🏻\n
+2️⃣ Quieres informar de tu llegada a destino ☝🏻\n
+3️⃣ Ya te registraste antes y quieres actualizar tus datos de contacto  🙌🏻`;
+                        break;
+
+                        case '7':
+                          $formulario.pregunta += 2; //va a pregunta 11
+                          $formulario.donde_te_encuentras = 'Cartagena';
+                          actualizarLlegada($formulario);
+                          conversation.tipo_formulario = null;
+                          actualizarConversacion(conversation);
+                          //mensajeRespuesta = `Escribe tu número de contacto en números 📞 `;
+                          mensajeRespuesta = `Gracias por informar de tu llegada a destino!
+Ahora por favor respóndeme con el número correspondiente a lo que quieres hacer:\n
+1️⃣ Quieres diligenciar el formulario de registro ✍🏻\n
+2️⃣ Quieres informar de tu llegada a destino ☝🏻\n
+3️⃣ Ya te registraste antes y quieres actualizar tus datos de contacto  🙌🏻`;
+                        break;
+
+                        case '8':
+                          $formulario.pregunta += 2; //va a pregunta 11
+                          $formulario.donde_te_encuentras = 'Cúcuta';
+                          actualizarLlegada($formulario);
+                          conversation.tipo_formulario = null;
+                          actualizarConversacion(conversation);
+                          //mensajeRespuesta = `Escribe tu número de contacto en números 📞 `;
+                          mensajeRespuesta = `Gracias por informar de tu llegada a destino!
+Ahora por favor respóndeme con el número correspondiente a lo que quieres hacer:\n
+1️⃣ Quieres diligenciar el formulario de registro ✍🏻\n
+2️⃣ Quieres informar de tu llegada a destino ☝🏻\n
+3️⃣ Ya te registraste antes y quieres actualizar tus datos de contacto  🙌🏻`;
+                          
+                        break;
+
+                        case '9':
+                          $formulario.pregunta += 2; //va a pregunta 11
+                          $formulario.donde_te_encuentras = 'Medellín';
+                          actualizarLlegada($formulario);
+                          conversation.tipo_formulario = null;
+                          actualizarConversacion(conversation);
+                          //mensajeRespuesta = `Escribe tu número de contacto en números 📞 `;
+                          mensajeRespuesta = `Gracias por informar de tu llegada a destino!
+Ahora por favor respóndeme con el número correspondiente a lo que quieres hacer:\n
+1️⃣ Quieres diligenciar el formulario de registro ✍🏻\n
+2️⃣ Quieres informar de tu llegada a destino ☝🏻\n
+3️⃣ Ya te registraste antes y quieres actualizar tus datos de contacto  🙌🏻`;
+                        break;
+
+                        case '10':
+                          //$formulario.pregunta += 2; //va pregunta 11
+                          $formulario.donde_te_encuentras = 'Riohacha';
+                          actualizarLlegada($formulario);
+                          conversation.tipo_formulario = null;
+                          actualizarConversacion(conversation);
+                          //mensajeRespuesta = `Escribe tu número de contacto en números 📞 `;
+                          mensajeRespuesta = `Gracias por informar de tu llegada a destino!
+Ahora por favor respóndeme con el número correspondiente a lo que quieres hacer:\n
+1️⃣ Quieres diligenciar el formulario de registro ✍🏻\n
+2️⃣ Quieres informar de tu llegada a destino ☝🏻\n
+3️⃣ Ya te registraste antes y quieres actualizar tus datos de contacto  🙌🏻`;
+                        break;
+
+                        case '11':
+                          $formulario.pregunta += 2; //va a pregunta 11
+                          $formulario.donde_te_encuentras = 'Pasto';
+                          actualizarLlegada($formulario);
+                          conversation.tipo_formulario = null;
+                          actualizarConversacion(conversation);
+                          //mensajeRespuesta = `Escribe tu número de contacto en números 📞 `;
+                          mensajeRespuesta = `Gracias por informar de tu llegada a destino!
+Ahora por favor respóndeme con el número correspondiente a lo que quieres hacer:\n
+1️⃣ Quieres diligenciar el formulario de registro ✍🏻\n
+2️⃣ Quieres informar de tu llegada a destino ☝🏻\n
+3️⃣ Ya te registraste antes y quieres actualizar tus datos de contacto  🙌🏻`;
+                        break;
+
+                        case '12':
+                          $formulario.pregunta += 2; //va a pregunta 11
+                          $formulario.donde_te_encuentras = 'Valledupar';
+                          actualizarLlegada($formulario);
+                          conversation.tipo_formulario = null;
+                          actualizarConversacion(conversation);
+                          //mensajeRespuesta = `Escribe tu número de contacto en números 📞 `;
+                          mensajeRespuesta = `Gracias por informar de tu llegada a destino!
+Ahora por favor respóndeme con el número correspondiente a lo que quieres hacer:\n
+1️⃣ Quieres diligenciar el formulario de registro ✍🏻\n
+2️⃣ Quieres informar de tu llegada a destino ☝🏻\n
+3️⃣ Ya te registraste antes y quieres actualizar tus datos de contacto  🙌🏻`;
+                        break;
+                      
+                        default:
+                          break;
+
+                      }
 
 
-                  } else if (opcionesDepartamento.includes(req.body.Body)) {
+                 /* } else if (opcionesSeleccion.includes(req.body.incomingMessage)) {
                     //conversation.pregunta += 1; //va a pregunta 29
                     //conversation.id_departamento_destino_final =  parseInt(req.body.Body);
                     //crearEncuesta(conversation);
@@ -2125,9 +2482,25 @@ Escribe por favor tu número de documento 📇 (no utilices símbolos, solo núm
                     $formulario.id_departamento = $idDepartamentoRecibido;
 
                     actualizarLlegada($formulario);
-                    mensajeRespuesta = `Envía el Municipio ` ;
+                    mensajeRespuesta = `Envía el Municipio ` ;*/
                     
                   } else {
+                    
+                    mensajeRespuesta = `Gracias 🙂, ten presente que no puedo reconocer imágenes, audios, ni emojis. Nos podemos comunicar por medio de texto o digitando el número de las opciones que te indico en mi pregunta.
+¿Dónde te encuentras?
+1️⃣ Otro
+2️⃣ Arauca
+3️⃣ Barranquilla
+4️⃣ Bogotá
+5️⃣ Bucaramanga
+6️⃣ Cali
+7️⃣ Cartagena
+8️⃣ Cúcuta
+9️⃣ Medellín
+🔟 Riohacha
+1️⃣1️⃣ Pasto
+1️⃣2️⃣ Valledupar`;
+                    /*
                     mensajeRespuesta = `Gracias 🙂, ten presente que no puedo reconocer imágenes, audios, ni emojis. Nos podemos comunicar por medio de texto o digitando el número de las opciones que te indico en mi pregunta.
 ¿Cuál es tu destino final dentro de Colombia? Envía el número del Departamento correspondiente ó el número *1* en caso de que no tengas definido el Departamento de destino. 1: No sé 
                     2:	Antioquia
@@ -2164,13 +2537,30 @@ Escribe por favor tu número de documento 📇 (no utilices símbolos, solo núm
                     33:	Guaviare
                     34:	Vaupes
                     35:	Vichada`;
+                    */
                   }
 
                 } catch (error) {
                   //console.log('ERROR EN 28__ ', error);
-                  $formulario.pregunta = 10; //vuelve a 11
-                  actualizarEncuesta($formulario);
+                  $formulario.pregunta = 6; //vuelve a 6
+                  actualizarLlegada($formulario);
+
                   mensajeRespuesta = `Gracias 🙂, ten presente que no puedo reconocer imágenes, audios, ni emojis. Nos podemos comunicar por medio de texto o digitando el número de las opciones que te indico en mi pregunta.
+¿Dónde te encuentras?
+1️⃣ Otro
+2️⃣ Arauca
+3️⃣ Barranquilla
+4️⃣ Bogotá
+5️⃣ Bucaramanga
+6️⃣ Cali
+7️⃣ Cartagena
+8️⃣ Cúcuta
+9️⃣ Medellín
+🔟 Riohacha
+1️⃣1️⃣ Pasto
+1️⃣2️⃣ Valledupar`;
+                  
+                  /*mensajeRespuesta = `Gracias 🙂, ten presente que no puedo reconocer imágenes, audios, ni emojis. Nos podemos comunicar por medio de texto o digitando el número de las opciones que te indico en mi pregunta.
                   ¿Cuál es tu destino final dentro de Colombia? Envía el número del Departamento correspondiente ó el número *1* en caso de que no tengas definido el Departamento de destino. 1: No sé 
                   2:	Antioquia
                   3:	Atlántico
@@ -2205,22 +2595,44 @@ Escribe por favor tu número de documento 📇 (no utilices símbolos, solo núm
                   32:	Guainia
                   33:	Guaviare
                   34:	Vaupes
-                  35:	Vichada`;
+                  35:	Vichada`;*/
 
                 }
               break;
 
               
-              case 5:
+              case 7:
                 try{
-                  mensajeRespuesta = `Ya reportaste tu llegada a destino Gracias!`;
+                  
+                  $formulario.pregunta = 1;
+                          $formulario.otro_donde_te_encuentras = req.body.incomingMessage;
+                          actualizarLlegada($formulario);
+                          conversation.tipo_formulario = null;
+                          actualizarConversacion(conversation);
+                          mensajeRespuesta = `Gracias por informar de tu llegada a destino!
+Ahora por favor respóndeme con el número correspondiente a lo que quieres hacer:\n
+1️⃣ Quieres diligenciar el formulario de registro ✍🏻\n
+2️⃣ Quieres informar de tu llegada a destino ☝🏻\n
+3️⃣ Ya te registraste antes y quieres actualizar tus datos de contacto  🙌🏻`;
                 }catch{
-
+                  mensajeRespuesta = `Gracias 🙂, ten presente que no puedo reconocer imágenes, audios, ni emojis. Nos podemos comunicar por medio de texto o digitando el número de las opciones que te indico en mi pregunta.\n
+En cuál otro lugar te encuentras?`;
                 }
               break;
 
               default:
+                $formulario.pregunta = 7; //vuelve a 
+                  actualizarLlegada($formulario);
+                mensajeRespuesta = `Gracias 🙂, ten presente que no puedo reconocer imágenes, audios, ni emojis. Nos podemos comunicar por medio de texto o digitando el número de las opciones que te indico en mi pregunta.
+En cuál otro lugar te encuentras?`;
               break;
+
+              case 8:
+                try{
+                  mensajeRespuesta = `Ya reportaste tu llegada a destino gracias!`;
+                }catch{
+
+                }
             }
 
           }else if(conversation.tipo_formulario == 3){
@@ -2231,7 +2643,8 @@ Escribe por favor tu número de documento 📇 (no utilices símbolos, solo núm
               case 1: //guardo respuesta pregunta 1
                   try {
       
-                    switch (req.body.Body) {
+                    //switch (req.body.Body) {
+                    switch (req.body.incomingMessage){
                       case '1':
                         $formulario.tipo_documento = "Acta de Nacimiento";
                         $formulario.pregunta += 1;// pregunta 2
@@ -2290,14 +2703,14 @@ Escribe por favor tu número de documento 📇 (no utilices símbolos, solo núm
 
                       default:
                         mensajeRespuesta = `Gracias 🙂, ten presente que no puedo reconocer imágenes, audios, ni emojis. Nos podemos comunicar por medio de texto o digitando el número de las opciones que te indico en mi pregunta.\n
-      ¿Cuál es tu tipo de documento? 📇 Responde con el número de acuerdo a la opción correspondiente:
-                          1️⃣ Acta de Nacimiento
-                          2️⃣ Cédula de Identidad (venezolana)
-                          3️⃣ Cédula de Ciudadanía (colombiana)
-                          4️⃣ Pasaporte
-                          5️⃣ Cédula de Extranjería
-                          6️⃣ Indocumentado
-                          7️⃣ Otro`;
+¿Cuál es tu tipo de documento? 📇 Responde con el número de acuerdo a la opción correspondiente:
+1️⃣ Acta de Nacimiento
+2️⃣ Cédula de Identidad (venezolana)
+3️⃣ Cédula de Ciudadanía (colombiana)
+4️⃣ Pasaporte
+5️⃣ Cédula de Extranjería
+6️⃣ Indocumentado
+7️⃣ Otro`;
                         break;
                     
 
@@ -2307,21 +2720,22 @@ Escribe por favor tu número de documento 📇 (no utilices símbolos, solo núm
                     $formulario.pregunta = 1; //vuelve a entrar a pregunta 1
                     actualizarDatosContacto($formulario);
                     mensajeRespuesta = `Gracias 🙂, ten presente que no puedo reconocer imágenes, audios, ni emojis. Nos podemos comunicar por medio de texto o digitando el número de las opciones que te indico en mi pregunta.\n
-                    ¿Cuál es tu tipo de documento? 📇 Responde con el número de acuerdo a la opción correspondiente:
-                            1️⃣ Acta de Nacimiento
-                            2️⃣ Cédula de Identidad (venezolana)
-                            3️⃣ Cédula de Ciudadanía (colombiana)
-                            4️⃣ Pasaporte
-                            5️⃣ Cédula de Extranjería
-                            6️⃣ Indocumentado
-                            7️⃣ Otro`;
+¿Cuál es tu tipo de documento? 📇 Responde con el número de acuerdo a la opción correspondiente:
+1️⃣ Acta de Nacimiento
+2️⃣ Cédula de Identidad (venezolana)
+3️⃣ Cédula de Ciudadanía (colombiana)
+4️⃣ Pasaporte
+5️⃣ Cédula de Extranjería
+6️⃣ Indocumentado
+7️⃣ Otro`;
                   }
               break;
 
               case 2: //guardo respuesta pregunta 2
 
                 try {
-                  $formulario.numero_documento = req.body.Body;//.replace(/[^\ñ\Ñ\ü\Ü\á\Á\é\É\í\Í\ó\Ó\ú\Ú\-\w]/gi, '');
+                  //$formulario.numero_documento = req.body.Body;//.replace(/[^\ñ\Ñ\ü\Ü\á\Á\é\É\í\Í\ó\Ó\ú\Ú\-\w]/gi, '');
+                  $formulario.numero_documento = req.body.incomingMessage;
 
                   const pattern = new RegExp('^[0-9]+$', 'i');
 
@@ -2340,7 +2754,7 @@ Escribe por favor tu número de documento 📇 (no utilices símbolos, solo núm
 
                     }else{
                       mensajeRespuesta = `Gracias 🙂, ten presente que no puedo reconocer imágenes, audios, ni emojis. Nos podemos comunicar por medio de texto o digitando el número de las opciones que te indico en mi pregunta.\n
-                      Escribe por favor tu número de documento 📇 (no utilices símbolos, solo números) Ejemplo: 123456789`;
+Escribe por favor tu número de documento 📇 (no utilices símbolos, solo números) Ejemplo: 123456789`;
 
                     }
 
@@ -2349,7 +2763,7 @@ Escribe por favor tu número de documento 📇 (no utilices símbolos, solo núm
                     $formulario.pregunta = 2; //vuelve a entrar a paso 2
                     actualizarDatosContacto($formulario);
                     mensajeRespuesta = `Gracias 🙂, ten presente que no puedo reconocer imágenes, audios, ni emojis. Nos podemos comunicar por medio de texto o digitando el número de las opciones que te indico en mi pregunta.\n
-                    Escribe por favor tu número de documento 📇 (no utilices símbolos, solo números) Ejemplo: 123456789`;
+Escribe por favor tu número de documento 📇 (no utilices símbolos, solo números) Ejemplo: 123456789`;
                 }
 
               break;
@@ -2359,15 +2773,17 @@ Escribe por favor tu número de documento 📇 (no utilices símbolos, solo núm
 
                   const pattern = new RegExp('^[0-9]+$', 'i');
 
-                  if(pattern.test(req.body.Body)){
-                    $formulario.telefono = req.body.Body;
+                  //if(pattern.test(req.body.Body)){
+                  if(pattern.test(req.body.incomingMessage)){
+                    //$formulario.telefono = req.body.Body;
+                    $formulario.telefono = req.body.incomingMessage;
                     $formulario.pregunta += 1; //va a 4
                     actualizarDatosContacto($formulario);
 
                     mensajeRespuesta = `¿Podrías compartirme un correo electrónico 📧 en el que te podamos contactar?  (si no tienes, ¡no te preocupes! escribe NO`;
                   }else{
                     mensajeRespuesta = `Gracias 🙂, ten presente que no puedo reconocer imágenes, audios, ni emojis. Nos podemos comunicar por medio de texto o digitando el número de las opciones que te indico en mi pregunta.\n
-                    Escribe tu número de teléfono en números 📞` ;
+Escribe tu número de teléfono en números 📞` ;
 
                   }
                   
@@ -2375,7 +2791,7 @@ Escribe por favor tu número de documento 📇 (no utilices símbolos, solo núm
                   $formulario.pregunta = 3; //vuelve a 3
                   actualizarDatosContacto($formulario);
                   mensajeRespuesta = `Gracias 🙂, ten presente que no puedo reconocer imágenes, audios, ni emojis. Nos podemos comunicar por medio de texto o digitando el número de las opciones que te indico en mi pregunta.\n
-                  Escribe tu número de teléfono en números 📞` ;
+Escribe tu número de teléfono en números 📞` ;
                 }
               
               break;
@@ -2385,7 +2801,8 @@ Escribe por favor tu número de documento 📇 (no utilices símbolos, solo núm
 
                   emailregex = /^(?:[^<>()[\].,;:\s@"]+(\.[^<>()[\].,;:\s@"]+)*|"[^\n"]+")@(?:[^<>()[\].,;:\s@"]+\.)+[^<>()[\]\.,;:\s@"]{2,63}$/i;
                   //console.log('TEST EMAIL:: ', emailregex.test(req.body.Body));
-                  if(req.body.Body === 'NO'){
+                  //if(req.body.Body === 'NO'){
+                  if(req.body.incomingMessage === 'NO'){
                     $formulario.pregunta = null;
                     actualizarDatosContacto($formulario);
                     conversation.tipo_formulario = null;
@@ -2397,11 +2814,13 @@ Ahora por favor respóndeme con el número correspondiente a lo que quieres hace
 3️⃣ Ya te registraste antes y quieres actualizar tus datos de contacto  🙌🏻 `;
                   
 
-                  }else if(emailregex.test(req.body.Body)) {
+                  //}else if(emailregex.test(req.body.Body)) {
+                  }else if(emailregex.test(req.body.incomingMessage)){
                     //console.log('TEST SI');
                     $formulario.pregunta = null;
                     
-                    $formulario.correo_electronico = req.body.Body;
+                    //$formulario.correo_electronico = req.body.Body;
+                    $formulario.correo_electronico = req.body.incomingMessage;
                     console.log('correo a guardar: ', $formulario.correo_electronico);
                     actualizarDatosContacto($formulario);
                     conversation.tipo_formulario = null;
@@ -2415,7 +2834,7 @@ Por favor respóndeme con el número correspondiente a lo que quieres hacer:\n
                   
                   }else{
                     mensajeRespuesta = `Gracias 🙂, ten presente que no puedo reconocer imágenes, audios, ni emojis. Nos podemos comunicar por medio de texto o digitando el número de las opciones que te indico en mi pregunta.
-                  ¿Podrías compartirme un correo electrónico 📧 en el que te podamos contactar?  (si no tienes, ¡no te preocupes! escribe NO`;
+¿Podrías compartirme un correo electrónico 📧 en el que te podamos contactar?  (si no tienes, ¡no te preocupes! escribe NO`;
 
                   }
                   
@@ -2423,7 +2842,7 @@ Por favor respóndeme con el número correspondiente a lo que quieres hacer:\n
                   $formulario.pregunta = 4; //vuelve a 4
                   actualizarDatosContacto($formulario);
                   mensajeRespuesta = `Gracias 🙂, ten presente que no puedo reconocer imágenes, audios, ni emojis. Nos podemos comunicar por medio de texto o digitando el número de las opciones que te indico en mi pregunta.
-                  ¿Podrías compartirme un correo electrónico 📧 en el que te podamos contactar?  (si no tienes, ¡no te preocupes! escribe NO`;
+¿Podrías compartirme un correo electrónico 📧 en el que te podamos contactar?  (si no tienes, ¡no te preocupes! escribe NO`;
 
                 }
 
@@ -2436,7 +2855,8 @@ Por favor respóndeme con el número correspondiente a lo que quieres hacer:\n
           }
 
         }else{
-          switch (req.body.Body) {
+          //switch (req.body.Body) {
+          switch(req.body.incomingMessage){
 
               //selecciona llenar nuevo form
               case '1':
