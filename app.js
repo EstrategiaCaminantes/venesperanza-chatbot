@@ -35,7 +35,7 @@ function sendMessageWhatsapp(params){
     if (err) {
     return console.log('Error: ', err);
     }
-    console.log('Resp: 'response);
+    console.log('Resp: ',response);
     });
 }
 
