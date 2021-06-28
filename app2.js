@@ -27,6 +27,8 @@ console.log = function(msg) {
 
 const app = express();
 
+var db = require(('./db'));
+
 app.use(bodyParser.urlencoded({
   extended: true
 }));
@@ -47,6 +49,7 @@ const client = require('twilio')(TWILIO_ID, TWILIO_SK);
 //0fKBTUzr6BzO99zvbZXihP0Sp
 var messagebird = require('messagebird')("x0fdqCXzhkFWNOVQlIh1t7wKs");
 
+/*
 const connection = mysql.createConnection({
   //host: 'localhost',
   host: process.env.DB_HOST,
@@ -58,7 +61,7 @@ const connection = mysql.createConnection({
   //database : 'venesperanzaCHATBOT',
   port: process.env.DB_PORT
   //port:'8889'
-});
+});*/
 
 $preguntaEncuesta = 0;
 $miembrosFamilia = 0;
@@ -99,7 +102,8 @@ app.post('/whatsapp', async (req, res) => {
     FROM conversacion_chatbot 
      WHERE waId = '${whatsappID}'`;
     
-    connection.query(sql, (error, results) => {
+    //connection.query(sql, (error, results) => {
+      db.query(sql, (error, results) => {
 
       if (error) throw error;
 
@@ -111,7 +115,10 @@ app.post('/whatsapp', async (req, res) => {
         const sqlRequest = `SELECT request_id
           FROM conversacion_request
           WHERE id_conversacion = '${$conversation.id}' AND request_id = '${req.body.messageBirdRequestId}'`;
-          connection.query(sqlRequest, (errorResult, resultRequest) => {
+         
+          //connection.query(sqlRequest, (errorResult, resultRequest) => {
+
+          db.query(sqlRequest, (errorResult, resultRequest) => {
             if (errorResult) throw errorResult;
             if(resultRequest.length > 0){
               //console.log('REQUEST ID YA EXISTE')
@@ -132,7 +139,8 @@ app.post('/whatsapp', async (req, res) => {
               }
               //console.log('NUEVA CONVERSACION: ', nuevaconversacion);
           
-              connection.query(sqlRequestInsert, nuevoRequest, (error, results) => {
+              //connection.query(sqlRequestInsert, nuevoRequest, (error, results) => {
+              db.query(sqlRequestInsert, nuevoRequest, (error, results) => {
                 if (error) throw error;
               });
     
@@ -157,7 +165,8 @@ app.post('/whatsapp', async (req, res) => {
               }else if($conversation.tipo_formulario == 1){
                 const sqlencuesta = `SELECT * FROM encuesta where waId = '${whatsappID}'`;
       
-                connection.query(sqlencuesta, (error, encuesta) => {
+                //connection.query(sqlencuesta, (error, encuesta) => {
+                db.query(sqlencuesta, (error, encuesta) => {
                   if (error) throw error;
       
                   if (encuesta.length > 0) { 
@@ -170,7 +179,8 @@ app.post('/whatsapp', async (req, res) => {
               }else if($conversation.tipo_formulario == 2){
                 const sqllegadas = `SELECT * FROM llegadas where waId = '${whatsappID}'`;
       
-                connection.query(sqllegadas, (error, llegadas) => {
+                //connection.query(sqllegadas, (error, llegadas) => {
+                db.query(sqllegadas, (error, llegadas) => {
                   if (error) throw error;
       
                   if (llegadas.length > 0) { 
@@ -183,7 +193,8 @@ app.post('/whatsapp', async (req, res) => {
                 
                 const sqlactualizardatos = `SELECT * FROM datos_actualizados where waId = '${whatsappID}'`;
       
-                connection.query(sqlactualizardatos, (error, actualizardatos) => {
+                //connection.query(sqlactualizardatos, (error, actualizardatos) => {
+                db.query(sqlactualizardatos, (error, actualizardatos) => {
                   if (error) throw error;
       
                   if (actualizardatos.length > 0) { 
@@ -208,7 +219,8 @@ app.post('/whatsapp', async (req, res) => {
   async function consultaExisteEncuesta(conversacion){
     const sqlConsultarEncuesta = `SELECT * FROM encuesta where waId = '${conversacion.waId}'`;
 
-    connection.query(sqlConsultarEncuesta, (error, existeEncuesta) => {
+    //connection.query(sqlConsultarEncuesta, (error, existeEncuesta) => {
+    db.query(sqlConsultarEncuesta, (error, existeEncuesta) => {
       mensajeRespuesta = '';
       if (error) throw error;
 
@@ -256,7 +268,8 @@ Ahora por favor respóndeme con el número correspondiente a lo que quieres hace
   async function consultaExisteLlegadaADestino(conversacion){
     const sqlConsultarLlegadaDestino = `SELECT * FROM llegadas where waId = '${conversacion.waId}'`;
 
-    connection.query(sqlConsultarLlegadaDestino, (error, existeLlegadaADestino) => {
+    //connection.query(sqlConsultarLlegadaDestino, (error, existeLlegadaADestino) => {
+    db.query(sqlConsultarLlegadaDestino, (error, existeLlegadaADestino) => {
       mensajeRespuesta = '';
       if (error) throw error;
 
@@ -314,7 +327,8 @@ Tipo de documento 📇 Responde con el número de acuerdo a la opción correspon
   async function consultaExisteDatosActualizados(conversacion){
     const sqlConsultarDatosActualizados = `SELECT * FROM datos_actualizados where waId = '${conversacion.waId}'`;
 
-    connection.query(sqlConsultarDatosActualizados, (error, existeDatosActualizados) => {
+    //connection.query(sqlConsultarDatosActualizados, (error, existeDatosActualizados) => {
+    db.query(sqlConsultarDatosActualizados, (error, existeDatosActualizados) => {
       mensajeRespuesta = '';
       if (error) throw error;
 
@@ -492,8 +506,9 @@ Por favor respóndeme con el número correspondiente a lo que quieres hacer:\n
     }
     //console.log('NUEVA CONVERSACION: ', nuevaconversacion);
 
-    connection.query(sqlnuevo, nuevaconversacion, (error, results) => {
-      //if (error) throw error;
+    //connection.query(sqlnuevo, nuevaconversacion, (error, results) => {
+    db.query(sqlnuevo, nuevaconversacion, (error, results) => {
+    //if (error) throw error;
       if(error){
         mensajeRespuesta = "Su Nombre de perfil de Whatsapp contiene emoticones, por favor quitelos momentaneamente para interactuar con nuestro chat e intente nuevamente";
 
@@ -535,7 +550,8 @@ Por favor respóndeme con el número correspondiente a lo que quieres hacer:\n
      where id = ${$conversa.id}`;
      //console.log('VALOR SQL', sqlCreaEncuesta);
 
-    connection.query(sqlConversacion, (error, res) => {
+    //connection.query(sqlConversacion, (error, res) => {
+    db.query(sqlConversacion, (error, res) => {
       if (error) console.log('ERROR: ', error);
       
     });
@@ -582,7 +598,8 @@ Por favor respóndeme con el número correspondiente a lo que quieres hacer:\n
       waId: $conversa.waId
     }
 
-    connection.query(sqlAutorizacion, nuevaAutorizacion, (error, results) => {
+    //connection.query(sqlAutorizacion, nuevaAutorizacion, (error, results) => {
+    db.query(sqlAutorizacion, nuevaAutorizacion, (error, results) => {  
       if (error) throw error;
 
     });
@@ -610,7 +627,8 @@ Por favor respóndeme con el número correspondiente a lo que quieres hacer:\n
     }
     //console.log('NUEVA CONVERSACION: ', nuevaconversacion);
 
-    connection.query(sqlnuevaencuesta, nuevaencuesta, (error, results) => {
+    //connection.query(sqlnuevaencuesta, nuevaencuesta, (error, results) => {
+    db.query(sqlnuevaencuesta, nuevaencuesta, (error, results) => {
       if (error){
         mensajeRespuesta = `Disculpa tuvimos un problema en crear la encuesta. Por favor respóndeme con el número correspondiente a lo que quieres hacer:\n
 1️⃣ Quieres diligenciar el formulario de registro ✍🏻\n
@@ -665,7 +683,8 @@ Por favor respóndeme con el número correspondiente a lo que quieres hacer:\n
       created_at: new Date(),
     }
 
-    connection.query(sqlnuevaLlegada, nuevaLlegada, (error, results) => {
+    //connection.query(sqlnuevaLlegada, nuevaLlegada, (error, results) => {
+    db.query(sqlnuevaLlegada, nuevaLlegada, (error, results) => {
       if (error){
         mensajeRespuesta = `Disculpa tuvimos un problema. Por favor respóndeme con el número correspondiente a lo que quieres hacer:\n
 1️⃣ Quieres diligenciar el formulario de registro ✍🏻\n
@@ -722,7 +741,8 @@ Tipo de documento 📇 Responde con el número de acuerdo a la opción correspon
       created_at: new Date(),
     }
 
-    connection.query(sqlnuevoDatosActualizados, nuevoDatosActualizados, (error, results) => {
+    //connection.query(sqlnuevoDatosActualizados, nuevoDatosActualizados, (error, results) => {
+    db.query(sqlnuevoDatosActualizados, nuevoDatosActualizados, (error, results) => {
       if (error){
         mensajeRespuesta = `Disculpa tuvimos un problema. Por favor respóndeme con el número correspondiente a lo que quieres hacer:\n
 1️⃣ Quieres diligenciar el formulario de registro ✍🏻\n
@@ -804,7 +824,8 @@ Tipo de documento 📇 Responde con el número de acuerdo a la opción correspon
      updated_at = '${$encuesta.updated_at}'
      WHERE id = ${$encuesta.id}`;
 
-    connection.query(sqlCreaEncuesta, (error, res) => {
+    //connection.query(sqlCreaEncuesta, (error, res) => {
+    db.query(sqlCreaEncuesta, (error, res) => {
       if (error) throw error;
 
       //return callback(true);
@@ -830,7 +851,8 @@ Tipo de documento 📇 Responde con el número de acuerdo a la opción correspon
 
    
 
-    connection.query(sqlLlegada, (error, res) => {
+    //connection.query(sqlLlegada, (error, res) => {
+    db.query(sqlLlegada, (error, res) => {
       if (error) console.log('ERRROR ACTUALIZAR LLEGADA', error);
 
       //return callback(true);
@@ -843,7 +865,8 @@ Tipo de documento 📇 Responde con el número de acuerdo a la opción correspon
     //consulta encuesta con $llegadaEncuesta waId, toma id_encuesta y se lo asigna a llegadas where waid = encuesta.waId;
     const sqlConsultaEncuesta = `SELECT id FROM encuesta WHERE waId = '${$llegadaEncuesta.waId}' AND tipo_documento = '${$llegadaEncuesta.tipo_documento}' AND numero_documento = '${$llegadaEncuesta.numero_documento}'`;
 
-    connection.query(sqlConsultaEncuesta, (error, encuesta) => {
+    //connection.query(sqlConsultaEncuesta, (error, encuesta) => {
+    db.query(sqlConsultaEncuesta, (error, encuesta) => {
       //mensajeRespuesta = '';
       if (error) console.log('ERROR EN ACTUALIZAR LLEGADA ENCUESTA:: ', error);
 
@@ -878,7 +901,8 @@ Tipo de documento 📇 Responde con el número de acuerdo a la opción correspon
      id_encuesta = ${$datosContactoActualizados.id_encuesta},  updated_at = '${$datosContactoActualizados.updated_at}'
      WHERE waId = ${$datosContactoActualizados.waId}`;
 
-    connection.query(sqlActualizarDatos, (error, res) => {
+    //connection.query(sqlActualizarDatos, (error, res) => {
+    db.query(sqlActualizarDatos, (error, res) => {
       if (error) throw error;
 
       //return callback(true);
@@ -892,7 +916,8 @@ Tipo de documento 📇 Responde con el número de acuerdo a la opción correspon
     //consulta encuesta con $llegadaEncuesta waId, toma id_encuesta y se lo asigna a llegadas where waid = encuesta.waId;
     const sqlConsultaEncuesta = `SELECT id FROM encuesta WHERE waId = '${$datosContactoEncuesta.waId}' AND tipo_documento = '${$datosContactoEncuesta.tipo_documento}' AND numero_documento = '${$datosContactoEncuesta.numero_documento}'`;
 
-    connection.query(sqlConsultaEncuesta, (error, encuesta) => {
+    //connection.query(sqlConsultaEncuesta, (error, encuesta) => {
+    db.query(sqlConsultaEncuesta, (error, encuesta) => {
       //mensajeRespuesta = '';
       if (error) console.log('ERROR EN ACTUALIZAR DATOS CONTACTO ENCUESTA:: ', error);
 
@@ -2833,10 +2858,11 @@ Responde:
 
 });
 
+/*
 connection.connect(error => {
   if (error) throw error;
   //console.log('Database server running OK');
-});
+});*/
 
 //puerto de despliegue
 //app.listen(3000, function () {
