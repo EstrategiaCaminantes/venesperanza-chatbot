@@ -38,12 +38,19 @@ function errorLog(title,msg) {
 
 function sendMessageWhatsapp(params) {
     errorLog('sendMessageWhatsapp-Params',params);
-    messagebird.conversations.send(params, function (err, response) {
+    //params.from = '9673e34a-1c1e-4a61-be4d-0432abd4a98f';
+    /*messagebird.conversations.send(params, function (err, response) {
       if (err) {
         errorLog('sendMessageWhatsapp-err',err);
       }
         errorLog('sendMessageWhatsapp-response',response);
-  });
+  });*/
+    messagebird.conversations.reply(params.conversationId, params, function (err, response) {
+        if (err) {
+            errorLog('sendMessageWhatsapp-err',err);
+        }
+        errorLog('sendMessageWhatsapp-response',response);
+    });
 }
 
 app.post('/whatsapp', async (req, res) => {
@@ -195,7 +202,7 @@ Ahora por favor respóndeme con el número correspondiente a lo que quieres hace
 3️⃣ Ya te registraste antes y quieres actualizar tus datos de contacto  🙌🏻 `;
           sendMessageWhatsapp({
             'to': req.body['message.from'],
-            'from': '9673e34a-1c1e-4a61-be4d-0432abd4a98f',
+            'conversationId': req.body.conversationId,
             'type': 'text',
             'content': {
                     'text': mensajeRespuesta,
@@ -241,7 +248,7 @@ Tipo de documento 📇 Responde con el número de acuerdo a la opción correspon
 
           sendMessageWhatsapp({
           'to': req.body['message.from'],
-          'from': '9673e34a-1c1e-4a61-be4d-0432abd4a98f',
+          'conversationId': req.body.conversationId,
           'type': 'text',
           'content': {
                   'text': mensajeRespuesta,
@@ -288,7 +295,7 @@ Tipo de documento 📇 Responde con el número de acuerdo a la opción correspon
 
 sendMessageWhatsapp({
   'to': req.body['message.from'],
-  'from': '9673e34a-1c1e-4a61-be4d-0432abd4a98f',
+    'conversationId': req.body.conversationId,
   'type': 'text',
   'content': {
           'text': mensajeRespuesta,
@@ -351,7 +358,7 @@ Por favor respóndeme con el número correspondiente a lo que quieres hacer:\n
 
           sendMessageWhatsapp({
             'to': req.body['message.from'],
-            'from': '9673e34a-1c1e-4a61-be4d-0432abd4a98f',
+              'conversationId': req.body.conversationId,
             'type': 'text',
             'content': {
                     'text': mensajeRespuesta,
@@ -371,7 +378,7 @@ Por favor respóndeme con el número correspondiente a lo que quieres hacer:\n
 
             sendMessageWhatsapp({
               'to': req.body['message.from'],
-              'from': '9673e34a-1c1e-4a61-be4d-0432abd4a98f',
+                'conversationId': req.body.conversationId,
               'type': 'text',
               'content': {
                       'text': mensajeRespuesta,
@@ -415,7 +422,7 @@ Por favor respóndeme con el número correspondiente a lo que quieres hacer:\n
 
         sendMessageWhatsapp({
           'to': req.body['message.from'],
-          'from': '9673e34a-1c1e-4a61-be4d-0432abd4a98f',
+            'conversationId': req.body.conversationId,
           'type': 'text',
           'content': {
                   'text': mensajeRespuesta,
@@ -528,7 +535,7 @@ Por favor respóndeme con el número correspondiente a lo que quieres hacer:\n
 
         sendMessageWhatsapp({
           'to': req.body['message.from'],
-          'from': '9673e34a-1c1e-4a61-be4d-0432abd4a98f',
+            'conversationId': req.body.conversationId,
           'type': 'text',
           'content': {
                   'text': mensajeRespuesta,
@@ -578,7 +585,7 @@ Tipo de documento 📇 Responde con el número de acuerdo a la opción correspon
 
       sendMessageWhatsapp({
         'to': req.body['message.from'],
-        'from': '9673e34a-1c1e-4a61-be4d-0432abd4a98f',
+          'conversationId': req.body.conversationId,
         'type': 'text',
         'content': {
                 'text': mensajeRespuesta,
@@ -629,7 +636,7 @@ Tipo de documento 📇 Responde con el número de acuerdo a la opción correspon
 
         sendMessageWhatsapp({
           'to': req.body['message.from'],
-          'from': '9673e34a-1c1e-4a61-be4d-0432abd4a98f',
+            'conversationId': req.body.conversationId,
           'type': 'text',
           'content': {
                   'text': mensajeRespuesta,
@@ -2674,7 +2681,7 @@ Responde:
 
       sendMessageWhatsapp({
         'to': req.body['message.from'],
-        'from': '9673e34a-1c1e-4a61-be4d-0432abd4a98f',
+          'conversationId': req.body.conversationId,
         'type': 'text',
         'content': {
                 'text': mensajeRespuesta,
