@@ -13,7 +13,7 @@ const fetch = require('node-fetch');
 var dateFormat = require('dateformat');
 const axios = require('axios').default;
 const app = express();
-var db = require(('./db'));
+var db = require('./db');
 
 app.use(bodyParser.urlencoded({
   extended: true
@@ -33,9 +33,9 @@ $miembrosFamilia = 0;
 function sendMessageWhatsapp(params){
   messagebird.conversations.send(params, function (err, response) {
     if (err) {
-    return console.log('EL ERROR::: ', err);
+    return console.log('Error: ', err);
     }
-    //console.log(response);
+    console.log('Resp: 'response);
     });
 }
 
