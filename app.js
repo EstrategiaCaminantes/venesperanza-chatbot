@@ -37,14 +37,18 @@ function errorLog(title,msg) {
 }
 
 function sendMessageWhatsapp(params) {
+  //console.log(':::ANTES DE ERROR LOG::::', params);
     errorLog('sendMessageWhatsapp-Params',params);
     //params.from = '9673e34a-1c1e-4a61-be4d-0432abd4a98f';
-    /*messagebird.conversations.send(params, function (err, response) {
+   
+   /*
+    messagebird.conversations.send(params, function (err, response) {
       if (err) {
         errorLog('sendMessageWhatsapp-err',err);
       }
         errorLog('sendMessageWhatsapp-response',response);
   });*/
+  
     messagebird.conversations.reply(params.conversationId, params, function (err, response) {
         if (err) {
             errorLog('sendMessageWhatsapp-err',err);
@@ -61,6 +65,7 @@ app.post('/whatsapp', async (req, res) => {
   //console.log('JSON:::', JSON.parse(req.body));
 
   //version messagebird
+  //console.log('::MENSAJE RECIBIDO REQ.BODY::', req.body);
     errorLog('API-req.body',req.body);
 
     //if(req.body.message.from !== '+447418310508'){
@@ -400,6 +405,7 @@ Por favor respóndeme con el número correspondiente a lo que quieres hacer:\n
    //var newprofile = params.ProfileName.replace(/[^\ñ\Ñ\ü\Ü\á\Á\é\É\í\Í\ó\Ó\ú\Ú\w\s]/gi, ''); //version twilio
     //var newprofile = params.conversationContactId.replace(/[^\ñ\Ñ\ü\Ü\á\Á\é\É\í\Í\ó\Ó\ú\Ú\w\s]/gi, ''); //version messagebird
     var newprofile = params['contact.displayName'].replace(/[^\ñ\Ñ\ü\Ü\á\Á\é\É\í\Í\ó\Ó\ú\Ú\w\s]/gi, ''); //version messagebird
+   //var newprofile = params['contact.firstName'].replace(/[^\ñ\Ñ\ü\Ü\á\Á\é\É\í\Í\ó\Ó\ú\Ú\w\s]/gi, ''); //version messagebird
 
     const nuevaconversacion = {
       //waId: params.WaId,
@@ -1007,7 +1013,8 @@ Por favor escribe tu segundo apellido, si no tienes segundo apellido escribe NO`
 4️⃣ Lo recibí por chat
 5️⃣ Lo encontré en Facebook
 6️⃣ Una persona conocida me lo envió para que lo llenara
-7️⃣ Otro`;;
+7️⃣ Recibí una manilla con el número
+8️⃣ Otro`;
                         break;
 
                         case '7':
@@ -1096,7 +1103,8 @@ Por favor escribe tu segundo apellido, si no tienes segundo apellido escribe NO`
 4️⃣ Lo recibí por chat
 5️⃣ Lo encontré en Facebook
 6️⃣ Una persona conocida me lo envió para que lo llenara
-7️⃣ Otro`;
+7️⃣ Recibí una manilla con el número
+8️⃣ Otro`;
                     }else{
                       mensajeRespuesta = `Gracias 🙂, ten presente que no puedo reconocer imágenes, audios, ni emojis. Nos podemos comunicar por medio de texto o digitando el número de las opciones que te indico en mi pregunta.\n
 Escribe por favor tu número de documento 📇 (no utilices símbolos, solo números) Ejemplo: 123456789`;
@@ -1168,8 +1176,15 @@ Escribe por favor tu número de documento 📇 (no utilices símbolos, solo núm
                       mensajeRespuesta = `¿En qué fecha tÚ y tu grupo familiar llegaron al país🇨🇴?. Envía la fecha de esta manera AAAA-MM-DD para (Año-Mes-Día. Ejemplo: 2000-10-26)`;
 
                       break;
-
+                    
                     case '7':
+                      $formulario.pregunta += 1; //va a pregunta 9
+                      $formulario.como_llego_al_formulario = "Recibí una manilla con el número";
+                      actualizarEncuesta($formulario);
+                      mensajeRespuesta = `¿En qué fecha tÚ y tu grupo familiar llegaron al país🇨🇴?. Envía la fecha de esta manera AAAA-MM-DD para (Año-Mes-Día. Ejemplo: 2000-10-26)`;
+                      break;
+
+                    case '8':
                       $formulario.pregunta += 1; //va a pregunta 9
                       $formulario.como_llego_al_formulario = "Otro";
                       actualizarEncuesta($formulario);
@@ -1186,7 +1201,8 @@ Escribe por favor tu número de documento 📇 (no utilices símbolos, solo núm
 4️⃣ Lo recibí por chat
 5️⃣ Lo encontré en Facebook
 6️⃣ Una persona conocida me lo envió para que lo llenara
-7️⃣ Otro`;
+7️⃣ Recibí una manilla con el número
+8️⃣ Otro`;
                       break;
                     }
 
@@ -1203,7 +1219,8 @@ Escribe por favor tu número de documento 📇 (no utilices símbolos, solo núm
 4️⃣ Lo recibí por chat
 5️⃣ Lo encontré en Facebook
 6️⃣ Una persona conocida me lo envió para que lo llenara
-7️⃣ Otro`;
+7️⃣ Recibí una manilla con el número
+8️⃣ Otro`;
                   }
                 break;
 
@@ -2679,14 +2696,40 @@ Responde:
 
     }
 
-      sendMessageWhatsapp({
-        'to': req.body['message.from'],
-          'conversationId': req.body.conversationId,
-        'type': 'text',
-        'content': {
-                'text': mensajeRespuesta,
+      //Segun el estado de la conversacion envia mensaje con plantilla o con mensaje de respuesta
+      /*if(conversation.conversation_start == true && !conversation.tipo_formulario && !conversation.autorizacion){
+        
+        sendMessageWhatsapp({
+          'to': req.body['message.from'],
+            'conversationId': req.body.conversationId,
+            'type': 'hsm',
+            'content': {
+              hsm: {
+                //namespace: '5ba2d0b7_f2c6_433b_a66e_57b009ceb6ff',
+                templateName: 'saludo_autorizacion',
+                language: {
+                  policy: 'deterministic',
+                  code: 'en',
+                },
+                //params: [{ default: 'Bob' }, { default: 'tomorrow!' }],
               }
-      });
+                }
+        });
+
+      }else{*/
+        sendMessageWhatsapp({
+          'to': req.body['message.from'],
+            'conversationId': req.body.conversationId,
+          'type': 'text',
+          'content': {
+                  'text': mensajeRespuesta,
+                }
+        });
+      //}
+        
+        
+
+      
 
   }
 
