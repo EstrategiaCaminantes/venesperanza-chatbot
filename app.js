@@ -66,7 +66,7 @@ app.post('/whatsapp', async (req, res) => {
 
   //version messagebird
   //console.log('::MENSAJE RECIBIDO REQ.BODY::', req.body);
-    errorLog('API-req.body',req.body);
+    errorLog('::::API-req.body:::::',req.body);
 
     //if(req.body.message.from !== '+447418310508'){
    // console.log('ENTRA A FROM');
@@ -667,7 +667,25 @@ Tipo de documento 📇 Responde con el número de acuerdo a la opción correspon
     console.log('NUEVO FORMATO FECHA: ', $conversa.fecha_nacimiento);*/
 
     $encuesta.updated_at = new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '') ;
+    
+
     //campos finales
+    const sqlCreaEncuesta = `UPDATE encuesta SET pregunta = ${$encuesta.pregunta},
+    primer_nombre = '${$encuesta.primer_nombre}', segundo_nombre = '${$encuesta.segundo_nombre}', primer_apellido = '${$encuesta.primer_apellido}', segundo_apellido = '${$encuesta.segundo_apellido}',
+    codigo_encuesta = '${$encuesta.codigo_encuesta}',
+    tipo_documento = '${$encuesta.tipo_documento}', cual_otro_tipo_documento = '${$encuesta.cual_otro_tipo_documento}', numero_documento = '${$encuesta.numero_documento}',
+    como_llego_al_formulario = '${$encuesta.como_llego_al_formulario}', fecha_llegada_pais = '${$encuesta.fecha_llegada_pais}',
+    nombre_municipio_destino_final = '${$encuesta.nombre_municipio_destino_final}',
+    numero_entregado_venesperanza = ${$encuesta.numero_entregado_venesperanza},
+    numero_contacto = '${$encuesta.numero_contacto}', linea_contacto_propia = ${$encuesta.linea_contacto_propia},
+    linea_asociada_whatsapp = ${$encuesta.linea_asociada_whatsapp},
+    correo_electronico = '${$encuesta.correo_electronico}',
+    updated_at = '${$encuesta.updated_at}'
+     WHERE id = ${$encuesta.id}`;
+
+
+    //campos antes de eliminar
+    /*
     const sqlCreaEncuesta = `UPDATE encuesta SET pregunta = ${$encuesta.pregunta},
     primer_nombre = '${$encuesta.primer_nombre}', segundo_nombre = '${$encuesta.segundo_nombre}', primer_apellido = '${$encuesta.primer_apellido}', segundo_apellido = '${$encuesta.segundo_apellido}',
     sexo = '${$encuesta.sexo}', codigo_encuesta = '${$encuesta.codigo_encuesta}',
@@ -692,6 +710,7 @@ Tipo de documento 📇 Responde con el número de acuerdo a la opción correspon
      otra_forma_contactarte = '${$encuesta.otra_forma_contactarte}', comentario = '${$encuesta.comentario}',
      updated_at = '${$encuesta.updated_at}'
      WHERE id = ${$encuesta.id}`;
+     */
 
     //connection.query(sqlCreaEncuesta, (error, res) => {
     db.query(sqlCreaEncuesta, (error, res) => {
@@ -711,8 +730,7 @@ Tipo de documento 📇 Responde con el número de acuerdo a la opción correspon
 
     const sqlLlegada = `UPDATE llegadas SET pregunta = ${$llegada.pregunta},
     tipo_documento = '${$llegada.tipo_documento}', numero_documento = '${$llegada.numero_documento}',
-    numero_contacto = ${$llegada.numero_contacto}, id_departamento = ${$llegada.id_departamento},
-    id_municipio = ${$llegada.id_municipio}, 
+    numero_contacto = ${$llegada.numero_contacto}, 
      id_encuesta = ${$llegada.id_encuesta}, updated_at = '${$llegada.updated_at}',
      nombre_jefe_hogar = '${$llegada.nombre_jefe_hogar}', numero_contacto_asociado_whatsapp = ${$llegada.numero_contacto_asociado_whatsapp},
      donde_te_encuentras = '${$llegada.donde_te_encuentras}', otro_donde_te_encuentras = '${$llegada.otro_donde_te_encuentras}'
@@ -1126,7 +1144,7 @@ Escribe por favor tu número de documento 📇 (no utilices símbolos, solo núm
                     case '1':
                       $formulario.pregunta += 1; //va a pregunta 9
                       $formulario.como_llego_al_formulario = "Ví un pendón en un albergue";
-                      $formulario.donde_encontro_formulario = null;
+                      //$formulario.donde_encontro_formulario = null;
                       actualizarEncuesta($formulario);
                       mensajeRespuesta = `¿En qué fecha tÚ y tu grupo familiar llegaron al país🇨🇴?. Envía la fecha de esta manera AAAA-MM-DD para (Año-Mes-Día. Ejemplo: 2000-10-26)`;
 
@@ -1135,7 +1153,7 @@ Escribe por favor tu número de documento 📇 (no utilices símbolos, solo núm
                     case '2':
                       $formulario.pregunta += 1; //va a pregunta 9
                       $formulario.como_llego_al_formulario = "Recibí un volante en el albergue";
-                      $formulario.donde_encontro_formulario = null;
+                      //$formulario.donde_encontro_formulario = null;
                       actualizarEncuesta($formulario);
                       mensajeRespuesta = `¿En qué fecha tÚ y tu grupo familiar llegaron al país🇨🇴?. Envía la fecha de esta manera AAAA-MM-DD para (Año-Mes-Día. Ejemplo: 2000-10-26)`;
 
@@ -1144,7 +1162,7 @@ Escribe por favor tu número de documento 📇 (no utilices símbolos, solo núm
                     case '3':
                       $formulario.pregunta += 1; //va a pregunta 9
                       $formulario.como_llego_al_formulario = "Recibí una foto con la información";
-                      $formulario.donde_encontro_formulario = null;
+                      //$formulario.donde_encontro_formulario = null;
                       actualizarEncuesta($formulario);
                       mensajeRespuesta = `¿En qué fecha tÚ y tu grupo familiar llegaron al país🇨🇴?. Envía la fecha de esta manera AAAA-MM-DD para (Año-Mes-Día. Ejemplo: 2000-10-26)`;
 
@@ -1153,7 +1171,7 @@ Escribe por favor tu número de documento 📇 (no utilices símbolos, solo núm
                     case '4':
                       $formulario.pregunta += 1; //va a pregunta 9
                       $formulario.como_llego_al_formulario = "Recibí el enlache por chat";
-                      $formulario.donde_encontro_formulario = null;
+                      //$formulario.donde_encontro_formulario = null;
                       actualizarEncuesta($formulario);
                       mensajeRespuesta = `¿En qué fecha tÚ y tu grupo familiar llegaron al país🇨🇴?. Envía la fecha de esta manera AAAA-MM-DD para (Año-Mes-Día. Ejemplo: 2000-10-26)`;
 
@@ -1162,7 +1180,7 @@ Escribe por favor tu número de documento 📇 (no utilices símbolos, solo núm
                     case '5':
                       $formulario.pregunta += 1; //va a pregunta 9
                       $formulario.como_llego_al_formulario = "Encontré el enlace en Facebook";
-                      $formulario.donde_encontro_formulario = null;
+                      //$formulario.donde_encontro_formulario = null;
                       actualizarEncuesta($formulario);
                       mensajeRespuesta = `¿En qué fecha tÚ y tu grupo familiar llegaron al país🇨🇴?. Envía la fecha de esta manera AAAA-MM-DD para (Año-Mes-Día. Ejemplo: 2000-10-26)`;
 
@@ -1171,7 +1189,7 @@ Escribe por favor tu número de documento 📇 (no utilices símbolos, solo núm
                     case '6':
                       $formulario.pregunta += 1; //va a pregunta 9
                       $formulario.como_llego_al_formulario = "Una persona conocida me lo envió para que lo llenara";
-                      $formulario.donde_encontro_formulario = null;
+                      //$formulario.donde_encontro_formulario = null;
                       actualizarEncuesta($formulario);
                       mensajeRespuesta = `¿En qué fecha tÚ y tu grupo familiar llegaron al país🇨🇴?. Envía la fecha de esta manera AAAA-MM-DD para (Año-Mes-Día. Ejemplo: 2000-10-26)`;
 
@@ -1233,12 +1251,7 @@ Escribe por favor tu número de documento 📇 (no utilices símbolos, solo núm
                     //if(patternfecha.test(req.body.Body)){
                     //if(patternfecha.test(req.body.Body)){
                     if(patternfecha.test(req.body.incomingMessage)){
-                      //console.log('ES TRUEEE');
-                    //if(req.body.Body.match(pattern)){
-
-                      //$fechaSinEmoticones = req.body.Body.replace(/[^\-\w\s]/gi, '');
-                      //console.log('FECHA SIN EMOTICONES: ', $fechaSinEmoticones);
-                      //$fechavalidar = $fechaSinEmoticones.split('-');
+                     
                       //$fechavalidar = req.body.Body.split('-');
                       $fechavalidar = req.body.incomingMessage.split('-');
                       //console.log('FECHA VALIDAR:', $fechavalidar);
@@ -1279,44 +1292,6 @@ Escribe por favor tu número de documento 📇 (no utilices símbolos, solo núm
 1️⃣2️⃣ Pasto
 1️⃣3️⃣ Valledupar`;
 
-                          /*
-                          //anterior version
-                          mensajeRespuesta = `¿Cuál es tu destino final dentro de Colombia? Envía el número del Departamento correspondiente ó el número *1* en caso de que no tengas definido el Departamento de destino. 1: No sé
-                          2:	Antioquia
-                          3:	Atlántico
-                          4:	Bogotá D.C.
-                          5:	Bolívar
-                          6:	Boyaca
-                          7:	Caldas
-                          8:	Caqueta
-                          9:	Cauca
-                          10:	Cesar
-                          11:	Córdoba
-                          12:	Cundinamarca
-                          13:	Choco
-                          14:	Huila
-                          15:	La Guajira
-                          16:	Magdalena
-                          17:	Meta
-                          18:	Nariño
-                          19:	Norte de Santander
-                          20:	Quindio
-                          21:	Risaralda
-                          22:	Santander
-                          23:	Sucre
-                          24:	Tolima
-                          25:	Valle del Cauca
-                          26:	Arauca
-                          27:	Casanare
-                          28:	Putumayo
-                          29:	San Andres
-                          30:	Isla de Providencia y Santa Catalina
-                          31:	Amazonas
-                          32:	Guainia
-                          33:	Guaviare
-                          34:	Vaupes
-                          35:	Vichada`;*/
-
                         } else {
                           mensajeRespuesta = `Gracias 🙂, ten presente que no puedo reconocer imágenes, audios, ni emojis. Nos podemos comunicar por medio de texto o digitando el número de las opciones que te indico en mi pregunta.\n
 ¿En qué fecha tÚ y tu grupo familiar llegaron al país🇨🇴?. Envía la fecha de esta manera AAAA-MM-DD para (Año-Mes-Día. Ejemplo: 2000-10-26)`;
@@ -1346,9 +1321,6 @@ Escribe por favor tu número de documento 📇 (no utilices símbolos, solo núm
                 case 10:
                   try {
 
-                    //console.log('LO QUE HAY EN BODY 28: ', req.body.Body);
-                    //const opcionesDepartamento = ['2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15', '16',
-                    //'17', '18', '19', '20', '21', '22', '23', '24', '25', '26', '27', '28', '29', '30', '31', '32', '33', '34', '35'];
                     const opcionesSeleccion = ['1','2','3','4','5','6','7','8','9','10','11','12','13'];
 
                     if (opcionesSeleccion.includes(req.body.incomingMessage)) {
@@ -1448,45 +1420,6 @@ Escribe por favor tu número de documento 📇 (no utilices símbolos, solo núm
 1️⃣2️⃣ Pasto
 1️⃣3️⃣ Valledupar`;
 
-
-                      /* //anterior
-                      mensajeRespuesta = `Gracias 🙂, ten presente que no puedo reconocer imágenes, audios, ni emojis. Nos podemos comunicar por medio de texto o digitando el número de las opciones que te indico en mi pregunta.
-¿Cuál es tu destino final dentro de Colombia? Envía el número del Departamento correspondiente ó el número *1* en caso de que no tengas definido el Departamento de destino. 1: No sé
-                      2:	Antioquia
-                      3:	Atlántico
-                      4:	Bogotá D.C.
-                      5:	Bolívar
-                      6:	Boyaca
-                      7:	Caldas
-                      8:	Caqueta
-                      9:	Cauca
-                      10:	Cesar
-                      11:	Córdoba
-                      12:	Cundinamarca
-                      13:	Choco
-                      14:	Huila
-                      15:	La Guajira
-                      16:	Magdalena
-                      17:	Meta
-                      18:	Nariño
-                      19:	Norte de Santander
-                      20:	Quindio
-                      21:	Risaralda
-                      22:	Santander
-                      23:	Sucre
-                      24:	Tolima
-                      25:	Valle del Cauca
-                      26:	Arauca
-                      27:	Casanare
-                      28:	Putumayo
-                      29:	San Andres
-                      30:	Isla de Providencia y Santa Catalina
-                      31:	Amazonas
-                      32:	Guainia
-                      33:	Guaviare
-                      34:	Vaupes
-                      35:	Vichada`;
-                      */
                     }
 
                   } catch (error) {
@@ -1509,45 +1442,6 @@ Escribe por favor tu número de documento 📇 (no utilices símbolos, solo núm
 1️⃣1️⃣ Riohacha
 1️⃣2️⃣ Pasto
 1️⃣3️⃣ Valledupar`;
-
-                    /* //anterior
-                    mensajeRespuesta = `Gracias 🙂, ten presente que no puedo reconocer imágenes, audios, ni emojis. Nos podemos comunicar por medio de texto o digitando el número de las opciones que te indico en mi pregunta.
-                    ¿Cuál es tu destino final dentro de Colombia? Envía el número del Departamento correspondiente ó el número *1* en caso de que no tengas definido el Departamento de destino. 1: No sé
-                    2:	Antioquia
-                    3:	Atlántico
-                    4:	Bogotá D.C.
-                    5:	Bolívar
-                    6:	Boyaca
-                    7:	Caldas
-                    8:	Caqueta
-                    9:	Cauca
-                    10:	Cesar
-                    11:	Córdoba
-                    12:	Cundinamarca
-                    13:	Choco
-                    14:	Huila
-                    15:	La Guajira
-                    16:	Magdalena
-                    17:	Meta
-                    18:	Nariño
-                    19:	Norte de Santander
-                    20:	Quindio
-                    21:	Risaralda
-                    22:	Santander
-                    23:	Sucre
-                    24:	Tolima
-                    25:	Valle del Cauca
-                    26:	Arauca
-                    27:	Casanare
-                    28:	Putumayo
-                    29:	San Andres
-                    30:	Isla de Providencia y Santa Catalina
-                    31:	Amazonas
-                    32:	Guainia
-                    33:	Guaviare
-                    34:	Vaupes
-                    35:	Vichada`;
-                    */
 
                   }
                 break;
@@ -1891,44 +1785,7 @@ Escribe por favor tu número de documento 📇 (no utilices símbolos, solo núm
                     actualizarLlegada($formulario);
 
                     mensajeRespuesta = `Escribe tu número de teléfono en números 📞`;
-                    /*
-                    //version anterior
-                    mensajeRespuesta = `Envía el número del Departamento al que llegaste ó el número *1* en caso de que no sepas a qué Departamento llegaste. 1: No sé
-                          2:	Antioquia
-                          3:	Atlántico
-                          4:	Bogotá D.C.
-                          5:	Bolívar
-                          6:	Boyaca
-                          7:	Caldas
-                          8:	Caqueta
-                          9:	Cauca
-                          10:	Cesar
-                          11:	Córdoba
-                          12:	Cundinamarca
-                          13:	Choco
-                          14:	Huila
-                          15:	La Guajira
-                          16:	Magdalena
-                          17:	Meta
-                          18:	Nariño
-                          19:	Norte de Santander
-                          20:	Quindio
-                          21:	Risaralda
-                          22:	Santander
-                          23:	Sucre
-                          24:	Tolima
-                          25:	Valle del Cauca
-                          26:	Arauca
-                          27:	Casanare
-                          28:	Putumayo
-                          29:	San Andres
-                          30:	Isla de Providencia y Santa Catalina
-                          31:	Amazonas
-                          32:	Guainia
-                          33:	Guaviare
-                          34:	Vaupes
-                          35:	Vichada`;
-                          */
+                    
                   }else{
                     //mensajeRespuesta = `Gracias 🙂, ten presente que no puedo reconocer imágenes, audios, ni emojis. Nos podemos comunicar por medio de texto o digitando el número de las opciones que te indico en mi pregunta.\n
                     //Escribe tu número de teléfono en números 📞` ;
@@ -1968,8 +1825,6 @@ Escribe el nombre del jefe de hogar`;
 
 Escribe tu número de teléfono en números 📞`;
                           }
-
-
 
                   } catch (error) {
                     $formulario.pregunta = 4;
@@ -2217,21 +2072,6 @@ Todos nuestros servicios son GRATUITOS, no tenemos intermediarios ni tramitadore
 
                       }
 
-
-                 /* } else if (opcionesSeleccion.includes(req.body.incomingMessage)) {
-                    //conversation.pregunta += 1; //va a pregunta 29
-                    //conversation.id_departamento_destino_final =  parseInt(req.body.Body);
-                    //crearEncuesta(conversation);
-                    //mensajeRespuesta = "Escriba en mayúscula el nombre del Municipio ó la palabra *NO SE* en caso de que no tenta definido el Municipio de destino.\n"+
-                    //"En el siguiente link puede consultar el nombre de los Municipios: https://docs.google.com/spreadsheets/d/1AwkvC905X-yddB_FB526e-_2f3CIOYdQF7TUfDYjvWk/edit#gid=1717145484";
-                    $idDepartamentoRecibido = parseInt(req.body.Body);
-
-                    $formulario.pregunta += 1;
-                    $formulario.id_departamento = $idDepartamentoRecibido;
-
-                    actualizarLlegada($formulario);
-                    mensajeRespuesta = `Envía el Municipio ` ;*/
-
                   } else {
 
                     mensajeRespuesta = `Gracias 🙂, ten presente que no puedo reconocer imágenes, audios, ni emojis. Nos podemos comunicar por medio de texto o digitando el número de las opciones que te indico en mi pregunta.
@@ -2248,44 +2088,7 @@ Todos nuestros servicios son GRATUITOS, no tenemos intermediarios ni tramitadore
 🔟 Riohacha
 1️⃣1️⃣ Pasto
 1️⃣2️⃣ Valledupar`;
-                    /*
-                    mensajeRespuesta = `Gracias 🙂, ten presente que no puedo reconocer imágenes, audios, ni emojis. Nos podemos comunicar por medio de texto o digitando el número de las opciones que te indico en mi pregunta.
-¿Cuál es tu destino final dentro de Colombia? Envía el número del Departamento correspondiente ó el número *1* en caso de que no tengas definido el Departamento de destino. 1: No sé
-                    2:	Antioquia
-                    3:	Atlántico
-                    4:	Bogotá D.C.
-                    5:	Bolívar
-                    6:	Boyaca
-                    7:	Caldas
-                    8:	Caqueta
-                    9:	Cauca
-                    10:	Cesar
-                    11:	Córdoba
-                    12:	Cundinamarca
-                    13:	Choco
-                    14:	Huila
-                    15:	La Guajira
-                    16:	Magdalena
-                    17:	Meta
-                    18:	Nariño
-                    19:	Norte de Santander
-                    20:	Quindio
-                    21:	Risaralda
-                    22:	Santander
-                    23:	Sucre
-                    24:	Tolima
-                    25:	Valle del Cauca
-                    26:	Arauca
-                    27:	Casanare
-                    28:	Putumayo
-                    29:	San Andres
-                    30:	Isla de Providencia y Santa Catalina
-                    31:	Amazonas
-                    32:	Guainia
-                    33:	Guaviare
-                    34:	Vaupes
-                    35:	Vichada`;
-                    */
+                
                   }
 
                 } catch (error) {
@@ -2307,43 +2110,6 @@ Todos nuestros servicios son GRATUITOS, no tenemos intermediarios ni tramitadore
 🔟 Riohacha
 1️⃣1️⃣ Pasto
 1️⃣2️⃣ Valledupar`;
-
-                  /*mensajeRespuesta = `Gracias 🙂, ten presente que no puedo reconocer imágenes, audios, ni emojis. Nos podemos comunicar por medio de texto o digitando el número de las opciones que te indico en mi pregunta.
-                  ¿Cuál es tu destino final dentro de Colombia? Envía el número del Departamento correspondiente ó el número *1* en caso de que no tengas definido el Departamento de destino. 1: No sé
-                  2:	Antioquia
-                  3:	Atlántico
-                  4:	Bogotá D.C.
-                  5:	Bolívar
-                  6:	Boyaca
-                  7:	Caldas
-                  8:	Caqueta
-                  9:	Cauca
-                  10:	Cesar
-                  11:	Córdoba
-                  12:	Cundinamarca
-                  13:	Choco
-                  14:	Huila
-                  15:	La Guajira
-                  16:	Magdalena
-                  17:	Meta
-                  18:	Nariño
-                  19:	Norte de Santander
-                  20:	Quindio
-                  21:	Risaralda
-                  22:	Santander
-                  23:	Sucre
-                  24:	Tolima
-                  25:	Valle del Cauca
-                  26:	Arauca
-                  27:	Casanare
-                  28:	Putumayo
-                  29:	San Andres
-                  30:	Isla de Providencia y Santa Catalina
-                  31:	Amazonas
-                  32:	Guainia
-                  33:	Guaviare
-                  34:	Vaupes
-                  35:	Vichada`;*/
 
                 }
               break;
@@ -2587,8 +2353,6 @@ Todos nuestros servicios son GRATUITOS, no tenemos intermediarios ni tramitadore
                 break;
               }
 
-
-
           }
 
         }else{
@@ -2726,10 +2490,6 @@ Responde:
                 }
         });
       //}
-        
-        
-
-      
 
   }
 
