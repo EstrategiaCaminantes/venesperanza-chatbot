@@ -13,7 +13,7 @@ const fetch = require('node-fetch');
 var dateFormat = require('dateformat');
 const axios = require('axios').default;
 const app = express();
-var db = require('./db');
+//var db = require('./db');
 
 app.use(bodyParser.urlencoded({
   extended: true
@@ -25,7 +25,7 @@ app.get('/', function (req, res) {
 });
 
 //MessageBird
-var messagebird = require('messagebird')(process.env.MB_KEY);
+var messagebird = require('messagebird')(process.env.MB_KEY, 50000);
 
 $preguntaEncuesta = 0;
 $miembrosFamilia = 0;
@@ -36,31 +36,50 @@ function errorLog(title,msg) {
     }
 }
 
+
+//funcion sendMessage afuera
+/*
 function sendMessageWhatsapp(params) {
   //console.log(':::ANTES DE ERROR LOG::::', params);
     errorLog('sendMessageWhatsapp-Params',params);
     //params.from = '9673e34a-1c1e-4a61-be4d-0432abd4a98f';
    
-   /*
-    messagebird.conversations.send(params, function (err, response) {
-      if (err) {
-        errorLog('sendMessageWhatsapp-err',err);
-      }
-        errorLog('sendMessageWhatsapp-response',response);
-  });*/
+   
+    //messagebird.conversations.send(params, function (err, response) {
+   //   if (err) {
+   //     errorLog('sendMessageWhatsapp-err',err);
+   //   }
+   //     errorLog('sendMessageWhatsapp-response',response);
+  //});
   
     messagebird.conversations.reply(params.conversationId, params, function (err, response) {
         if (err) {
             errorLog('sendMessageWhatsapp-err',err);
         }
         errorLog('sendMessageWhatsapp-response',response);
+        //db.end();
+        console.log('::CIERRO CONEXION DB EN SENDMESSAGEWHATSAPP:::');
+        
     });
 }
+*/
+
+
+
 
 app.post('/whatsapp', async (req, res) => {
 
-
-
+  
+  const db = mysql.createConnection({
+    host: process.env.DB_HOST,
+    user: process.env.DB_USER,
+    password: process.env.DB_PASSWORD,
+    database: process.env.DB_NAME,
+    port: process.env.DB_PORT
+  });
+  //Abro conexion a basedatos
+  db.connect(function(err){});
+  
   //console.log(req.body);
   //console.log('JSON:::', JSON.parse(req.body));
 
@@ -74,6 +93,25 @@ app.post('/whatsapp', async (req, res) => {
     consultaConversacion(req.body.contactPhoneNumber,0);
   //}
 
+  //funcion sendMessage adentro
+  
+  function sendMessageWhatsapp(params) {
+    //console.log(':::ANTES DE ERROR LOG::::', params);
+      errorLog('sendMessageWhatsapp-Params',params);
+      //params.from = '9673e34a-1c1e-4a61-be4d-0432abd4a98f';
+     
+      messagebird.conversations.reply(params.conversationId, params, function (err, response) {
+          if (err) {
+              errorLog('sendMessageWhatsapp-err',err);
+          }
+          errorLog('sendMessageWhatsapp-response',response);
+          db.end();
+          console.log('::CIERRO CONEXION DB EN SENDMESSAGEWHATSAPP:::');
+          
+      });
+  }
+  
+  
 
   //Consulta conversacion para seguir respondiendo o crear una nueva
   function consultaConversacion(whatsappID, $bandera) {
@@ -95,9 +133,12 @@ app.post('/whatsapp', async (req, res) => {
           db.query(sqlRequest, (errorResult, resultRequest) => {
               if (errorResult) {errorLog('dbquery.error',errorResult);throw errorResult;}
             if(resultRequest.length > 0){
+
+              db.end();
+              console.log('::CIERRO CONEXION DATABASE CUANDO MESSAGEID EXISTE::');
               //console.log('REQUEST ID YA EXISTE')
                 //Ignorar
-                return;
+                //return;
             } else {
               /*
               console.log(':::ENTRA A ACTUALIZAR MESSAGEBIRD REQUEST::::', req.body.messageBirdRequestId);
@@ -2408,10 +2449,11 @@ Todos nuestros servicios son GRATUITOS, no tenemos intermediarios ni tramitadore
               actualizarConversacion(conversation);
               autorizacionTratamientoDatos(conversation);
 
-              mensajeRespuesta = `Ahora por favor respóndeme con el número correspondiente a lo que quieres hacer:\n
+              /*mensajeRespuesta = `Ahora por favor respóndeme con el número correspondiente a lo que quieres hacer:\n
 1️⃣ Quieres diligenciar el formulario de registro ✍🏻\n
 2️⃣ Quieres informar de tu llegada a destino ☝🏻\n
-3️⃣ Ya te registraste antes y quieres actualizar tus datos de contacto  🙌🏻 `
+3️⃣ Ya te registraste antes y quieres actualizar tus datos de contacto  🙌🏻 `;*/
+              mensajeRespuesta = 'seleccionar_formulario';
             break;
 
             case '2':
@@ -2445,13 +2487,24 @@ Responde:
         //crearEncuesta(conversation);
         //console.log('CONVERSATION EN START FALSE:', conversation);
         actualizarConversacion(conversation);
-        mensajeRespuesta = `Hola, soy Esperanza 👩🏻, la asistente virtual del programa VenEsperanza. ¡Es un gusto  atenderte! 😊
+        /*
+        axios.post('https://flows.messagebird.com/flows/0972699c-4ac7-4ee4-a16c-1084db4778b4/invoke')
+        .then(response => {
+          console.log(response.data.url);
+          console.log(response.data.explanation);
+          console.log(':::SI HIZO LLAMADO AXIOS:::')
+        })
+        .catch(error => {
+          console.log(error);
+        });
+        */
+        /*mensajeRespuesta = `Hola, soy Esperanza 👩🏻, la asistente virtual del programa VenEsperanza. ¡Es un gusto  atenderte! 😊
 Tus datos personales recolectados serán tratados para gestionar nuestros servicios 🤝, conoce nuestra Política de Tratamiento de Datos 🗒️ en este enlace https://bit.ly/3uftBaQ en el que encontrarás tus derechos.
 Para iniciar este chat 💬 debes autorizar el uso de tus datos. ✅ 
 Responde:
 1️⃣ Si, para aceptar los términos y condiciones del programa #VenEsperanza
-2️⃣ No, no autorizo`;
-
+2️⃣ No, no autorizo`;*/
+        mensajeRespuesta = 'bienvenida_chat';
 
       } catch (error) {
         //console.log('ERROR::', error);
@@ -2460,6 +2513,26 @@ Responde:
 
     }
 
+    //if(conversation.conversation_start == true && !conversation.tipo_formulario && !conversation.autorizacion){
+      sendMessageWhatsapp({
+        'to': req.body['message.from'],
+          'conversationId': req.body.conversationId,
+          'type': 'hsm',
+          'content': {
+            'hsm': {
+              'namespace': 'e3e14847_97d6_4731_a155_2a089c961b5d',
+              //'templateName': 'welcome',
+              'templateName': mensajeRespuesta,
+              'language': {
+                'policy': 'deterministic',
+                'code': 'es',
+              },
+              //params: [{ default: 'Bob' }, { default: 'tomorrow!' }],
+            }
+              },
+          'reportUrl': 'https://webhook.site/681229d0-1961-4b03-b9f7-113b37636538'
+      });
+    
       //Segun el estado de la conversacion envia mensaje con plantilla o con mensaje de respuesta
       /*if(conversation.conversation_start == true && !conversation.tipo_formulario && !conversation.autorizacion){
         
@@ -2478,9 +2551,10 @@ Responde:
                 //params: [{ default: 'Bob' }, { default: 'tomorrow!' }],
               }
                 }
-        });
+        });*/
 
-      }else{*/
+     /* }else{
+        
         sendMessageWhatsapp({
           'to': req.body['message.from'],
             'conversationId': req.body.conversationId,
@@ -2489,7 +2563,7 @@ Responde:
                   'text': mensajeRespuesta,
                 }
         });
-      //}
+      }*/
 
   }
 
