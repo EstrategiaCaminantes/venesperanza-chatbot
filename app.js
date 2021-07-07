@@ -13,7 +13,12 @@ const fetch = require('node-fetch');
 var dateFormat = require('dateformat');
 const axios = require('axios').default;
 const app = express();
-//var db = require('./db');
+var db = require('./db');
+
+var whatsappMessageController = require('./controllers/whatsappMessage.controller');
+var conversacionController = require('./controllers/conversacion.controller');
+var autorizacionTratamientoDatosController = require('./controllers/autorizacionTratamientoDatos.controller');
+var encuestaController = require('./controllers/encuesta.controller');
 
 app.use(bodyParser.urlencoded({
   extended: true
@@ -25,10 +30,11 @@ app.get('/', function (req, res) {
 });
 
 //MessageBird
-var messagebird = require('messagebird')(process.env.MB_KEY, 50000);
+//var messagebird = require('messagebird')(process.env.MB_KEY, 50000);
 
 $preguntaEncuesta = 0;
 $miembrosFamilia = 0;
+
 
 function errorLog(title,msg) {
     if(process.env.ENV === 'test') {
@@ -36,40 +42,9 @@ function errorLog(title,msg) {
     }
 }
 
-
-//funcion sendMessage afuera
-/*
-function sendMessageWhatsapp(params) {
-  //console.log(':::ANTES DE ERROR LOG::::', params);
-    errorLog('sendMessageWhatsapp-Params',params);
-    //params.from = '9673e34a-1c1e-4a61-be4d-0432abd4a98f';
-   
-   
-    //messagebird.conversations.send(params, function (err, response) {
-   //   if (err) {
-   //     errorLog('sendMessageWhatsapp-err',err);
-   //   }
-   //     errorLog('sendMessageWhatsapp-response',response);
-  //});
-  
-    messagebird.conversations.reply(params.conversationId, params, function (err, response) {
-        if (err) {
-            errorLog('sendMessageWhatsapp-err',err);
-        }
-        errorLog('sendMessageWhatsapp-response',response);
-        //db.end();
-        console.log('::CIERRO CONEXION DB EN SENDMESSAGEWHATSAPP:::');
-        
-    });
-}
-*/
-
-
-
-
 app.post('/whatsapp', async (req, res) => {
 
-  
+  /*
   const db = mysql.createConnection({
     host: process.env.DB_HOST,
     user: process.env.DB_USER,
@@ -78,7 +53,7 @@ app.post('/whatsapp', async (req, res) => {
     port: process.env.DB_PORT
   });
   //Abro conexion a basedatos
-  db.connect(function(err){});
+  db.connect(function(err){});*/
   
   //console.log(req.body);
   //console.log('JSON:::', JSON.parse(req.body));
@@ -92,26 +67,6 @@ app.post('/whatsapp', async (req, res) => {
     //consultaConversacion(req.body.contact.msisdn,0);
     consultaConversacion(req.body.contactPhoneNumber,0);
   //}
-
-  //funcion sendMessage adentro
-  
-  function sendMessageWhatsapp(params) {
-    //console.log(':::ANTES DE ERROR LOG::::', params);
-      errorLog('sendMessageWhatsapp-Params',params);
-      //params.from = '9673e34a-1c1e-4a61-be4d-0432abd4a98f';
-     
-      messagebird.conversations.reply(params.conversationId, params, function (err, response) {
-          if (err) {
-              errorLog('sendMessageWhatsapp-err',err);
-          }
-          errorLog('sendMessageWhatsapp-response',response);
-          db.end();
-          console.log('::CIERRO CONEXION DB EN SENDMESSAGEWHATSAPP:::');
-          
-      });
-  }
-  
-  
 
   //Consulta conversacion para seguir respondiendo o crear una nueva
   function consultaConversacion(whatsappID, $bandera) {
@@ -134,8 +89,8 @@ app.post('/whatsapp', async (req, res) => {
               if (errorResult) {errorLog('dbquery.error',errorResult);throw errorResult;}
             if(resultRequest.length > 0){
 
-              db.end();
-              console.log('::CIERRO CONEXION DATABASE CUANDO MESSAGEID EXISTE::');
+              //db.end();
+              //console.log('::CIERRO CONEXION DATABASE CUANDO MESSAGEID EXISTE::');
               //console.log('REQUEST ID YA EXISTE')
                 //Ignorar
                 //return;
@@ -224,7 +179,8 @@ app.post('/whatsapp', async (req, res) => {
 
       } else {
 
-        nuevaConversacion();
+        nuevaConversacion(); //llamado a funcion en app.js
+        //conversacionController.nuevaConversacion(req.body); //llamado a conversacion.controller.js
 
       }
     });
@@ -246,7 +202,7 @@ Ahora por favor respóndeme con el número correspondiente a lo que quieres hace
 1️⃣ Quieres diligenciar el formulario de registro ✍🏻\n
 2️⃣ Quieres informar de tu llegada a destino ☝🏻\n
 3️⃣ Ya te registraste antes y quieres actualizar tus datos de contacto  🙌🏻 `;
-          sendMessageWhatsapp({
+whatsappMessageController.sendMessageWhatsapp({
             'to': req.body['message.from'],
             'conversationId': req.body.conversationId,
             'type': 'text',
@@ -292,7 +248,7 @@ Tipo de documento 📇 Responde con el número de acuerdo a la opción correspon
 5️⃣ Cédula de Extranjería
 6️⃣ Otro`;
 
-          sendMessageWhatsapp({
+whatsappMessageController.sendMessageWhatsapp({
           'to': req.body['message.from'],
           'conversationId': req.body.conversationId,
           'type': 'text',
@@ -339,7 +295,7 @@ Tipo de documento 📇 Responde con el número de acuerdo a la opción correspon
 5️⃣ Cédula de Extranjería
 6️⃣ Otro`;
 
-sendMessageWhatsapp({
+whatsappMessageController.sendMessageWhatsapp({
   'to': req.body['message.from'],
     'conversationId': req.body.conversationId,
   'type': 'text',
@@ -402,7 +358,7 @@ Por favor respóndeme con el número correspondiente a lo que quieres hacer:\n
 2️⃣ Quieres informar de tu llegada a destino ☝🏻\n
 3️⃣ Ya te registraste antes y quieres actualizar tus datos de contacto  🙌🏻 `;
 
-          sendMessageWhatsapp({
+        whatsappMessageController.sendMessageWhatsapp({
             'to': req.body['message.from'],
               'conversationId': req.body.conversationId,
             'type': 'text',
@@ -422,7 +378,7 @@ Por favor respóndeme con el número correspondiente a lo que quieres hacer:\n
 3️⃣ Ya te registraste antes y quieres actualizar tus datos de contacto  🙌🏻 `;
             //console.log('MENSAJE A ENVIAR::', mensajeRespuesta);
 
-            sendMessageWhatsapp({
+            whatsappMessageController.sendMessageWhatsapp({
               'to': req.body['message.from'],
                 'conversationId': req.body.conversationId,
               'type': 'text',
@@ -502,45 +458,6 @@ Por favor respóndeme con el número correspondiente a lo que quieres hacer:\n
     });
   }
 
-
-  //guardar imagenes
-  async function SaveMedia(mediaItem) {
-    //console.log('LLEGA A SAVEMEDIA::', mediaItem);
-    const { mediaUrl, filename } = mediaItem;
-    //if (NODE_ENV !== 'test') {
-    //const fullPath = path.resolve(`${PUBLIC_DIR}/${filename}`);
-    const fullPath = path.resolve(`documentos/${filename}`);
-    if (!fs.existsSync(fullPath)) {
-      const response = await fetch(mediaUrl);
-      const fileStream = fs.createWriteStream(fullPath);
-
-      response.body.pipe(fileStream);
-
-      //deleteMediaItem(mediaItem);
-    }
-  }
-
-  function autorizacionTratamientoDatos($conversa) {
-
-    const sqlAutorizacion = 'INSERT INTO autorizaciones SET ?';
-
-    const nuevaAutorizacion = {
-      //id_encuesta: $conversa.id,
-      id_encuesta: null,
-      tratamiento_datos: true,
-      terminos_condiciones: true,
-      condiciones: true,
-      created_at: new Date(),
-      waId: $conversa.waId
-    }
-
-    //connection.query(sqlAutorizacion, nuevaAutorizacion, (error, results) => {
-    db.query(sqlAutorizacion, nuevaAutorizacion, (error, results) => {
-      if (error) {errorLog('dbquery.error',error);throw error;}
-
-    });
-  }
-
   //funcion crear encuesta
   function crearEncuesta($conversation) {
 
@@ -574,13 +491,14 @@ Por favor respóndeme con el número correspondiente a lo que quieres hacer:\n
 
       }else{
         $conversation.tipo_formulario = 1;
-        actualizarConversacion($conversation);
+        //actualizarConversacion($conversation); //llamado en app.js
+        conversacionController.actualizarConversacion($conversation);
+
         mensajeRespuesta = `Por favor escribe tu primer nombre. Sólo puedo leer texto, no utilices audio, imágenes o emojis.`;
 
       }
 
-
-        sendMessageWhatsapp({
+      whatsappMessageController.sendMessageWhatsapp({
           'to': req.body['message.from'],
             'conversationId': req.body.conversationId,
           'type': 'text',
@@ -630,7 +548,7 @@ Tipo de documento 📇 Responde con el número de acuerdo a la opción correspon
 6️⃣ Otro`;
       }
 
-      sendMessageWhatsapp({
+      whatsappMessageController.sendMessageWhatsapp({
         'to': req.body['message.from'],
           'conversationId': req.body.conversationId,
         'type': 'text',
@@ -638,7 +556,6 @@ Tipo de documento 📇 Responde con el número de acuerdo a la opción correspon
                 'text': mensajeRespuesta,
               }
       });
-
 
     });
   }
@@ -681,7 +598,7 @@ Tipo de documento 📇 Responde con el número de acuerdo a la opción correspon
 6️⃣ Otro`;
       }
 
-        sendMessageWhatsapp({
+      whatsappMessageController.sendMessageWhatsapp({
           'to': req.body['message.from'],
             'conversationId': req.body.conversationId,
           'type': 'text',
@@ -692,74 +609,6 @@ Tipo de documento 📇 Responde con el número de acuerdo a la opción correspon
 
     });
 
-  }
-
-  function actualizarEncuesta($encuesta) {
-
-    /*
-    if(!$encuesta.fecha_nacimiento){
-      $encuesta.fecha_nacimiento = "1900-01-01";
-    }else if(typeof($encuesta.fecha_nacimiento) != 'string'){
-      $encuesta.fecha_nacimiento = $encuesta.fecha_nacimiento.toISOString();
-      $encuesta.fecha_nacimiento = $encuesta.fecha_nacimiento.substring(0,10);
-    }*/
-
-    /*$conversa.fecha_nacimiento = dateFormat($conversa.fecha_nacimiento, "yyyy-mm-dd");
-    console.log('NUEVO FORMATO FECHA: ', $conversa.fecha_nacimiento);*/
-
-    $encuesta.updated_at = new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '') ;
-    
-
-    //campos finales
-    const sqlCreaEncuesta = `UPDATE encuesta SET pregunta = ${$encuesta.pregunta},
-    primer_nombre = '${$encuesta.primer_nombre}', segundo_nombre = '${$encuesta.segundo_nombre}', primer_apellido = '${$encuesta.primer_apellido}', segundo_apellido = '${$encuesta.segundo_apellido}',
-    codigo_encuesta = '${$encuesta.codigo_encuesta}',
-    tipo_documento = '${$encuesta.tipo_documento}', cual_otro_tipo_documento = '${$encuesta.cual_otro_tipo_documento}', numero_documento = '${$encuesta.numero_documento}',
-    como_llego_al_formulario = '${$encuesta.como_llego_al_formulario}', fecha_llegada_pais = '${$encuesta.fecha_llegada_pais}',
-    nombre_municipio_destino_final = '${$encuesta.nombre_municipio_destino_final}',
-    numero_entregado_venesperanza = ${$encuesta.numero_entregado_venesperanza},
-    numero_contacto = '${$encuesta.numero_contacto}', linea_contacto_propia = ${$encuesta.linea_contacto_propia},
-    linea_asociada_whatsapp = ${$encuesta.linea_asociada_whatsapp},
-    correo_electronico = '${$encuesta.correo_electronico}',
-    updated_at = '${$encuesta.updated_at}'
-     WHERE id = ${$encuesta.id}`;
-
-
-    //campos antes de eliminar
-    /*
-    const sqlCreaEncuesta = `UPDATE encuesta SET pregunta = ${$encuesta.pregunta},
-    primer_nombre = '${$encuesta.primer_nombre}', segundo_nombre = '${$encuesta.segundo_nombre}', primer_apellido = '${$encuesta.primer_apellido}', segundo_apellido = '${$encuesta.segundo_apellido}',
-    sexo = '${$encuesta.sexo}', codigo_encuesta = '${$encuesta.codigo_encuesta}',
-    nacionalidad = '${$encuesta.nacionalidad}', cual_otro_nacionalidad = '${$encuesta.cual_otro_nacionalidad}', tipo_documento = '${$encuesta.tipo_documento}',
-    cual_otro_tipo_documento = '${$encuesta.cual_otro_tipo_documento}', numero_documento = '${$encuesta.numero_documento}',
-    compartir_foto_documento_encuestado = ${$encuesta.compartir_foto_documento_encuestado}, url_foto_documento_encuestado = '${$encuesta.url_foto_documento_encuestado}',
-    como_llego_al_formulario = '${$encuesta.como_llego_al_formulario}', donde_encontro_formulario = '${$encuesta.donde_encontro_formulario}', fecha_llegada_pais = '${$encuesta.fecha_llegada_pais}',
-    estar_dentro_colombia = ${$encuesta.estar_dentro_colombia}, id_departamento_destino_final = ${$encuesta.id_departamento_destino_final},
-    id_municipio_destino_final = ${$encuesta.id_municipio_destino_final}, 
-    nombre_municipio_destino_final = '${$encuesta.nombre_municipio_destino_final}',
-     razon_elegir_destino_final = '${$encuesta.razon_elegir_destino_final}', otra_razon_elegir_destino_final = '${$encuesta.otra_razon_elegir_destino_final}',
-     recibe_transporte_humanitario = ${$encuesta.recibe_transporte_humanitario},
-     pais_destino_final = '${$encuesta.pais_destino_final}',
-     total_miembros_hogar = ${$encuesta.total_miembros_hogar}, miembro_hogar_preguntando = ${$encuesta.miembro_hogar_preguntando},
-     id_departamento = ${$encuesta.id_departamento}, ubicacion = '${$encuesta.ubicacion}', numero_entregado_venesperanza = ${$encuesta.numero_entregado_venesperanza},
-     numero_contacto = '${$encuesta.numero_contacto}', linea_contacto_propia = ${$encuesta.linea_contacto_propia},
-     linea_asociada_whatsapp = ${$encuesta.linea_asociada_whatsapp}, numero_whatsapp_principal = '${$encuesta.numero_whatsapp_principal}',
-     numero_alternativo = '${$encuesta.numero_alternativo}', linea_contacto_alternativo = ${$encuesta.linea_contacto_alternativo},
-     linea_alternativa_asociada_whatsapp = ${$encuesta.linea_alternativa_asociada_whatsapp}, correo_electronico = '${$encuesta.correo_electronico}',
-     tiene_cuenta_facebook = ${$encuesta.tiene_cuenta_facebook}, cuenta_facebook = '${$encuesta.cuenta_facebook}',
-     podemos_contactarte = ${$encuesta.podemos_contactarte}, forma_contactarte = '${$encuesta.forma_contactarte}',
-     otra_forma_contactarte = '${$encuesta.otra_forma_contactarte}', comentario = '${$encuesta.comentario}',
-     updated_at = '${$encuesta.updated_at}'
-     WHERE id = ${$encuesta.id}`;
-     */
-
-    //connection.query(sqlCreaEncuesta, (error, res) => {
-    db.query(sqlCreaEncuesta, (error, res) => {
-      if (error) {errorLog('dbquery.error',error);throw error;}
-
-      //return callback(true);
-
-    });
   }
 
   function actualizarLlegada($llegada) {
@@ -776,8 +625,6 @@ Tipo de documento 📇 Responde con el número de acuerdo a la opción correspon
      nombre_jefe_hogar = '${$llegada.nombre_jefe_hogar}', numero_contacto_asociado_whatsapp = ${$llegada.numero_contacto_asociado_whatsapp},
      donde_te_encuentras = '${$llegada.donde_te_encuentras}', otro_donde_te_encuentras = '${$llegada.otro_donde_te_encuentras}'
      WHERE waId = ${$llegada.waId}`;
-
-
 
     //connection.query(sqlLlegada, (error, res) => {
     db.query(sqlLlegada, (error, res) => {
@@ -888,7 +735,8 @@ Tipo de documento 📇 Responde con el número de acuerdo a la opción correspon
 
                       //crearEncuesta(conversation);
                       //console.log('LLAMARE A ACTUALZIAR ENCUESTA:: \n', $formulario );
-                      actualizarEncuesta($formulario);
+                      //actualizarEncuesta($formulario); //llama a funcion en archivo app.js
+                      encuestaController.actualizarEncuesta($formulario); //llama a funcion en encuesta.controller.js
                       /*mensajeRespuesta = "*Segundo Nombre:* " +
                         "(En caso de que no tenga envía un '.' (punto))";*/
                       mensajeRespuesta = `Por favor escribe tu segundo nombre, si no tienes segundo nombre escribe NO.`
@@ -904,7 +752,9 @@ Por favor escribe tu primer nombre. Sólo puedo leer texto, no utilices audio, i
                   } catch (error) {
                     //console.log(error);
                     $formulario.pregunta = 1;
-                    actualizarEncuesta($formulario);
+                    //actualizarEncuesta($formulario);
+                    encuestaController.actualizarEncuesta($formulario); //llama a funcion en encuestaController
+
                     mensajeRespuesta = `Gracias 🙂, ten presente que no puedo reconocer imágenes, audios, ni emojis. Nos podemos comunicar por medio de texto o digitando el número de las opciones que te indico en mi pregunta.\n
 
 Por favor escribe tu primer nombre. Sólo puedo leer texto, no utilices audio, imágenes o emojis.`;
@@ -925,7 +775,8 @@ Por favor escribe tu primer nombre. Sólo puedo leer texto, no utilices audio, i
                       $formulario.pregunta += 1; //pregunta 2
 
                       //crearEncuesta(conversation);
-                      actualizarEncuesta($formulario);
+                      //actualizarEncuesta($formulario); //llama a funcion en app.js
+                      encuestaController.actualizarEncuesta($formulario); //llama a funcion en encuestaController
                       /*mensajeRespuesta = "*Segundo Nombre:* " +
                         "(En caso de que no tenga envía un '.' (punto))";*/
                       mensajeRespuesta = `Por favor escribe tu primer apellido`;
@@ -941,7 +792,9 @@ Por favor escribe tu segundo nombre, si no tienes segundo nombre escribe NO.`;
                   } catch (error) {
                     //console.log('ERROR EN 2:', error);
                     $formulario.pregunta = 2;
-                    actualizarEncuesta($formulario);
+                    //actualizarEncuesta($formulario);
+                    encuestaController.actualizarEncuesta($formulario); //llama a funcion en encuestaController
+
                     mensajeRespuesta = `Gracias 🙂, ten presente que no puedo reconocer imágenes, audios, ni emojis. Nos podemos comunicar por medio de texto o digitando el número de las opciones que te indico en mi pregunta.\n
 
 Por favor escribe tu segundo nombre, si no tienes segundo nombre escribe NO.`;
@@ -961,7 +814,9 @@ Por favor escribe tu segundo nombre, si no tienes segundo nombre escribe NO.`;
                       if(pattern.test($formulario.primer_apellido)){
                         $formulario.pregunta += 1; //pregunta 14
 
-                        actualizarEncuesta($formulario);
+                        //actualizarEncuesta($formulario); //llama a funcion en app.js
+                        encuestaController.actualizarEncuesta($formulario); //llama a funcion en encuestaController
+
                         mensajeRespuesta = `Por favor escribe tu segundo apellido, si no tienes segundo apellido escribe NO`;
 
                       }else{
@@ -974,7 +829,9 @@ Por favor escribe tu primer apellido`;
 
                   } catch (error) {
                     $formulario.pregunta = 3;
-                    actualizarEncuesta($formulario);
+                    //actualizarEncuesta($formulario);
+                    encuestaController.actualizarEncuesta($formulario); //llama a funcion en encuestaController
+
                     mensajeRespuesta = `Gracias 🙂, ten presente que no puedo reconocer imágenes, audios, ni emojis. Nos podemos comunicar por medio de texto o digitando el número de las opciones que te indico en mi pregunta.\n
 
 Por favor escribe tu primer apellido`;
@@ -991,7 +848,9 @@ Por favor escribe tu primer apellido`;
                         if(patternsegundoapellido.test($formulario.segundo_apellido)){
                         $formulario.pregunta += 1; //pregunta 14
 
-                        actualizarEncuesta($formulario);
+                        //actualizarEncuesta($formulario);
+                        encuestaController.actualizarEncuesta($formulario); //llama a funcion en encuestaController
+
                         mensajeRespuesta = `¿Cuál es tu tipo de documento? 📇 Responde con el número de acuerdo a la opción correspondiente:
 1️⃣ Acta de Nacimiento
 2️⃣ Cédula de Identidad (venezolana)
@@ -1008,7 +867,9 @@ Por favor escribe tu segundo apellido, si no tienes segundo apellido escribe NO`
 
                   } catch (error) {
                     $formulario.pregunta = 4;
-                    actualizarEncuesta($formulario);
+                    //actualizarEncuesta($formulario);
+                    encuestaController.actualizarEncuesta($formulario); //llama a funcion en encuestaController
+
                     mensajeRespuesta = `Gracias 🙂, ten presente que no puedo reconocer imágenes, audios, ni emojis. Nos podemos comunicar por medio de texto o digitando el número de las opciones que te indico en mi pregunta.\n
 Por favor escribe tu segundo apellido, si no tienes segundo apellido escribe NO`;
                   }
@@ -1023,7 +884,9 @@ Por favor escribe tu segundo apellido, si no tienes segundo apellido escribe NO`
                         case '1':
                           $formulario.tipo_documento = "Acta de Nacimiento";
                           $formulario.pregunta += 2;// pregunta 7
-                          actualizarEncuesta($formulario);
+                          //actualizarEncuesta($formulario);
+                          encuestaController.actualizarEncuesta($formulario); //llama a funcion en encuestaController
+
                           mensajeRespuesta = `Escribe por favor tu número de documento 📇 (no utilices símbolos, solo números) Ejemplo: 123456789`;
 
 
@@ -1032,7 +895,9 @@ Por favor escribe tu segundo apellido, si no tienes segundo apellido escribe NO`
                           $formulario.tipo_documento = "Cédula de Identidad (venezonala)";
 
                           $formulario.pregunta += 2;// pregunta 7
-                          actualizarEncuesta($formulario);
+                          //actualizarEncuesta($formulario);
+                          encuestaController.actualizarEncuesta($formulario); //llama a funcion en encuestaController
+
                           mensajeRespuesta = `Escribe por favor tu número de documento 📇 (no utilices símbolos, solo números) Ejemplo: 123456789`;
                           break;
 
@@ -1040,7 +905,9 @@ Por favor escribe tu segundo apellido, si no tienes segundo apellido escribe NO`
                           $formulario.tipo_documento = "Cédula de ciudadania (colombiana)";
 
                           $formulario.pregunta += 2;// pregunta 21
-                          actualizarEncuesta($formulario);
+                          //actualizarEncuesta($formulario);
+                          encuestaController.actualizarEncuesta($formulario); //llama a funcion en encuestaController
+
                           mensajeRespuesta = `Escribe por favor tu número de documento 📇 (no utilices símbolos, solo números) Ejemplo: 123456789`;
                           break;
 
@@ -1048,7 +915,9 @@ Por favor escribe tu segundo apellido, si no tienes segundo apellido escribe NO`
                           $formulario.tipo_documento = "Pasaporte";
 
                           $formulario.pregunta += 2;// pregunta 7
-                          actualizarEncuesta($formulario);
+                          //actualizarEncuesta($formulario);
+                          encuestaController.actualizarEncuesta($formulario); //llama a funcion en encuestaController
+
                           mensajeRespuesta = `Escribe por favor tu número de documento 📇 (no utilices símbolos, solo números) Ejemplo: 123456789`;
                           break;
 
@@ -1056,7 +925,9 @@ Por favor escribe tu segundo apellido, si no tienes segundo apellido escribe NO`
                           $formulario.tipo_documento = "Cédula de Extranjería";
 
                           $formulario.pregunta += 2;// pregunta 21
-                          actualizarEncuesta($formulario);
+                          //actualizarEncuesta($formulario);
+                          encuestaController.actualizarEncuesta($formulario); //llama a funcion en encuestaController
+
                           mensajeRespuesta = `Escribe por favor tu número de documento 📇 (no utilices símbolos, solo números) Ejemplo: 123456789`;
                           break;
 
@@ -1064,7 +935,9 @@ Por favor escribe tu segundo apellido, si no tienes segundo apellido escribe NO`
                           $formulario.tipo_documento = "Indocumentado";
 
                           $formulario.pregunta += 3;// pregunta 8. Indocumentado no se muestra numero documento
-                          actualizarEncuesta($formulario);
+                          //actualizarEncuesta($formulario);
+                          encuestaController.actualizarEncuesta($formulario); //llama a funcion en encuestaController
+
                           mensajeRespuesta = `¿Cómo encontraste mi número de WhatsApp? Responde con el número de acuerdo a la opción correspondiente:
 1️⃣ Ví un pendón en un albergue
 2️⃣ Recibí un volante en el albergue
@@ -1079,7 +952,9 @@ Por favor escribe tu segundo apellido, si no tienes segundo apellido escribe NO`
                         case '7':
                           $formulario.tipo_documento = "Otro";
                           $formulario.pregunta += 1; // pregunta 6
-                          actualizarEncuesta($formulario);
+                          //actualizarEncuesta($formulario);
+                          encuestaController.actualizarEncuesta($formulario); //llama a funcion en encuestaController
+
                           mensajeRespuesta = `¿Cuál? (Indicar tipo, ejemplo: pasaporte)`;
                         break;
 
@@ -1100,7 +975,9 @@ Por favor escribe tu segundo apellido, si no tienes segundo apellido escribe NO`
 
                   } catch (error) {
                     $formulario.pregunta = 5; //vuelve a entrar a pregunta 5
-                    actualizarEncuesta($formulario);
+                    //actualizarEncuesta($formulario);
+                    encuestaController.actualizarEncuesta($formulario); //llama a funcion en encuestaController
+
                     mensajeRespuesta = `Gracias 🙂, ten presente que no puedo reconocer imágenes, audios, ni emojis. Nos podemos comunicar por medio de texto o digitando el número de las opciones que te indico en mi pregunta.\n
 ¿Cuál es tu tipo de documento? 📇 Responde con el número de acuerdo a la opción correspondiente:
 1️⃣ Acta de Nacimiento
@@ -1124,7 +1001,9 @@ Por favor escribe tu segundo apellido, si no tienes segundo apellido escribe NO`
                     if(pattern.test($formulario.cual_otro_tipo_documento)){
 
                       $formulario.pregunta += 1;// pregunta 7.
-                      actualizarEncuesta($formulario);
+                      //actualizarEncuesta($formulario);
+                      encuestaController.actualizarEncuesta($formulario); //llama a funcion en encuestaController
+
                       mensajeRespuesta = `Escribe por favor tu número de documento 📇 (no utilices símbolos, solo números) Ejemplo: 123456789`;
 
 
@@ -1135,7 +1014,9 @@ Por favor escribe tu segundo apellido, si no tienes segundo apellido escribe NO`
 
                   } catch (error) {
                     $formulario.pregunta = 6; //vuelve a entrar a paso 6
-                    actualizarEncuesta($formulario);
+                    //actualizarEncuesta($formulario);
+                    encuestaController.actualizarEncuesta($formulario); //llama a funcion en encuestaController
+
                     mensajeRespuesta = `Gracias 🙂, ten presente que no puedo reconocer imágenes, audios, ni emojis. Nos podemos comunicar por medio de texto o digitando el número de las opciones que te indico en mi pregunta.\n
 ¿Cuál otro tipo de documento? (Indicar tipo, ejemplo: pasaporte)`;
 
@@ -1154,7 +1035,9 @@ Por favor escribe tu segundo apellido, si no tienes segundo apellido escribe NO`
                     //if($formulario.numero_documento.length>0){
 
                     $formulario.pregunta += 1;// pregunta 8.
-                    actualizarEncuesta($formulario);
+                    //actualizarEncuesta($formulario);
+                    encuestaController.actualizarEncuesta($formulario); //llama a funcion en encuestaController
+
                     mensajeRespuesta = `¿Cómo encontraste mi número de WhatsApp? Responde con el número de acuerdo a la opción correspondiente:
 1️⃣ Ví un pendón en un albergue
 2️⃣ Recibí un volante en el albergue
@@ -1172,7 +1055,9 @@ Escribe por favor tu número de documento 📇 (no utilices símbolos, solo núm
 
                   } catch (error) {
                     $formulario.pregunta = 7; //vuelve a entrar a paso 7
-                    actualizarEncuesta($formulario);
+                    //actualizarEncuesta($formulario);
+                    encuestaController.actualizarEncuesta($formulario); //llama a funcion en encuestaController
+
                     mensajeRespuesta = `Gracias 🙂, ten presente que no puedo reconocer imágenes, audios, ni emojis. Nos podemos comunicar por medio de texto o digitando el número de las opciones que te indico en mi pregunta.\n
 Escribe por favor tu número de documento 📇 (no utilices símbolos, solo números) Ejemplo: 123456789`;
                 }
@@ -1186,7 +1071,9 @@ Escribe por favor tu número de documento 📇 (no utilices símbolos, solo núm
                       $formulario.pregunta += 1; //va a pregunta 9
                       $formulario.como_llego_al_formulario = "Ví un pendón en un albergue";
                       //$formulario.donde_encontro_formulario = null;
-                      actualizarEncuesta($formulario);
+                      //actualizarEncuesta($formulario);
+                      encuestaController.actualizarEncuesta($formulario); //llama a funcion en encuestaController
+
                       mensajeRespuesta = `¿En qué fecha tÚ y tu grupo familiar llegaron al país🇨🇴?. Envía la fecha de esta manera AAAA-MM-DD para (Año-Mes-Día. Ejemplo: 2000-10-26)`;
 
                       break;
@@ -1195,7 +1082,9 @@ Escribe por favor tu número de documento 📇 (no utilices símbolos, solo núm
                       $formulario.pregunta += 1; //va a pregunta 9
                       $formulario.como_llego_al_formulario = "Recibí un volante en el albergue";
                       //$formulario.donde_encontro_formulario = null;
-                      actualizarEncuesta($formulario);
+                      //actualizarEncuesta($formulario);
+                      encuestaController.actualizarEncuesta($formulario); //llama a funcion en encuestaController
+
                       mensajeRespuesta = `¿En qué fecha tÚ y tu grupo familiar llegaron al país🇨🇴?. Envía la fecha de esta manera AAAA-MM-DD para (Año-Mes-Día. Ejemplo: 2000-10-26)`;
 
                       break;
@@ -1204,7 +1093,9 @@ Escribe por favor tu número de documento 📇 (no utilices símbolos, solo núm
                       $formulario.pregunta += 1; //va a pregunta 9
                       $formulario.como_llego_al_formulario = "Recibí una foto con la información";
                       //$formulario.donde_encontro_formulario = null;
-                      actualizarEncuesta($formulario);
+                      //actualizarEncuesta($formulario);
+                      encuestaController.actualizarEncuesta($formulario); //llama a funcion en encuestaController
+
                       mensajeRespuesta = `¿En qué fecha tÚ y tu grupo familiar llegaron al país🇨🇴?. Envía la fecha de esta manera AAAA-MM-DD para (Año-Mes-Día. Ejemplo: 2000-10-26)`;
 
                       break;
@@ -1213,7 +1104,9 @@ Escribe por favor tu número de documento 📇 (no utilices símbolos, solo núm
                       $formulario.pregunta += 1; //va a pregunta 9
                       $formulario.como_llego_al_formulario = "Recibí el enlache por chat";
                       //$formulario.donde_encontro_formulario = null;
-                      actualizarEncuesta($formulario);
+                      //actualizarEncuesta($formulario);
+                      encuestaController.actualizarEncuesta($formulario); //llama a funcion en encuestaController
+
                       mensajeRespuesta = `¿En qué fecha tÚ y tu grupo familiar llegaron al país🇨🇴?. Envía la fecha de esta manera AAAA-MM-DD para (Año-Mes-Día. Ejemplo: 2000-10-26)`;
 
                       break;
@@ -1222,7 +1115,9 @@ Escribe por favor tu número de documento 📇 (no utilices símbolos, solo núm
                       $formulario.pregunta += 1; //va a pregunta 9
                       $formulario.como_llego_al_formulario = "Encontré el enlace en Facebook";
                       //$formulario.donde_encontro_formulario = null;
-                      actualizarEncuesta($formulario);
+                      //actualizarEncuesta($formulario);
+                      encuestaController.actualizarEncuesta($formulario); //llama a funcion en encuestaController
+
                       mensajeRespuesta = `¿En qué fecha tÚ y tu grupo familiar llegaron al país🇨🇴?. Envía la fecha de esta manera AAAA-MM-DD para (Año-Mes-Día. Ejemplo: 2000-10-26)`;
 
                       break;
@@ -1231,7 +1126,10 @@ Escribe por favor tu número de documento 📇 (no utilices símbolos, solo núm
                       $formulario.pregunta += 1; //va a pregunta 9
                       $formulario.como_llego_al_formulario = "Una persona conocida me lo envió para que lo llenara";
                       //$formulario.donde_encontro_formulario = null;
-                      actualizarEncuesta($formulario);
+                      //actualizarEncuesta($formulario);
+
+                      encuestaController.actualizarEncuesta($formulario); //llama a funcion en encuestaController
+
                       mensajeRespuesta = `¿En qué fecha tÚ y tu grupo familiar llegaron al país🇨🇴?. Envía la fecha de esta manera AAAA-MM-DD para (Año-Mes-Día. Ejemplo: 2000-10-26)`;
 
                       break;
@@ -1239,14 +1137,18 @@ Escribe por favor tu número de documento 📇 (no utilices símbolos, solo núm
                     case '7':
                       $formulario.pregunta += 1; //va a pregunta 9
                       $formulario.como_llego_al_formulario = "Recibí una manilla con el número";
-                      actualizarEncuesta($formulario);
+                      //actualizarEncuesta($formulario);
+                      encuestaController.actualizarEncuesta($formulario); //llama a funcion en encuestaController
+
                       mensajeRespuesta = `¿En qué fecha tÚ y tu grupo familiar llegaron al país🇨🇴?. Envía la fecha de esta manera AAAA-MM-DD para (Año-Mes-Día. Ejemplo: 2000-10-26)`;
                       break;
 
                     case '8':
                       $formulario.pregunta += 1; //va a pregunta 9
                       $formulario.como_llego_al_formulario = "Otro";
-                      actualizarEncuesta($formulario);
+                      //actualizarEncuesta($formulario);
+                      encuestaController.actualizarEncuesta($formulario); //llama a funcion en encuestaController
+
                       mensajeRespuesta = `¿En qué fecha tÚ y tu grupo familiar llegaron al país🇨🇴?. Envía la fecha de esta manera AAAA-MM-DD para (Año-Mes-Día. Ejemplo: 2000-10-26)`;
                       break;
 
@@ -1268,7 +1170,9 @@ Escribe por favor tu número de documento 📇 (no utilices símbolos, solo núm
 
                   } catch (error) {
                     $formulario.pregunta = 8; //vuelve a entrar a paso 8
-                    actualizarEncuesta($formulario);
+                    //actualizarEncuesta($formulario);
+                    encuestaController.actualizarEncuesta($formulario); //llama a funcion en encuestaController
+
                     mensajeRespuesta = `Gracias 🙂, ten presente que no puedo reconocer imágenes, audios, ni emojis. Nos podemos comunicar por medio de texto o digitando el número de las opciones que te indico en mi pregunta.\n
 
 ¿Cómo encontraste mi número de WhatsApp? Responde con el número de acuerdo a la opción correspondiente:
@@ -1316,7 +1220,9 @@ Escribe por favor tu número de documento 📇 (no utilices símbolos, solo núm
                           $formulario.pregunta += 1; //va a pregunta 10
                           $formulario.fecha_llegada_pais = req.body.incomingMessage;//.replace(/[^\-\w]/gi, '');
 
-                          actualizarEncuesta($formulario);
+                          //actualizarEncuesta($formulario);
+                          encuestaController.actualizarEncuesta($formulario); //llama a funcion en encuestaController
+
 
                           mensajeRespuesta = `¿Cuál es tu destino final dentro de Colombia? Envía el número de la opción correspondiente:
 1️⃣ No estoy seguro/a
@@ -1352,7 +1258,9 @@ Escribe por favor tu número de documento 📇 (no utilices símbolos, solo núm
 
                 } catch (error) {
                   $formulario.pregunta = 9; //vuelve a 9
-                    actualizarEncuesta($formulario);
+                    //actualizarEncuesta($formulario);
+                    encuestaController.actualizarEncuesta($formulario); //llama a funcion en encuestaController
+
                     mensajeRespuesta = `Gracias 🙂, ten presente que no puedo reconocer imágenes, audios, ni emojis. Nos podemos comunicar por medio de texto o digitando el número de las opciones que te indico en mi pregunta.\n
 ¿En qué fecha tÚ y tu grupo familiar llegaron al país🇨🇴?. Envía la fecha de esta manera AAAA-MM-DD para (Año-Mes-Día. Ejemplo: 2000-10-26)`;
 
@@ -1439,7 +1347,9 @@ Escribe por favor tu número de documento 📇 (no utilices símbolos, solo núm
 
                       }
 
-                      actualizarEncuesta($formulario);
+                      //actualizarEncuesta($formulario);
+                      encuestaController.actualizarEncuesta($formulario); //llama a funcion en encuestaController
+
                       mensajeRespuesta = `Escribe tu número de contacto en números 📞 `;
 
 
@@ -1466,7 +1376,9 @@ Escribe por favor tu número de documento 📇 (no utilices símbolos, solo núm
                   } catch (error) {
                     //console.log('ERROR EN 28__ ', error);
                     $formulario.pregunta = 10; //vuelve a 11
-                    actualizarEncuesta($formulario);
+                    //actualizarEncuesta($formulario);
+                    encuestaController.actualizarEncuesta($formulario); //llama a funcion en encuestaController
+
 
                     mensajeRespuesta = `Gracias 🙂, ten presente que no puedo reconocer imágenes, audios, ni emojis. Nos podemos comunicar por medio de texto o digitando el número de las opciones que te indico en mi pregunta.
 ¿Cuál es tu destino final dentro de Colombia? Envía el número de la opción correspondiente:
@@ -1495,7 +1407,9 @@ Escribe por favor tu número de documento 📇 (no utilices símbolos, solo núm
                     if(pattern.test(req.body.incomingMessage)){
                       $formulario.numero_contacto = req.body.incomingMessage;
                       $formulario.pregunta += 1; //va a 12
-                      actualizarEncuesta($formulario);
+                      //actualizarEncuesta($formulario);
+                      encuestaController.actualizarEncuesta($formulario); //llama a funcion en encuestaController
+
                       mensajeRespuesta = `¿Este número de contacto fue entregado por el programa VenEsperanza? Responde con el número según la opción: 1️⃣ Sí 2️⃣ No`;
                     }else{
                       mensajeRespuesta = `Gracias 🙂, ten presente que no puedo reconocer imágenes, audios, ni emojis. Nos podemos comunicar por medio de texto o digitando el número de las opciones que te indico en mi pregunta.\n
@@ -1505,7 +1419,9 @@ Escribe tu número de contacto en números 📞` ;
 
                   } catch (error) {
                     $formulario.pregunta = 11; //vuelve a 11
-                      actualizarEncuesta($formulario);
+                    //actualizarEncuesta($formulario);
+                    encuestaController.actualizarEncuesta($formulario); //llama a funcion en encuestaController
+
                     mensajeRespuesta = `Gracias 🙂, ten presente que no puedo reconocer imágenes, audios, ni emojis. Nos podemos comunicar por medio de texto o digitando el número de las opciones que te indico en mi pregunta.\n
 Escribe tu número de contacto en números 📞` ;
                   }
@@ -1521,7 +1437,9 @@ Escribe tu número de contacto en números 📞` ;
                         $formulario.numero_entregado_venesperanza = true;
                         $formulario.pregunta += 1; //Va a pregunta 13
 
-                        actualizarEncuesta($formulario);
+                        //actualizarEncuesta($formulario);
+                        encuestaController.actualizarEncuesta($formulario); //llama a funcion en encuestaController
+
                         mensajeRespuesta = `¿Este número de contacto es tuyo? Responde con el número según la opción: 1️⃣ Sí 2️⃣ No`;
 
                       break;
@@ -1530,7 +1448,9 @@ Escribe tu número de contacto en números 📞` ;
                         $formulario.numero_entregado_venesperanza = false;
                         $formulario.pregunta += 1; //Va a pregunta 13
 
-                        actualizarEncuesta($formulario);
+                        //actualizarEncuesta($formulario);
+                        encuestaController.actualizarEncuesta($formulario); //llama a funcion en encuestaController
+
                         mensajeRespuesta = `¿Este número de contacto es tuyo? Responde con el número según la opción: 1️⃣ Sí 2️⃣ No`;
 
                       break;
@@ -1544,7 +1464,9 @@ Escribe tu número de contacto en números 📞` ;
 
                   } catch (error) {
                     $formulario.pregunta = 12; //vuelve a 12
-                    actualizarEncuesta($formulario);
+                    //actualizarEncuesta($formulario);
+                    encuestaController.actualizarEncuesta($formulario); //llama a funcion en encuestaController
+
                     mensajeRespuesta = `Gracias 🙂, ten presente que no puedo reconocer imágenes, audios, ni emojis. Nos podemos comunicar por medio de texto o digitando el número de las opciones que te indico en mi pregunta.
 ¿Este número de contacto fue entregado por el programa VenEsperanza? Responde con el número según la opción: 1️⃣ Sí 2️⃣ No`;
 
@@ -1559,14 +1481,18 @@ Escribe tu número de contacto en números 📞` ;
                       case '1':
                         $formulario.linea_contacto_propia = true;
                         $formulario.pregunta += 1; //Va a pregunta 14
-                        actualizarEncuesta($formulario);
+                        //actualizarEncuesta($formulario);
+                        encuestaController.actualizarEncuesta($formulario); //llama a funcion en encuestaController
+
                         mensajeRespuesta = `¿Este número de contacto tiene WhatsApp? Responde con el número según la opción: 1️⃣ Sí 2️⃣ No`;
                       break;
 
                       case '2':
                         $formulario.linea_contacto_propia = false;
                         $formulario.pregunta += 1; //Va a pregunta 14
-                        actualizarEncuesta($formulario);
+                        //actualizarEncuesta($formulario);
+                        encuestaController.actualizarEncuesta($formulario); //llama a funcion en encuestaController
+
                         mensajeRespuesta = `¿Este número de contacto tiene WhatsApp? Responde con el número según la opción: 1️⃣ Sí 2️⃣ No`;
                       break;
 
@@ -1579,7 +1505,9 @@ Escribe tu número de contacto en números 📞` ;
 
                   } catch (error) {
                     $formulario.pregunta = 13; //vuelve a 13
-                    actualizarEncuesta($formulario);
+                    //actualizarEncuesta($formulario);
+                    encuestaController.actualizarEncuesta($formulario); //llama a funcion en encuestaController
+
                     mensajeRespuesta = `Gracias 🙂, ten presente que no puedo reconocer imágenes, audios, ni emojis. Nos podemos comunicar por medio de texto o digitando el número de las opciones que te indico en mi pregunta.
 ¿Este número de contacto es tuyo? Responde con el número según la opción: 1️⃣ Sí 2️⃣ No`
 
@@ -1595,14 +1523,18 @@ Escribe tu número de contacto en números 📞` ;
                       case '1':
                         $formulario.linea_asociada_whatsapp = true;
                         $formulario.pregunta += 1; //Va a pregunta 15
-                        actualizarEncuesta($formulario);
+                        //actualizarEncuesta($formulario);
+                        encuestaController.actualizarEncuesta($formulario); //llama a funcion en encuestaController
+
                         mensajeRespuesta = `¿Podrías compartirme un correo electrónico 📧 en el que te podamos contactar? Si no ❌ tienes, ¡no te preocupes! escribe NO`;
                       break;
 
                       case '2':
                         $formulario.linea_asociada_whatsapp = false;
                         $formulario.pregunta += 1; //Va a pregunta 15
-                        actualizarEncuesta($formulario);
+                        //actualizarEncuesta($formulario);
+                        encuestaController.actualizarEncuesta($formulario); //llama a funcion en encuestaController
+
                         mensajeRespuesta = `¿Podrías compartirme un correo electrónico 📧 en el que te podamos contactar? Si no ❌ tienes, ¡no te preocupes! escribe NO`;
                       break;
 
@@ -1616,7 +1548,9 @@ Escribe tu número de contacto en números 📞` ;
 
                   } catch (error) {
                     $formulario.pregunta = 14; //vuelve a 14
-                    actualizarEncuesta($formulario);
+                    //actualizarEncuesta($formulario);
+                    encuestaController.actualizarEncuesta($formulario); //llama a funcion en encuestaController
+
                     mensajeRespuesta = `Gracias 🙂, ten presente que no puedo reconocer imágenes, audios, ni emojis. Nos podemos comunicar por medio de texto o digitando el número de las opciones que te indico en mi pregunta.
 ¿Este número de contacto tiene WhatsApp? Responde con el número según la opción: 1️⃣ Sí 2️⃣ No`;
 
@@ -1635,10 +1569,14 @@ Escribe tu número de contacto en números 📞` ;
                     //if(req.body.incomingMessage === 'NO'){
                     if(newVariableIncomingMessage === 'no'){
                       $formulario.pregunta += 1;
-                      actualizarEncuesta($formulario);
+                      //actualizarEncuesta($formulario);
+                      encuestaController.actualizarEncuesta($formulario); //llama a funcion en encuestaController
+
                       conversation.tipo_formulario = null;
                       //conversation.autorizacion = null;
-                      actualizarConversacion(conversation);
+                      //actualizarConversacion(conversation); //llamado a funcion en app.js
+                      conversacionController.actualizarConversacion(conversation);
+
                       mensajeRespuesta = `¡Gracias por participar! 👩🏻
                       Si eres preseleccionado/a el programa #VenEsperanza se comunicará contigo a través de una llamada 📞
                       ⚠️Recuerda:
@@ -1651,14 +1589,20 @@ Escribe tu número de contacto en números 📞` ;
                       $formulario.pregunta += 1;
                       //$formulario.correo_electronico = req.body.Body;
                       $formulario.correo_electronico = req.body.incomingMessage;
-                      actualizarEncuesta($formulario);
+                      //actualizarEncuesta($formulario);
+                      encuestaController.actualizarEncuesta($formulario); //llama a funcion en encuestaController
+
                       conversation.tipo_formulario = null;
                       //console.log('CONVERSACION ACTUALIZAR:: ', conversation);
-                      actualizarConversacion(conversation);
-                      mensajeRespuesta = `¡Gracias por participar! 👩🏻
+
+                      //actualizarConversacion(conversation); //llamado a funcion en app.js
+                      conversacionController.actualizarConversacion(conversation);
+
+                      /*mensajeRespuesta = `¡Gracias por participar! 👩🏻
 Si eres preseleccionado/a el programa #VenEsperanza se comunicará contigo a través de una llamada 📞
 ⚠️Recuerda:
-Todos nuestros servicios son GRATUITOS, no tenemos intermediarios ni tramitadores. No caigas en la trampa ❗ La ayuda humanitaria es gratuita.`;
+Todos nuestros servicios son GRATUITOS, no tenemos intermediarios ni tramitadores. No caigas en la trampa ❗ La ayuda humanitaria es gratuita.`;*/
+                      mensajeRespuesta = 'final_form_registro'
 
                     }else{
                       mensajeRespuesta = `Gracias 🙂, ten presente que no puedo reconocer imágenes, audios, ni emojis. Nos podemos comunicar por medio de texto o digitando el número de las opciones que te indico en mi pregunta.
@@ -1668,7 +1612,9 @@ Todos nuestros servicios son GRATUITOS, no tenemos intermediarios ni tramitadore
 
                   } catch (error) {
                     $formulario.pregunta = 15; //vuelve a 15
-                    actualizarEncuesta($formulario);
+                    //actualizarEncuesta($formulario);
+                    encuestaController.actualizarEncuesta($formulario); //llama a funcion en encuestaController
+
                     mensajeRespuesta = `Gracias 🙂, ten presente que no puedo reconocer imágenes, audios, ni emojis. Nos podemos comunicar por medio de texto o digitando el número de las opciones que te indico en mi pregunta.
 ¿Podrías compartirme un correo electrónico 📧 en el que te podamos contactar? Si no ❌ tienes, ¡no te preocupes! escribe NO`;
 
@@ -2406,7 +2352,8 @@ Todos nuestros servicios son GRATUITOS, no tenemos intermediarios ni tramitadore
                 try {
                   //crea nuevo encuesta
                   $conversation.tipo_formulario = 1;
-                  actualizarConversacion($conversation);
+                  //actualizarConversacion($conversation);
+                  conversacionController.actualizarConversacion($conversation)
                   crearEncuesta($conversation);
                   mensajeRespuesta = 'Empieza Llenar nuevo formulario';
 
@@ -2446,8 +2393,11 @@ Todos nuestros servicios son GRATUITOS, no tenemos intermediarios ni tramitadore
           //switch(req.body.Body){
             case '1':
               conversation.autorizacion = true;
-              actualizarConversacion(conversation);
-              autorizacionTratamientoDatos(conversation);
+              //actualizarConversacion(conversation); //llama a funcion en app.js
+              conversacionController.actualizarConversacion(conversation);
+
+              //autorizacionTratamientoDatos(conversation); //llama a funcion de app.js
+              autorizacionTratamientoDatosController.autorizacionTratamientoDatos(conversation); //llamado a autorizacionTratamientoDatos.controller.js
 
               /*mensajeRespuesta = `Ahora por favor respóndeme con el número correspondiente a lo que quieres hacer:\n
 1️⃣ Quieres diligenciar el formulario de registro ✍🏻\n
@@ -2486,18 +2436,9 @@ Responde:
         //console.log('IDNECUESTA: ', idencuesta);
         //crearEncuesta(conversation);
         //console.log('CONVERSATION EN START FALSE:', conversation);
-        actualizarConversacion(conversation);
-        /*
-        axios.post('https://flows.messagebird.com/flows/0972699c-4ac7-4ee4-a16c-1084db4778b4/invoke')
-        .then(response => {
-          console.log(response.data.url);
-          console.log(response.data.explanation);
-          console.log(':::SI HIZO LLAMADO AXIOS:::')
-        })
-        .catch(error => {
-          console.log(error);
-        });
-        */
+        //actualizarConversacion(conversation); //llama a funcion en app.js
+        conversacionController.actualizarConversacion(conversation);
+       
         /*mensajeRespuesta = `Hola, soy Esperanza 👩🏻, la asistente virtual del programa VenEsperanza. ¡Es un gusto  atenderte! 😊
 Tus datos personales recolectados serán tratados para gestionar nuestros servicios 🤝, conoce nuestra Política de Tratamiento de Datos 🗒️ en este enlace https://bit.ly/3uftBaQ en el que encontrarás tus derechos.
 Para iniciar este chat 💬 debes autorizar el uso de tus datos. ✅ 
@@ -2513,57 +2454,39 @@ Responde:
 
     }
 
-    //if(conversation.conversation_start == true && !conversation.tipo_formulario && !conversation.autorizacion){
-      sendMessageWhatsapp({
-        'to': req.body['message.from'],
-          'conversationId': req.body.conversationId,
-          'type': 'hsm',
-          'content': {
-            'hsm': {
-              'namespace': 'e3e14847_97d6_4731_a155_2a089c961b5d',
-              //'templateName': 'welcome',
-              'templateName': mensajeRespuesta,
-              'language': {
-                'policy': 'deterministic',
-                'code': 'es',
-              },
-              //params: [{ default: 'Bob' }, { default: 'tomorrow!' }],
-            }
-              },
-          'reportUrl': 'https://webhook.site/681229d0-1961-4b03-b9f7-113b37636538'
-      });
-    
-      //Segun el estado de la conversacion envia mensaje con plantilla o con mensaje de respuesta
-      /*if(conversation.conversation_start == true && !conversation.tipo_formulario && !conversation.autorizacion){
-        
-        sendMessageWhatsapp({
+    //Envia plantillas en mensaje inicial y seleccion de formulario
+    if(conversation.conversation_start == true && !conversation.tipo_formulario ){
+        whatsappMessageController.sendMessageWhatsapp({
           'to': req.body['message.from'],
             'conversationId': req.body.conversationId,
             'type': 'hsm',
             'content': {
-              hsm: {
-                //namespace: '5ba2d0b7_f2c6_433b_a66e_57b009ceb6ff',
-                templateName: 'saludo_autorizacion',
-                language: {
-                  policy: 'deterministic',
-                  code: 'en',
+              'hsm': {
+                'namespace': 'e3e14847_97d6_4731_a155_2a089c961b5d',
+                //'templateName': 'welcome',
+                'templateName': mensajeRespuesta,
+                'language': {
+                  'policy': 'deterministic',
+                  'code': 'es',
                 },
                 //params: [{ default: 'Bob' }, { default: 'tomorrow!' }],
               }
-                }
-        });*/
+                },
+            'reportUrl': 'https://webhook.site/681229d0-1961-4b03-b9f7-113b37636538'
+        });
 
-     /* }else{
+    }else{
         
-        sendMessageWhatsapp({
+        whatsappMessageController.sendMessageWhatsapp({
           'to': req.body['message.from'],
             'conversationId': req.body.conversationId,
           'type': 'text',
           'content': {
                   'text': mensajeRespuesta,
-                }
+                },
+          'reportUrl': 'https://webhook.site/681229d0-1961-4b03-b9f7-113b37636538'
         });
-      }*/
+      }
 
   }
 
