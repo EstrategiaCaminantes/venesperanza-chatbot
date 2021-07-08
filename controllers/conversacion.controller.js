@@ -58,7 +58,6 @@ exports.actualizarConversacion = async function($conversa){
         where id = ${$conversa.id}`;
         //console.log('VALOR SQL', sqlCreaEncuesta);
 
-        //connection.query(sqlConversacion, (error, res) => {
         /*
         db.query(sqlConversacion, (error, res) => {
         if (error) console.log('ERROR: ', error);

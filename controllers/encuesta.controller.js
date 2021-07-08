@@ -26,7 +26,6 @@ exports.actualizarEncuesta = async function ($encuesta) {
         WHERE id = ${$encuesta.id}`;
 
         /*
-        //connection.query(sqlCreaEncuesta, (error, res) => {
         db.query(sqlCreaEncuesta, (error, res) => {
         if (error) {errorLog('dbquery.error',error);throw error;}
 

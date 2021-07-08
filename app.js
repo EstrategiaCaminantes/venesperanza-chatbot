@@ -19,6 +19,8 @@ var whatsappMessageController = require('./controllers/whatsappMessage.controlle
 var conversacionController = require('./controllers/conversacion.controller');
 var autorizacionTratamientoDatosController = require('./controllers/autorizacionTratamientoDatos.controller');
 var encuestaController = require('./controllers/encuesta.controller');
+var llegadasController = require('./controllers/llegadas.controller');
+var actualizarDatosContactoController = require('./controllers/actualizarDatosContacto.controller');
 
 app.use(bodyParser.urlencoded({
   extended: true
@@ -233,10 +235,11 @@ whatsappMessageController.sendMessageWhatsapp({
       if (existeLlegadaADestino.length > 0) {
 
         conversacion.tipo_formulario = 2;
-        actualizarConversacion(conversacion);
+        //actualizarConversacion(conversacion); //llama a funcion en app.js
+        conversacionController.actualizarConversacion(conversacion)//llama a funcion en conversacion.controller.js
 
         existeLlegadaADestino[0].pregunta = 1;
-        //actualizarDatosContacto(existeLlegadaADestino[0]);
+
         actualizarLlegadaEncuesta(existeLlegadaADestino[0]);
 
         mensajeRespuesta = `A continuación responde a las preguntas para registrar tu llegada a destino como teléfono u otros:
@@ -282,10 +285,15 @@ whatsappMessageController.sendMessageWhatsapp({
       if (existeDatosActualizados.length > 0) {
 
         conversacion.tipo_formulario = 3;
-        actualizarConversacion(conversacion);
+
+        conversacionController.actualizarConversacion(conversacion)//llama a funcion en conversacion.controller.js
 
         existeDatosActualizados[0].pregunta = 1;
-        actualizarDatosContacto(existeDatosActualizados[0]);
+
+        //actualizarDatosContacto(existeDatosActualizados[0]); //llama a funcion en app.js
+        actualizarDatosContactoController.actualizarDatosContacto(existeDatosActualizados[0]);//llama a funcion en actualizarDAtosContacto.controller
+
+
         mensajeRespuesta = `A continuación responde a las preguntas para actualizar tus datos de contacto como teléfono u otros:
 Tipo de documento 📇 Responde con el número de acuerdo a la opción correspondiente:
 1️⃣ Acta de Nacimiento
@@ -295,14 +303,14 @@ Tipo de documento 📇 Responde con el número de acuerdo a la opción correspon
 5️⃣ Cédula de Extranjería
 6️⃣ Otro`;
 
-whatsappMessageController.sendMessageWhatsapp({
-  'to': req.body['message.from'],
-    'conversationId': req.body.conversationId,
-  'type': 'text',
-  'content': {
-          'text': mensajeRespuesta,
-        }
-});
+        whatsappMessageController.sendMessageWhatsapp({
+          'to': req.body['message.from'],
+            'conversationId': req.body.conversationId,
+          'type': 'text',
+          'content': {
+                  'text': mensajeRespuesta,
+                }
+        });
 
       }else{
         //conversacion.tipo_formulario = 1;
@@ -439,25 +447,6 @@ Por favor respóndeme con el número correspondiente a lo que quieres hacer:\n
     });
   }
 
-  //funcion que actualiza conversacion tabla 'conversacion_chatbot'
-  function actualizarConversacion($conversa){
-
-    $conversa.updated_at = new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '') ;
-
-    //$conversa.updated_at = dateFormat($conversa.updated_at, "yyyy-mm-dd hh");
-
-    const sqlConversacion = `UPDATE conversacion_chatbot SET conversation_start = ${$conversa.conversation_start}, 
-    autorizacion = ${$conversa.autorizacion}, tipo_formulario = ${$conversa.tipo_formulario}, updated_at = '${$conversa.updated_at}'
-     where id = ${$conversa.id}`;
-     //console.log('VALOR SQL', sqlCreaEncuesta);
-
-    //connection.query(sqlConversacion, (error, res) => {
-    db.query(sqlConversacion, (error, res) => {
-      if (error) console.log('ERROR: ', error);
-
-    });
-  }
-
   //funcion crear encuesta
   function crearEncuesta($conversation) {
 
@@ -536,7 +525,9 @@ Por favor respóndeme con el número correspondiente a lo que quieres hacer:\n
 3️⃣ Ya te registraste antes y quieres actualizar tus datos de contacto  🙌🏻 `;
       } else{
         $conversation.tipo_formulario = 2;
-        actualizarConversacion($conversation);
+        
+        //actualizarConversacion($conversation); //llamada a funcion en app.js
+        conversacionController.actualizarConversacion($conversation); //llamada a conversacionController
 
         mensajeRespuesta = `A continuación responde a las preguntas para informar de tu llegada a destino como teléfono u otros:
 Tipo de documento 📇 Responde con el número de acuerdo a la opción correspondiente:
@@ -586,7 +577,10 @@ Tipo de documento 📇 Responde con el número de acuerdo a la opción correspon
       } else{
 
         $conversation.tipo_formulario = 3;
-        actualizarConversacion($conversation);
+        
+        //actualizarConversacion($conversation); //llamada a funcion en app.js
+        conversacionController.actualizarConversacion($conversation); //llamada a conversacionController
+
 
         mensajeRespuesta = `A continuación responde a las preguntas para actualizar tus datos de contacto como teléfono u otros:
 Tipo de documento 📇 Responde con el número de acuerdo a la opción correspondiente:
@@ -611,29 +605,6 @@ Tipo de documento 📇 Responde con el número de acuerdo a la opción correspon
 
   }
 
-  function actualizarLlegada($llegada) {
-
-    //console.log('DATOS QUE LLEGAN A ACTUALIZAR LLEGADA::: ', $llegada)
-    //campos finales
-    //console.log('ESTOY EN ACTUALIZAR LLEGADA', $llegada);
-    $llegada.updated_at = new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '') ;
-
-    const sqlLlegada = `UPDATE llegadas SET pregunta = ${$llegada.pregunta},
-    tipo_documento = '${$llegada.tipo_documento}', numero_documento = '${$llegada.numero_documento}',
-    numero_contacto = ${$llegada.numero_contacto}, 
-     id_encuesta = ${$llegada.id_encuesta}, updated_at = '${$llegada.updated_at}',
-     nombre_jefe_hogar = '${$llegada.nombre_jefe_hogar}', numero_contacto_asociado_whatsapp = ${$llegada.numero_contacto_asociado_whatsapp},
-     donde_te_encuentras = '${$llegada.donde_te_encuentras}', otro_donde_te_encuentras = '${$llegada.otro_donde_te_encuentras}'
-     WHERE waId = ${$llegada.waId}`;
-
-    //connection.query(sqlLlegada, (error, res) => {
-    db.query(sqlLlegada, (error, res) => {
-      if (error) console.log('ERRROR ACTUALIZAR LLEGADA', error);
-
-      //return callback(true);
-
-    });
-  }
 
   function actualizarLlegadaEncuesta($llegadaEncuesta){
 
@@ -648,31 +619,16 @@ Tipo de documento 📇 Responde con el número de acuerdo a la opción correspon
       if (encuesta.length > 0) {
         //console.log('SI ENCONTRO UNA ENCUESTA CON EL WAID::');
         $llegadaEncuesta.id_encuesta = encuesta[0]['id'];
-        actualizarLlegada($llegadaEncuesta);
+        
+        //actualizarLlegada($llegadaEncuesta); //llama a funcion en app.js
+        llegadasController.actualizarLlegada($llegadaEncuesta); //llama a funcion en llegadas.controller.js
 
 
       }else{
-        actualizarLlegada($llegadaEncuesta);
+        //actualizarLlegada($llegadaEncuesta); //llama a funcion en app.js
+        llegadasController.actualizarLlegada($llegadaEncuesta); //llama a funcion en llegadas.controller.js
+
       }
-    });
-  }
-
-  function actualizarDatosContacto($datosContactoActualizados){
-
-    $datosContactoActualizados.updated_at = new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '') ;
-
-    const sqlActualizarDatos = `UPDATE datos_actualizados SET pregunta = ${$datosContactoActualizados.pregunta},
-    tipo_documento = '${$datosContactoActualizados.tipo_documento}', numero_documento = '${$datosContactoActualizados.numero_documento}',
-    telefono = ${$datosContactoActualizados.telefono}, correo_electronico = '${$datosContactoActualizados.correo_electronico}',
-     id_encuesta = ${$datosContactoActualizados.id_encuesta},  updated_at = '${$datosContactoActualizados.updated_at}'
-     WHERE waId = ${$datosContactoActualizados.waId}`;
-
-    //connection.query(sqlActualizarDatos, (error, res) => {
-    db.query(sqlActualizarDatos, (error, res) => {
-      if (error) {errorLog('dbquery.error',error);throw error;}
-
-      //return callback(true);
-
     });
   }
 
@@ -690,11 +646,15 @@ Tipo de documento 📇 Responde con el número de acuerdo a la opción correspon
       if (encuesta.length > 0) {
         //console.log('SI ENCONTRO UNA ENCUESTA CON EL WAID EN ACTUALIZAR DATOS CONTACTO::');
         $datosContactoEncuesta.id_encuesta = encuesta[0]['id'];
-        actualizarDatosContacto($datosContactoEncuesta);
+        //actualizarDatosContacto($datosContactoEncuesta); //llama a funcion en app.js
+        actualizarDatosContactoController.actualizarDatosContacto($datosContactoEncuesta);//llama a funcion en actualizarDAtosContacto.controller
+
 
       }else{
         $datosContactoEncuesta.id_encuesta = null;
-        actualizarDatosContacto($datosContactoEncuesta);
+        //actualizarDatosContacto($datosContactoEncuesta); //llama a funcion en app.js
+        actualizarDatosContactoController.actualizarDatosContacto($datosContactoEncuesta);//llama a funcion en actualizarDAtosContacto.controller
+
       }
     });
   }
@@ -1577,11 +1537,11 @@ Escribe tu número de contacto en números 📞` ;
                       //actualizarConversacion(conversation); //llamado a funcion en app.js
                       conversacionController.actualizarConversacion(conversation);
 
-                      mensajeRespuesta = `¡Gracias por participar! 👩🏻
-                      Si eres preseleccionado/a el programa #VenEsperanza se comunicará contigo a través de una llamada 📞
-                      ⚠️Recuerda:
-                      Todos nuestros servicios son GRATUITOS, no tenemos intermediarios ni tramitadores. No caigas en la trampa ❗ La ayuda humanitaria es gratuita.`;
-
+                      /*mensajeRespuesta = `¡Gracias por participar! 👩🏻
+Si eres preseleccionado/a el programa #VenEsperanza se comunicará contigo a través de una llamada 📞
+⚠️Recuerda:
+Todos nuestros servicios son GRATUITOS, no tenemos intermediarios ni tramitadores. No caigas en la trampa ❗ La ayuda humanitaria es gratuita.`;*/
+                      mensajeRespuesta = 'final_form_registro';
 
                     //}else if(emailregex.test(req.body.Body)) {
                     }else if(emailregex.test(req.body.incomingMessage)){
@@ -1644,7 +1604,10 @@ Todos nuestros servicios son GRATUITOS, no tenemos intermediarios ni tramitadore
                       case '1':
                         $formulario.tipo_documento = "Acta de Nacimiento";
                         $formulario.pregunta += 1;// pregunta 2
-                        actualizarLlegada($formulario);
+                        
+                        //actualizarLlegada($formulario); //llama a funcion en app.js
+                        llegadasController.actualizarLlegada($formulario); //llama a funcion en llegadas.controller.js
+
                         mensajeRespuesta = `Escribe por favor tu número de documento 📇 (no utilices símbolos, solo números) Ejemplo: 123456789`;
 
 
@@ -1653,7 +1616,10 @@ Todos nuestros servicios son GRATUITOS, no tenemos intermediarios ni tramitadore
                         $formulario.tipo_documento = "Cédula de Identidad (venezonala)";
 
                         $formulario.pregunta += 1;// pregunta 2
-                        actualizarLlegada($formulario);
+
+                        //actualizarLlegada($formulario); //llama a funcion en app.js
+                        llegadasController.actualizarLlegada($formulario); //llama a funcion en llegadas.controller.js
+
                         mensajeRespuesta = `Escribe por favor tu número de documento 📇 (no utilices símbolos, solo números) Ejemplo: 123456789`;
                         break;
 
@@ -1661,7 +1627,10 @@ Todos nuestros servicios son GRATUITOS, no tenemos intermediarios ni tramitadore
                         $formulario.tipo_documento = "Cédula de ciudadania (colombiana)";
 
                         $formulario.pregunta += 1;// pregunta 2
-                        actualizarLlegada($formulario);
+                        
+                        //actualizarLlegada($formulario); //llama a funcion en app.js
+                        llegadasController.actualizarLlegada($formulario); //llama a funcion en llegadas.controller.js
+
                         mensajeRespuesta = `Escribe por favor tu número de documento 📇 (no utilices símbolos, solo números) Ejemplo: 123456789`;
                         break;
 
@@ -1669,7 +1638,10 @@ Todos nuestros servicios son GRATUITOS, no tenemos intermediarios ni tramitadore
                         $formulario.tipo_documento = "Pasaporte";
 
                         $formulario.pregunta += 1;// pregunta 2
-                        actualizarLlegada($formulario);
+                        
+                        //actualizarLlegada($formulario); //llama a funcion en app.js
+                        llegadasController.actualizarLlegada($formulario); //llama a funcion en llegadas.controller.js
+
                         mensajeRespuesta = `Escribe por favor tu número de documento 📇 (no utilices símbolos, solo números) Ejemplo: 123456789`;
                         break;
 
@@ -1677,14 +1649,20 @@ Todos nuestros servicios son GRATUITOS, no tenemos intermediarios ni tramitadore
                         $formulario.tipo_documento = "Cédula de Extranjería";
 
                         $formulario.pregunta += 1;// pregunta 2
-                        actualizarLlegada($formulario);
+                        
+                        //actualizarLlegada($formulario); //llama a funcion en app.js
+                        llegadasController.actualizarLlegada($formulario); //llama a funcion en llegadas.controller.js
+
                         mensajeRespuesta = `Escribe por favor tu número de documento 📇 (no utilices símbolos, solo números) Ejemplo: 123456789`;
                         break;
 
                       case '6':
                         $formulario.tipo_documento = "Otro";
                         $formulario.pregunta += 1;// pregunta 2
-                        actualizarLlegada($formulario);
+                        
+                        //actualizarLlegada($formulario); //llama a funcion en app.js
+                        llegadasController.actualizarLlegada($formulario); //llama a funcion en llegadas.controller.js
+
                         mensajeRespuesta = `Escribe por favor tu número de documento 📇 (no utilices símbolos, solo números) Ejemplo: 123456789`;
                       break;
 
@@ -1704,7 +1682,10 @@ Todos nuestros servicios son GRATUITOS, no tenemos intermediarios ni tramitadore
 
                   } catch (error) {
                     $formulario.pregunta = 1; //vuelve a entrar a pregunta 1
-                    actualizarLlegada($formulario);
+                    
+                    //actualizarLlegada($formulario); //llama a funcion en app.js
+                    llegadasController.actualizarLlegada($formulario); //llama a funcion en llegadas.controller.js
+
                     mensajeRespuesta = `Gracias 🙂, ten presente que no puedo reconocer imágenes, audios, ni emojis. Nos podemos comunicar por medio de texto o digitando el número de las opciones que te indico en mi pregunta.\n
 ¿Cuál es tu tipo de documento? 📇 Responde con el número de acuerdo a la opción correspondiente:
 1️⃣ Acta de Nacimiento
@@ -1747,7 +1728,10 @@ Escribe por favor tu número de documento 📇 (no utilices símbolos, solo núm
                 } catch (error) {
                   //console.log('EL ERROR EN PASO 2 REPORTE LLEGADA: : ', error);
                     $formulario.pregunta = 2; //vuelve a entrar a paso 2
-                    actualizarLlegada($formulario);
+                    
+                    //actualizarLlegada($formulario); //llama a funcion en app.js
+                    llegadasController.actualizarLlegada($formulario); //llama a funcion en llegadas.controller.js
+
                     mensajeRespuesta = `Gracias 🙂, ten presente que no puedo reconocer imágenes, audios, ni emojis. Nos podemos comunicar por medio de texto o digitando el número de las opciones que te indico en mi pregunta.\n
 Escribe por favor tu número de documento 📇 (no utilices símbolos, solo números) Ejemplo: 123456789`;
                 }
@@ -1769,7 +1753,10 @@ Escribe por favor tu número de documento 📇 (no utilices símbolos, solo núm
                     $formulario.nombre_jefe_hogar = req.body.incomingMessage;
                     //$formulario.telefono = req.body.Body;
                     $formulario.pregunta += 1; //va a 4
-                    actualizarLlegada($formulario);
+                    
+                    //actualizarLlegada($formulario); //llama a funcion en app.js
+                    llegadasController.actualizarLlegada($formulario); //llama a funcion en llegadas.controller.js
+
 
                     mensajeRespuesta = `Escribe tu número de teléfono en números 📞`;
                     
@@ -1783,7 +1770,10 @@ Escribe el nombre del jefe de hogar`;
 
                 } catch (error) {
                   $formulario.pregunta = 3; //vuelve a 3
-                  actualizarLlegada($formulario);
+                  
+                  //actualizarLlegada($formulario); //llama a funcion en app.js
+                  llegadasController.actualizarLlegada($formulario); //llama a funcion en llegadas.controller.js
+
                   //mensajeRespuesta = `Gracias 🙂, ten presente que no puedo reconocer imágenes, audios, ni emojis. Nos podemos comunicar por medio de texto o digitando el número de las opciones que te indico en mi pregunta.\n
                   //Escribe tu número de teléfono en números 📞` ;
                   mensajeRespuesta = `Gracias 🙂, ten presente que no puedo reconocer imágenes, audios, ni emojis. Nos podemos comunicar por medio de texto o digitando el número de las opciones que te indico en mi pregunta.\n
@@ -1802,7 +1792,10 @@ Escribe el nombre del jefe de hogar`;
                         $formulario.numero_contacto = req.body.incomingMessage;
                             $formulario.pregunta += 1; //va a pregunta 5
 
-                            actualizarLlegada($formulario);
+                            
+                            //actualizarLlegada($formulario); //llama a funcion en app.js
+                        llegadasController.actualizarLlegada($formulario); //llama a funcion en llegadas.controller.js
+
                             mensajeRespuesta = `¿Esta línea de contacto está asociada a WhatsApp? Responde con el número de acuerdo a la opción correspondiente:
 1️⃣ Sí
 2️⃣ No`;
@@ -1815,7 +1808,10 @@ Escribe tu número de teléfono en números 📞`;
 
                   } catch (error) {
                     $formulario.pregunta = 4;
-                    actualizarLlegada($formulario);
+                    
+                    //actualizarLlegada($formulario); //llama a funcion en app.js
+                    llegadasController.actualizarLlegada($formulario); //llama a funcion en llegadas.controller.js
+
                     mensajeRespuesta = `Gracias 🙂, ten presente que no puedo reconocer imágenes, audios, ni emojis. Nos podemos comunicar por medio de texto o digitando el número de las opciones que te indico en mi pregunta.\n
 
 Escribe tu número de teléfono en números 📞`;
@@ -1832,7 +1828,9 @@ Escribe tu número de teléfono en números 📞`;
                       $formulario.numero_contacto_asociado_whatsapp = '1';
                       $formulario.pregunta += 1; //va a pregunta 6
 
-                      actualizarLlegada($formulario);
+                      //actualizarLlegada($formulario); //llama a funcion en app.js
+                      llegadasController.actualizarLlegada($formulario); //llama a funcion en llegadas.controller.js
+                      
                       mensajeRespuesta = `Dónde te encuentras?. Envía el número de la opción correspondiente
 1️⃣ Otro
 2️⃣ Arauca
@@ -1854,7 +1852,9 @@ Escribe tu número de teléfono en números 📞`;
                       $formulario.numero_contacto_asociado_whatsapp = '2';
                       $formulario.pregunta += 1; //va a pregunta 6
 
-                      actualizarLlegada($formulario);
+                      //actualizarLlegada($formulario); //llama a funcion en app.js
+                      llegadasController.actualizarLlegada($formulario); //llama a funcion en llegadas.controller.js
+
                       mensajeRespuesta = `Dónde te encuentras?. Envía el número de la opción correspondiente
 1️⃣ Otro
 2️⃣ Arauca
@@ -1880,7 +1880,10 @@ Escribe tu número de teléfono en números 📞`;
 
                 } catch (error) {
                     $formulario.pregunta = 5;
-                    actualizarLlegada($formulario);
+                    
+                    //actualizarLlegada($formulario); //llama a funcion en app.js
+                    llegadasController.actualizarLlegada($formulario); //llama a funcion en llegadas.controller.js
+
                       mensajeRespuesta = `Gracias 🙂, ten presente que no puedo reconocer imágenes, audios, ni emojis. Nos podemos comunicar por medio de texto o digitando el número de las opciones que te indico en mi pregunta.\n
 ¿Esta línea de contacto está asociada a WhatsApp? Responde con el número de acuerdo a la opción correspondiente:
 1️⃣ Sí
@@ -1904,155 +1907,255 @@ Escribe tu número de teléfono en números 📞`;
 
                           $formulario.pregunta += 1; //va a pregunta 7
                           $formulario.donde_te_encuentras = 'Otro';
-                          actualizarLlegada($formulario);
+                          
+                          //actualizarLlegada($formulario); //llama a funcion en app.js
+                          llegadasController.actualizarLlegada($formulario); //llama a funcion en llegadas.controller.js
+
                           //mensajeRespuesta = `Escribe tu número de contacto en números 📞 `;
-                          mensajeRespuesta = `En cuál otro lugar te encuentras`;
+                          mensajeRespuesta = `En cuál otro lugar te encuentras?`;
                         break;
 
                         case '2':
                           $formulario.pregunta += 2; //va a pregunta 11
                           $formulario.donde_te_encuentras = 'Arauca';
-                          actualizarLlegada($formulario);
+                          $formulario.otro_donde_te_encuentras = null;
+                          
+                          //actualizarLlegada($formulario); //llama a funcion en app.js
+                          llegadasController.actualizarLlegada($formulario); //llama a funcion en llegadas.controller.js
+
                           conversation.tipo_formulario = null;
-                          actualizarConversacion(conversation);
+                          
+                          //actualizarConversacion(conversation); //llama a funcion en app.js
+                          conversacionController.actualizarConversacion(conversation)//llama a funcion en conversacion.controller.js
+
                           //mensajeRespuesta = `Escribe tu número de contacto en números 📞 `;
+                          /*
                           mensajeRespuesta = `¡Gracias por reportar tu llegada al destino! 👩🏻
 Si eres preseleccionado/a el programa #VenEsperanza se comunicará contigo a través de una llamada 📞
 ⚠️Recuerda:
-Todos nuestros servicios son GRATUITOS, no tenemos intermediarios ni tramitadores. No caigas en la trampa ❗ La ayuda humanitaria es gratuita.`;
+Todos nuestros servicios son GRATUITOS, no tenemos intermediarios ni tramitadores. No caigas en la trampa ❗ La ayuda humanitaria es gratuita.`;*/
+                          mensajeRespuesta = 'final_form_llegada';
+
                         break;
 
                         case '3':
                           $formulario.pregunta += 2; //va a pregunta 11
                           $formulario.donde_te_encuentras = 'Barranquilla';
-                          actualizarLlegada($formulario);
+                          $formulario.otro_donde_te_encuentras = null;
+                          //actualizarLlegada($formulario); //llama a funcion en app.js
+                          llegadasController.actualizarLlegada($formulario); //llama a funcion en llegadas.controller.js
+
                           conversation.tipo_formulario = null;
-                          actualizarConversacion(conversation);
+                          
+                          //actualizarConversacion(conversation); //llama a funcion en app.js
+                          conversacionController.actualizarConversacion(conversation)//llama a funcion en conversacion.controller.js
+
                           //mensajeRespuesta = `Escribe tu número de contacto en números 📞 `;
+                          /*
                           mensajeRespuesta = `¡Gracias por reportar tu llegada al destino! 👩🏻
 Si eres preseleccionado/a el programa #VenEsperanza se comunicará contigo a través de una llamada 📞
 ⚠️Recuerda:
-Todos nuestros servicios son GRATUITOS, no tenemos intermediarios ni tramitadores. No caigas en la trampa ❗ La ayuda humanitaria es gratuita.`;
+Todos nuestros servicios son GRATUITOS, no tenemos intermediarios ni tramitadores. No caigas en la trampa ❗ La ayuda humanitaria es gratuita.`;*/
+                          mensajeRespuesta = 'final_form_llegada';
 
                         break;
 
                         case '4':
                           $formulario.pregunta += 2; //va a pregunta 11
                           $formulario.donde_te_encuentras = 'Bogotá';
-                          actualizarLlegada($formulario);
+                          $formulario.otro_donde_te_encuentras = null;
+                          //actualizarLlegada($formulario); //llama a funcion en app.js
+                          llegadasController.actualizarLlegada($formulario); //llama a funcion en llegadas.controller.js
+
                           conversation.tipo_formulario = null;
-                          actualizarConversacion(conversation);
+                          
+                          //actualizarConversacion(conversation); //llama a funcion en app.js
+                          conversacionController.actualizarConversacion(conversation)//llama a funcion en conversacion.controller.js
+
                           //mensajeRespuesta = `Escribe tu número de contacto en números 📞 `;
+                          /*
                           mensajeRespuesta = `¡Gracias por reportar tu llegada al destino! 👩🏻
 Si eres preseleccionado/a el programa #VenEsperanza se comunicará contigo a través de una llamada 📞
 ⚠️Recuerda:
-Todos nuestros servicios son GRATUITOS, no tenemos intermediarios ni tramitadores. No caigas en la trampa ❗ La ayuda humanitaria es gratuita.`;
+Todos nuestros servicios son GRATUITOS, no tenemos intermediarios ni tramitadores. No caigas en la trampa ❗ La ayuda humanitaria es gratuita.`;*/
+                          mensajeRespuesta = 'final_form_llegada';
+
                         break;
 
                         case '5':
                           $formulario.pregunta += 2; //va a pregunta 11
                           $formulario.donde_te_encuentras = 'Bucaramanga';
-                          actualizarLlegada($formulario);
+                          $formulario.otro_donde_te_encuentras = null;
+                          //actualizarLlegada($formulario); //llama a funcion en app.js
+                          llegadasController.actualizarLlegada($formulario); //llama a funcion en llegadas.controller.js
+
                           conversation.tipo_formulario = null;
-                          actualizarConversacion(conversation);
+                          
+                          //actualizarConversacion(conversation); //llama a funcion en app.js
+                          conversacionController.actualizarConversacion(conversation)//llama a funcion en conversacion.controller.js
+
                           //mensajeRespuesta = `Escribe tu número de contacto en números 📞 `;
+                          /*
                           mensajeRespuesta = `¡Gracias por reportar tu llegada al destino! 👩🏻
 Si eres preseleccionado/a el programa #VenEsperanza se comunicará contigo a través de una llamada 📞
 ⚠️Recuerda:
-Todos nuestros servicios son GRATUITOS, no tenemos intermediarios ni tramitadores. No caigas en la trampa ❗ La ayuda humanitaria es gratuita.`;
+Todos nuestros servicios son GRATUITOS, no tenemos intermediarios ni tramitadores. No caigas en la trampa ❗ La ayuda humanitaria es gratuita.`;*/
+                        mensajeRespuesta = 'final_form_llegada';
+
                         break;
 
                         case '6':
                           $formulario.pregunta += 2; //va a pregunta 11
                           $formulario.donde_te_encuentras = 'Cali';
-                          actualizarLlegada($formulario);
+                          $formulario.otro_donde_te_encuentras = null;
+                          //actualizarLlegada($formulario); //llama a funcion en app.js
+                          llegadasController.actualizarLlegada($formulario); //llama a funcion en llegadas.controller.js
+
                           conversation.tipo_formulario = null;
-                          actualizarConversacion(conversation);
+                          
+                          //actualizarConversacion(conversation); //llama a funcion en app.js
+                          conversacionController.actualizarConversacion(conversation)//llama a funcion en conversacion.controller.js
+
                           //mensajeRespuesta = `Escribe tu número de contacto en números 📞 `;
+                          /*
                           mensajeRespuesta = `¡Gracias por reportar tu llegada al destino! 👩🏻
 Si eres preseleccionado/a el programa #VenEsperanza se comunicará contigo a través de una llamada 📞
 ⚠️Recuerda:
-Todos nuestros servicios son GRATUITOS, no tenemos intermediarios ni tramitadores. No caigas en la trampa ❗ La ayuda humanitaria es gratuita.`;
+Todos nuestros servicios son GRATUITOS, no tenemos intermediarios ni tramitadores. No caigas en la trampa ❗ La ayuda humanitaria es gratuita.`;*/
+
+                          mensajeRespuesta = 'final_form_llegada';
+
                         break;
 
                         case '7':
                           $formulario.pregunta += 2; //va a pregunta 11
                           $formulario.donde_te_encuentras = 'Cartagena';
-                          actualizarLlegada($formulario);
+                          $formulario.otro_donde_te_encuentras = null;
+                          //actualizarLlegada($formulario); //llama a funcion en app.js
+                          llegadasController.actualizarLlegada($formulario); //llama a funcion en llegadas.controller.js
+
                           conversation.tipo_formulario = null;
-                          actualizarConversacion(conversation);
+                          
+                          //actualizarConversacion(conversation); //llama a funcion en app.js
+                          conversacionController.actualizarConversacion(conversation)//llama a funcion en conversacion.controller.js
+
                           //mensajeRespuesta = `Escribe tu número de contacto en números 📞 `;
+                          /*
                           mensajeRespuesta = `¡Gracias por reportar tu llegada al destino! 👩🏻
 Si eres preseleccionado/a el programa #VenEsperanza se comunicará contigo a través de una llamada 📞
 ⚠️Recuerda:
-Todos nuestros servicios son GRATUITOS, no tenemos intermediarios ni tramitadores. No caigas en la trampa ❗ La ayuda humanitaria es gratuita.`;
+Todos nuestros servicios son GRATUITOS, no tenemos intermediarios ni tramitadores. No caigas en la trampa ❗ La ayuda humanitaria es gratuita.`;*/
+                          mensajeRespuesta = 'final_form_llegada';
+
                         break;
 
                         case '8':
                           $formulario.pregunta += 2; //va a pregunta 11
                           $formulario.donde_te_encuentras = 'Cúcuta';
-                          actualizarLlegada($formulario);
+                          $formulario.otro_donde_te_encuentras = null;
+                          //actualizarLlegada($formulario); //llama a funcion en app.js
+                          llegadasController.actualizarLlegada($formulario); //llama a funcion en llegadas.controller.js
+
                           conversation.tipo_formulario = null;
-                          actualizarConversacion(conversation);
+                          
+                          //actualizarConversacion(conversation); //llama a funcion en app.js
+                          conversacionController.actualizarConversacion(conversation)//llama a funcion en conversacion.controller.js
+
                           //mensajeRespuesta = `Escribe tu número de contacto en números 📞 `;
+                          /*
                           mensajeRespuesta = `¡Gracias por reportar tu llegada al destino! 👩🏻
 Si eres preseleccionado/a el programa #VenEsperanza se comunicará contigo a través de una llamada 📞
 ⚠️Recuerda:
-Todos nuestros servicios son GRATUITOS, no tenemos intermediarios ni tramitadores. No caigas en la trampa ❗ La ayuda humanitaria es gratuita.`;
+Todos nuestros servicios son GRATUITOS, no tenemos intermediarios ni tramitadores. No caigas en la trampa ❗ La ayuda humanitaria es gratuita.`;*/
+                          mensajeRespuesta = 'final_form_llegada';
 
                         break;
 
                         case '9':
                           $formulario.pregunta += 2; //va a pregunta 11
                           $formulario.donde_te_encuentras = 'Medellín';
-                          actualizarLlegada($formulario);
+                          $formulario.otro_donde_te_encuentras = null;
+                          //actualizarLlegada($formulario); //llama a funcion en app.js
+                          llegadasController.actualizarLlegada($formulario); //llama a funcion en llegadas.controller.js
+
                           conversation.tipo_formulario = null;
-                          actualizarConversacion(conversation);
+                          
+                          //actualizarConversacion(conversation); //llama a funcion en app.js
+                          conversacionController.actualizarConversacion(conversation)//llama a funcion en conversacion.controller.js
+
                           //mensajeRespuesta = `Escribe tu número de contacto en números 📞 `;
+                          /*
                           mensajeRespuesta = `¡Gracias por reportar tu llegada al destino! 👩🏻
 Si eres preseleccionado/a el programa #VenEsperanza se comunicará contigo a través de una llamada 📞
 ⚠️Recuerda:
-Todos nuestros servicios son GRATUITOS, no tenemos intermediarios ni tramitadores. No caigas en la trampa ❗ La ayuda humanitaria es gratuita.`;
+Todos nuestros servicios son GRATUITOS, no tenemos intermediarios ni tramitadores. No caigas en la trampa ❗ La ayuda humanitaria es gratuita.`;*/
+                          mensajeRespuesta = 'final_form_llegada';  
+
                         break;
 
                         case '10':
                           //$formulario.pregunta += 2; //va pregunta 11
                           $formulario.donde_te_encuentras = 'Riohacha';
-                          actualizarLlegada($formulario);
+                          $formulario.otro_donde_te_encuentras = null;
+                          //actualizarLlegada($formulario); //llama a funcion en app.js
+                          llegadasController.actualizarLlegada($formulario); //llama a funcion en llegadas.controller.js
+
                           conversation.tipo_formulario = null;
-                          actualizarConversacion(conversation);
+                          
+                          //actualizarConversacion(conversation); //llama a funcion en app.js
+                          conversacionController.actualizarConversacion(conversation)//llama a funcion en conversacion.controller.js
+
                           //mensajeRespuesta = `Escribe tu número de contacto en números 📞 `;
+                          /*
                           mensajeRespuesta = `¡Gracias por reportar tu llegada al destino! 👩🏻
 Si eres preseleccionado/a el programa #VenEsperanza se comunicará contigo a través de una llamada 📞
 ⚠️Recuerda:
-Todos nuestros servicios son GRATUITOS, no tenemos intermediarios ni tramitadores. No caigas en la trampa ❗ La ayuda humanitaria es gratuita.`;
+Todos nuestros servicios son GRATUITOS, no tenemos intermediarios ni tramitadores. No caigas en la trampa ❗ La ayuda humanitaria es gratuita.`;*/
+                          mensajeRespuesta = 'final_form_llegada';
+
                         break;
 
                         case '11':
                           $formulario.pregunta += 2; //va a pregunta 11
                           $formulario.donde_te_encuentras = 'Pasto';
-                          actualizarLlegada($formulario);
+                          $formulario.otro_donde_te_encuentras = null;
+                          //actualizarLlegada($formulario); //llama a funcion en app.js
+                          llegadasController.actualizarLlegada($formulario); //llama a funcion en llegadas.controller.js
+
                           conversation.tipo_formulario = null;
-                          actualizarConversacion(conversation);
+                          
+                          //actualizarConversacion(conversation); //llama a funcion en app.js
+                          conversacionController.actualizarConversacion(conversation)//llama a funcion en conversacion.controller.js
+
                           //mensajeRespuesta = `Escribe tu número de contacto en números 📞 `;
+                          /*
                           mensajeRespuesta = `¡Gracias por reportar tu llegada al destino! 👩🏻
 Si eres preseleccionado/a el programa #VenEsperanza se comunicará contigo a través de una llamada 📞
 ⚠️Recuerda:
-Todos nuestros servicios son GRATUITOS, no tenemos intermediarios ni tramitadores. No caigas en la trampa ❗ La ayuda humanitaria es gratuita.`;
+Todos nuestros servicios son GRATUITOS, no tenemos intermediarios ni tramitadores. No caigas en la trampa ❗ La ayuda humanitaria es gratuita.`;*/
+                          mensajeRespuesta = 'final_form_llegada';
+
                         break;
 
                         case '12':
                           $formulario.pregunta += 2; //va a pregunta 11
                           $formulario.donde_te_encuentras = 'Valledupar';
-                          actualizarLlegada($formulario);
+                          $formulario.otro_donde_te_encuentras = null;
+                          //actualizarLlegada($formulario); //llama a funcion en app.js
+                          llegadasController.actualizarLlegada($formulario); //llama a funcion en llegadas.controller.js
+
                           conversation.tipo_formulario = null;
-                          actualizarConversacion(conversation);
+                          
+                          //actualizarConversacion(conversation); //llama a funcion en app.js
+                          conversacionController.actualizarConversacion(conversation)//llama a funcion en conversacion.controller.js
+
                           //mensajeRespuesta = `Escribe tu número de contacto en números 📞 `;
+                          /*
                           mensajeRespuesta = `¡Gracias por reportar tu llegada al destino! 👩🏻
 Si eres preseleccionado/a el programa #VenEsperanza se comunicará contigo a través de una llamada 📞
 ⚠️Recuerda:
-Todos nuestros servicios son GRATUITOS, no tenemos intermediarios ni tramitadores. No caigas en la trampa ❗ La ayuda humanitaria es gratuita.`;
-                        break;
+Todos nuestros servicios son GRATUITOS, no tenemos intermediarios ni tramitadores. No caigas en la trampa ❗ La ayuda humanitaria es gratuita.`;*/
+                          mensajeRespuesta = 'final_form_llegada';
 
                         default:
                           break;
@@ -2081,7 +2184,10 @@ Todos nuestros servicios son GRATUITOS, no tenemos intermediarios ni tramitadore
                 } catch (error) {
                   //console.log('ERROR EN 28__ ', error);
                   $formulario.pregunta = 6; //vuelve a 6
-                  actualizarLlegada($formulario);
+                  
+                  //actualizarLlegada($formulario); //llama a funcion en app.js
+                  llegadasController.actualizarLlegada($formulario); //llama a funcion en llegadas.controller.js
+
 
                   mensajeRespuesta = `Gracias 🙂, ten presente que no puedo reconocer imágenes, audios, ni emojis. Nos podemos comunicar por medio de texto o digitando el número de las opciones que te indico en mi pregunta.
 ¿Dónde te encuentras?
@@ -2107,13 +2213,22 @@ Todos nuestros servicios son GRATUITOS, no tenemos intermediarios ni tramitadore
 
                   $formulario.pregunta = 1;
                           $formulario.otro_donde_te_encuentras = req.body.incomingMessage;
-                          actualizarLlegada($formulario);
+                          
+                          //actualizarLlegada($formulario); //llama a funcion en app.js
+                          llegadasController.actualizarLlegada($formulario); //llama a funcion en llegadas.controller.js
+
                           conversation.tipo_formulario = null;
-                          actualizarConversacion(conversation);
+                          
+                          //actualizarConversacion(conversation); //llama a funcion en app.js
+                          conversacionController.actualizarConversacion(conversation)//llama a funcion en conversacion.controller.js
+                          
+                          /*
                           mensajeRespuesta = `¡Gracias por reportar tu llegada al destino! 👩🏻
 Si eres preseleccionado/a el programa #VenEsperanza se comunicará contigo a través de una llamada 📞
 ⚠️Recuerda:
-Todos nuestros servicios son GRATUITOS, no tenemos intermediarios ni tramitadores. No caigas en la trampa ❗ La ayuda humanitaria es gratuita.`;
+Todos nuestros servicios son GRATUITOS, no tenemos intermediarios ni tramitadores. No caigas en la trampa ❗ La ayuda humanitaria es gratuita.`;*/
+                          mensajeRespuesta = 'final_form_llegada';
+
                 }catch{
                   mensajeRespuesta = `Gracias 🙂, ten presente que no puedo reconocer imágenes, audios, ni emojis. Nos podemos comunicar por medio de texto o digitando el número de las opciones que te indico en mi pregunta.\n
 En cuál otro lugar te encuentras?`;
@@ -2122,7 +2237,10 @@ En cuál otro lugar te encuentras?`;
 
               default:
                 $formulario.pregunta = 7; //vuelve a
-                  actualizarLlegada($formulario);
+                
+                //actualizarLlegada($formulario); //llama a funcion en app.js
+                llegadasController.actualizarLlegada($formulario); //llama a funcion en llegadas.controller.js
+
                 mensajeRespuesta = `Gracias 🙂, ten presente que no puedo reconocer imágenes, audios, ni emojis. Nos podemos comunicar por medio de texto o digitando el número de las opciones que te indico en mi pregunta.
 En cuál otro lugar te encuentras?`;
               break;
@@ -2148,7 +2266,9 @@ En cuál otro lugar te encuentras?`;
                       case '1':
                         $formulario.tipo_documento = "Acta de Nacimiento";
                         $formulario.pregunta += 1;// pregunta 2
-                        actualizarDatosContacto($formulario);
+                        //actualizarDatosContacto($formulario);//llama a funcion en app.js
+                        actualizarDatosContactoController.actualizarDatosContacto($formulario);//llama a funcion en actualizarDAtosContacto.controller
+
                         mensajeRespuesta = `Escribe por favor tu número de documento 📇 (no utilices símbolos, solo números) Ejemplo: 123456789`;
 
 
@@ -2157,7 +2277,9 @@ En cuál otro lugar te encuentras?`;
                         $formulario.tipo_documento = "Cédula de Identidad (venezonala)";
 
                         $formulario.pregunta += 1;// pregunta 2
-                        actualizarDatosContacto($formulario);
+                        //actualizarDatosContacto($formulario);//llama a funcion en app.js
+                        actualizarDatosContactoController.actualizarDatosContacto($formulario);//llama a funcion en actualizarDAtosContacto.controller
+
                         mensajeRespuesta = `Escribe por favor tu número de documento 📇 (no utilices símbolos, solo números) Ejemplo: 123456789`;
                         break;
 
@@ -2165,7 +2287,9 @@ En cuál otro lugar te encuentras?`;
                         $formulario.tipo_documento = "Cédula de ciudadania (colombiana)";
 
                         $formulario.pregunta += 1;// pregunta 2
-                        actualizarDatosContacto($formulario);
+                        //actualizarDatosContacto($formulario);//llama a funcion en app.js
+                        actualizarDatosContactoController.actualizarDatosContacto($formulario);//llama a funcion en actualizarDAtosContacto.controller
+
                         mensajeRespuesta = `Escribe por favor tu número de documento 📇 (no utilices símbolos, solo números) Ejemplo: 123456789`;
                         break;
 
@@ -2173,7 +2297,9 @@ En cuál otro lugar te encuentras?`;
                         $formulario.tipo_documento = "Pasaporte";
 
                         $formulario.pregunta += 1;// pregunta 2
-                        actualizarDatosContacto($formulario);
+                        //actualizarDatosContacto($formulario);//llama a funcion en app.js
+                        actualizarDatosContactoController.actualizarDatosContacto($formulario);//llama a funcion en actualizarDAtosContacto.controller
+
                         mensajeRespuesta = `Escribe por favor tu número de documento 📇 (no utilices símbolos, solo números) Ejemplo: 123456789`;
                         break;
 
@@ -2181,14 +2307,18 @@ En cuál otro lugar te encuentras?`;
                         $formulario.tipo_documento = "Cédula de Extranjería";
 
                         $formulario.pregunta += 1;// pregunta 2
-                        actualizarDatosContacto($formulario);
+                        //actualizarDatosContacto($formulario);//llama a funcion en app.js
+                        actualizarDatosContactoController.actualizarDatosContacto($formulario);//llama a funcion en actualizarDAtosContacto.controller
+
                         mensajeRespuesta = `Escribe por favor tu número de documento 📇 (no utilices símbolos, solo números) Ejemplo: 123456789`;
                         break;
 
                       case '6':
                         $formulario.tipo_documento = "Otro";
                         $formulario.pregunta += 1;// pregunta 2
-                        actualizarDatosContacto($formulario);
+                        //actualizarDatosContacto($formulario);//llama a funcion en app.js
+                        actualizarDatosContactoController.actualizarDatosContacto($formulario);//llama a funcion en actualizarDAtosContacto.controller
+
                         mensajeRespuesta = `Escribe por favor tu número de documento 📇 (no utilices símbolos, solo números) Ejemplo: 123456789`;
                       break;
 
@@ -2208,7 +2338,9 @@ En cuál otro lugar te encuentras?`;
 
                   } catch (error) {
                     $formulario.pregunta = 1; //vuelve a entrar a pregunta 1
-                    actualizarDatosContacto($formulario);
+                    //actualizarDatosContacto($formulario);//llama a funcion en app.js
+                    actualizarDatosContactoController.actualizarDatosContacto($formulario);//llama a funcion en actualizarDAtosContacto.controller
+
                     mensajeRespuesta = `Gracias 🙂, ten presente que no puedo reconocer imágenes, audios, ni emojis. Nos podemos comunicar por medio de texto o digitando el número de las opciones que te indico en mi pregunta.\n
 ¿Cuál es tu tipo de documento? 📇 Responde con el número de acuerdo a la opción correspondiente:
 1️⃣ Acta de Nacimiento
@@ -2250,7 +2382,9 @@ Escribe por favor tu número de documento 📇 (no utilices símbolos, solo núm
                 } catch (error) {
                   //console.log('EL ERROR EN PASO 2 REPORTE LLEGADA: : ', error);
                     $formulario.pregunta = 2; //vuelve a entrar a paso 2
-                    actualizarDatosContacto($formulario);
+                    //actualizarDatosContacto($formulario);//llama a funcion en app.js
+                    actualizarDatosContactoController.actualizarDatosContacto($formulario);//llama a funcion en actualizarDAtosContacto.controller
+
                     mensajeRespuesta = `Gracias 🙂, ten presente que no puedo reconocer imágenes, audios, ni emojis. Nos podemos comunicar por medio de texto o digitando el número de las opciones que te indico en mi pregunta.\n
 Escribe por favor tu número de documento 📇 (no utilices símbolos, solo números) Ejemplo: 123456789`;
                 }
@@ -2267,7 +2401,9 @@ Escribe por favor tu número de documento 📇 (no utilices símbolos, solo núm
                     //$formulario.telefono = req.body.Body;
                     $formulario.telefono = req.body.incomingMessage;
                     $formulario.pregunta += 1; //va a 4
-                    actualizarDatosContacto($formulario);
+                    //actualizarDatosContacto($formulario);//llama a funcion en app.js
+                    actualizarDatosContactoController.actualizarDatosContacto($formulario);//llama a funcion en actualizarDAtosContacto.controller
+
 
                     mensajeRespuesta = `¿Podrías compartirme un correo electrónico 📧 en el que te podamos contactar? Si no ❌ tienes, ¡no te preocupes! escribe NO`;
                   }else{
@@ -2278,7 +2414,10 @@ Escribe tu número de teléfono en números 📞` ;
 
                 } catch (error) {
                   $formulario.pregunta = 3; //vuelve a 3
-                  actualizarDatosContacto($formulario);
+                  
+                  //actualizarDatosContacto($formulario);//llama a funcion en app.js
+                  actualizarDatosContactoController.actualizarDatosContacto($formulario);//llama a funcion en actualizarDAtosContacto.controller
+
                   mensajeRespuesta = `Gracias 🙂, ten presente que no puedo reconocer imágenes, audios, ni emojis. Nos podemos comunicar por medio de texto o digitando el número de las opciones que te indico en mi pregunta.\n
 Escribe tu número de teléfono en números 📞` ;
                 }
@@ -2296,13 +2435,22 @@ Escribe tu número de teléfono en números 📞` ;
                     //if(req.body.incomingMessage === 'NO'){
                   if(newVariableIncomingMessage === 'no'){
                     $formulario.pregunta = null;
-                    actualizarDatosContacto($formulario);
+                    $formulario.correo_electronico = null;
+                    //actualizarDatosContacto($formulario);//llama a funcion en app.js
+                    actualizarDatosContactoController.actualizarDatosContacto($formulario);//llama a funcion en actualizarDAtosContacto.controller
+
                     conversation.tipo_formulario = null;
-                    actualizarConversacion(conversation);
+                    
+                    //actualizarConversacion(conversation); //llama a funcion en app.js
+                    conversacionController.actualizarConversacion(conversation)//llama a funcion en conversacion.controller.js
+
+                    /*
                     mensajeRespuesta = `¡Gracias por actualizar tus datos! 👩🏻
 Si eres preseleccionado/a el programa #VenEsperanza se comunicará contigo a través de una llamada 📞
 ⚠️Recuerda:
-Todos nuestros servicios son GRATUITOS, no tenemos intermediarios ni tramitadores. No caigas en la trampa ❗ La ayuda humanitaria es gratuita.`;
+Todos nuestros servicios son GRATUITOS, no tenemos intermediarios ni tramitadores. No caigas en la trampa ❗ La ayuda humanitaria es gratuita.`;*/
+
+                  mensajeRespuesta = 'final_form_actualizar_datos';
 
 
                   //}else if(emailregex.test(req.body.Body)) {
@@ -2313,14 +2461,23 @@ Todos nuestros servicios son GRATUITOS, no tenemos intermediarios ni tramitadore
                     //$formulario.correo_electronico = req.body.Body;
                     $formulario.correo_electronico = req.body.incomingMessage;
                     //console.log('correo a guardar: ', $formulario.correo_electronico);
-                    actualizarDatosContacto($formulario);
+                    //actualizarDatosContacto($formulario);//llama a funcion en app.js
+                    actualizarDatosContactoController.actualizarDatosContacto($formulario);//llama a funcion en actualizarDAtosContacto.controller
+
+
                     conversation.tipo_formulario = null;
                     //console.log('CONVERSACION ACTUALIZAR:: ', conversation);
-                    actualizarConversacion(conversation);
+                    
+                    //actualizarConversacion(conversation); //llama a funcion en app.js
+                    conversacionController.actualizarConversacion(conversation)//llama a funcion en conversacion.controller.js
+
+                    /*
                     mensajeRespuesta = `¡Gracias por actualizar tus datos! 👩🏻
 Si eres preseleccionado/a el programa #VenEsperanza se comunicará contigo a través de una llamada 📞
 ⚠️Recuerda:
-Todos nuestros servicios son GRATUITOS, no tenemos intermediarios ni tramitadores. No caigas en la trampa ❗ La ayuda humanitaria es gratuita.`;
+Todos nuestros servicios son GRATUITOS, no tenemos intermediarios ni tramitadores. No caigas en la trampa ❗ La ayuda humanitaria es gratuita.`;*/
+
+                    mensajeRespuesta = 'final_form_actualizar_datos';
 
                   }else{
                     mensajeRespuesta = `Gracias 🙂, ten presente que no puedo reconocer imágenes, audios, ni emojis. Nos podemos comunicar por medio de texto o digitando el número de las opciones que te indico en mi pregunta.
@@ -2330,7 +2487,11 @@ Todos nuestros servicios son GRATUITOS, no tenemos intermediarios ni tramitadore
 
                 } catch (error) {
                   $formulario.pregunta = 4; //vuelve a 4
-                  actualizarDatosContacto($formulario);
+
+                  //actualizarDatosContacto($formulario);//llama a funcion en app.js
+                  actualizarDatosContactoController.actualizarDatosContacto($formulario);//llama a funcion en actualizarDAtosContacto.controller
+
+
                   mensajeRespuesta = `Gracias 🙂, ten presente que no puedo reconocer imágenes, audios, ni emojis. Nos podemos comunicar por medio de texto o digitando el número de las opciones que te indico en mi pregunta.
 ¿Podrías compartirme un correo electrónico 📧 en el que te podamos contactar? Si no ❌ tienes, ¡no te preocupes! escribe NO`;
 
@@ -2365,7 +2526,9 @@ Todos nuestros servicios son GRATUITOS, no tenemos intermediarios ni tramitadore
               case '2':
                 //crea actualizar datos
                   $conversation.tipo_formulario = 2;
-                  actualizarConversacion($conversation);
+                  
+                  conversacionController.actualizarConversacion($conversation)//llama a funcion en conversacion.controller.js
+
                   //crearActualizarDatos($conversation);
                   mensajeRespuesta = 'Empieza Actualizar Datos';
               break;
@@ -2373,16 +2536,21 @@ Todos nuestros servicios son GRATUITOS, no tenemos intermediarios ni tramitadore
               case '3':
                 //crea reporte llegada
                   $conversation.tipo_formulario = 3;
-                  actualizarConversacion($conversation);
+                  
+                  conversacionController.actualizarConversacion($conversation)//llama a funcion en conversacion.controller.js
+
                   //crearReporteLlegada($conversation);
                   mensajeRespuesta = 'Empieza Actualizar Datos';
               break;
 
             default:
+              /*
               mensajeRespuesta = `Ahora por favor respóndeme con el número correspondiente a lo que quieres hacer:\n
 1️⃣ Quieres diligenciar el formulario de registro ✍🏻\n
 2️⃣ Quieres informar de tu llegada a destino ☝🏻\n
-3️⃣ Ya te registraste antes y quieres actualizar tus datos de contacto  🙌🏻 `
+3️⃣ Ya te registraste antes y quieres actualizar tus datos de contacto  🙌🏻 `;*/
+              mensajeRespuesta = 'seleccionar_formulario';
+
             break;
           }
         }

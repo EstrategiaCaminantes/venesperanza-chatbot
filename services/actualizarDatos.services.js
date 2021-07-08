@@ -6,12 +6,12 @@ function errorLog(title,msg) {
     }
 }
 
-exports.actualizarEncuesta = async function (query) {
+exports.actualizarDatosContacto = async function (query) {
 
     try {
         await db.query(query, (error, results) => {
             if (error) {errorLog('dbquery.error',error);throw error;}
-           
+        
            return results
         });
         //return users;
