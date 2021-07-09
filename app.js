@@ -120,19 +120,23 @@ app.post('/whatsapp', async (req, res) => {
 
                 //$conversation.conversation_start = 1;
                 //actualizarConversacion($conversation);
-                conversacion($conversation);
+                //conversacion($conversation); llama a funcion en app.js
+                conversacionController.conversacion($conversation, null, req); //llama a funcion en conversacionController
 
 
               }else if(!$conversation.autorizacion){
 
-                conversacion($conversation);
+                //conversacion($conversation); llama a funcion en app.js
+                conversacionController.conversacion($conversation, null, req); //llama a funcion en conversacionController
+
 
                 //$conversation.autorizacion = 1;
                 //actualizarConversacion($conversation);
                 //autorizacionTratamientoDatos($conversation)
               }else if(!$conversation.tipo_formulario){
 
-                seleccionarFormulario($conversation);
+                //seleccionarFormulario($conversation); //llamado en app.js
+                conversacionController.seleccionarFormulario($conversation, req);
 
               }else if($conversation.tipo_formulario == 1){
                 const sqlencuesta = `SELECT * FROM encuesta where waId = '${whatsappID}'`;
@@ -144,7 +148,9 @@ app.post('/whatsapp', async (req, res) => {
                   if (encuesta.length > 0) {
 
                     //console.log('ENCUESTA ES: ', encuesta[0]);
-                    conversacion($conversation,encuesta[0]);
+                    //conversacion($conversation,encuesta[0]); //llama a la funcion en app.js
+                    conversacionController.conversacion($conversation, encuesta[0], req); //llama a funcion en conversacionController
+
                   }
 
                 });
@@ -157,7 +163,9 @@ app.post('/whatsapp', async (req, res) => {
 
                   if (llegadas.length > 0) {
                     //console.log('LLEGADA ES: ', llegadas[0]);
-                    conversacion($conversation , llegadas[0]);
+                    //conversacion($conversation , llegadas[0]);
+                    conversacionController.conversacion($conversation, llegadas[0], req); //llama a funcion en conversacionController
+
                   }
 
                 });
@@ -171,7 +179,9 @@ app.post('/whatsapp', async (req, res) => {
 
                   if (actualizardatos.length > 0) {
                     //console.log('ENCUESTA ES: ', actualizardatos[0]);
-                    conversacion($conversation , actualizardatos[0]);
+                    //conversacion($conversation , actualizardatos[0]); //llama a la funcion en app.js
+                    conversacionController.conversacion($conversation, actualizardatos[0], req); //llama a funcion en conversacionController
+
                   }
 
                 });
@@ -183,220 +193,8 @@ app.post('/whatsapp', async (req, res) => {
 
         nuevaConversacion(); //llamado a funcion en app.js
         //conversacionController.nuevaConversacion(req.body); //llamado a conversacion.controller.js
-
       }
     });
-  }
-
-  //funcion para consultar si existe una encuesta con el numero de whatsapp del usuario
-  async function consultaExisteEncuesta(conversacion){
-    const sqlConsultarEncuesta = `SELECT * FROM encuesta where waId = '${conversacion.waId}'`;
-
-    //connection.query(sqlConsultarEncuesta, (error, existeEncuesta) => {
-    db.query(sqlConsultarEncuesta, (error, existeEncuesta) => {
-      mensajeRespuesta = '';
-      if (error) {errorLog('dbquery.error',error);throw error;}
-
-      if (existeEncuesta.length > 0) {
-
-        mensajeRespuesta = `Ya has respondido el formulario. Gracias!
-Ahora por favor respóndeme con el número correspondiente a lo que quieres hacer:\n
-1️⃣ Quieres diligenciar el formulario de registro ✍🏻\n
-2️⃣ Quieres informar de tu llegada a destino ☝🏻\n
-3️⃣ Ya te registraste antes y quieres actualizar tus datos de contacto  🙌🏻 `;
-whatsappMessageController.sendMessageWhatsapp({
-            'to': req.body['message.from'],
-            'conversationId': req.body.conversationId,
-            'type': 'text',
-            'content': {
-                    'text': mensajeRespuesta,
-                  }
-          });
-      }else{
-        //conversacion.tipo_formulario = 1;
-        //actualizarConversacion(conversacion);
-        crearEncuesta(conversacion);
-        //mensajeRespuesta = `Por favor escribe tu primer nombre. Sólo puedo leer texto, no utilices audio, imágenes o emojis.`;
-
-      }
-
-    });
-  }
-
-  //funcion consulta si existe llegada a destino para actualizar o crear uno nuevo
-  async function consultaExisteLlegadaADestino(conversacion){
-    const sqlConsultarLlegadaDestino = `SELECT * FROM llegadas where waId = '${conversacion.waId}'`;
-
-    //connection.query(sqlConsultarLlegadaDestino, (error, existeLlegadaADestino) => {
-    db.query(sqlConsultarLlegadaDestino, (error, existeLlegadaADestino) => {
-      mensajeRespuesta = '';
-      if (error) {errorLog('dbquery.error',error);throw error;}
-
-      if (existeLlegadaADestino.length > 0) {
-
-        conversacion.tipo_formulario = 2;
-        //actualizarConversacion(conversacion); //llama a funcion en app.js
-        conversacionController.actualizarConversacion(conversacion)//llama a funcion en conversacion.controller.js
-
-        existeLlegadaADestino[0].pregunta = 1;
-
-        actualizarLlegadaEncuesta(existeLlegadaADestino[0]);
-
-        mensajeRespuesta = `A continuación responde a las preguntas para registrar tu llegada a destino como teléfono u otros:
-Tipo de documento 📇 Responde con el número de acuerdo a la opción correspondiente:
-1️⃣ Acta de Nacimiento
-2️⃣ Cédula de Identidad (venezolana)
-3️⃣ Cédula de Ciudadanía (colombiana)
-4️⃣ Pasaporte
-5️⃣ Cédula de Extranjería
-6️⃣ Otro`;
-
-whatsappMessageController.sendMessageWhatsapp({
-          'to': req.body['message.from'],
-          'conversationId': req.body.conversationId,
-          'type': 'text',
-          'content': {
-                  'text': mensajeRespuesta,
-                }
-        });
-
-      }else{
-        //conversacion.tipo_formulario = 1;
-        //actualizarConversacion(conversacion);
-        //crearDatosActualizados(conversacion);
-        crearLlegadaADestino(conversacion);
-        //mensajeRespuesta = `Por favor escribe tu primer nombre. Sólo puedo leer texto, no utilices audio, imágenes o emojis.`;
-
-      }
-
-    });
-
-
-  }
-
-  async function consultaExisteDatosActualizados(conversacion){
-    const sqlConsultarDatosActualizados = `SELECT * FROM datos_actualizados where waId = '${conversacion.waId}'`;
-
-    //connection.query(sqlConsultarDatosActualizados, (error, existeDatosActualizados) => {
-    db.query(sqlConsultarDatosActualizados, (error, existeDatosActualizados) => {
-      mensajeRespuesta = '';
-      if (error) {errorLog('dbquery.error',error);throw error;}
-
-      if (existeDatosActualizados.length > 0) {
-
-        conversacion.tipo_formulario = 3;
-
-        conversacionController.actualizarConversacion(conversacion)//llama a funcion en conversacion.controller.js
-
-        existeDatosActualizados[0].pregunta = 1;
-
-        //actualizarDatosContacto(existeDatosActualizados[0]); //llama a funcion en app.js
-        actualizarDatosContactoController.actualizarDatosContacto(existeDatosActualizados[0]);//llama a funcion en actualizarDAtosContacto.controller
-
-
-        mensajeRespuesta = `A continuación responde a las preguntas para actualizar tus datos de contacto como teléfono u otros:
-Tipo de documento 📇 Responde con el número de acuerdo a la opción correspondiente:
-1️⃣ Acta de Nacimiento
-2️⃣ Cédula de Identidad (venezolana)
-3️⃣ Cédula de Ciudadanía (colombiana)
-4️⃣ Pasaporte
-5️⃣ Cédula de Extranjería
-6️⃣ Otro`;
-
-        whatsappMessageController.sendMessageWhatsapp({
-          'to': req.body['message.from'],
-            'conversationId': req.body.conversationId,
-          'type': 'text',
-          'content': {
-                  'text': mensajeRespuesta,
-                }
-        });
-
-      }else{
-        //conversacion.tipo_formulario = 1;
-        //actualizarConversacion(conversacion);
-        crearDatosActualizados(conversacion);
-        //mensajeRespuesta = `Por favor escribe tu primer nombre. Sólo puedo leer texto, no utilices audio, imágenes o emojis.`;
-
-      }
-
-    });
-
-
-  }
-
-  //funcion seleccion de formulario a responder
-  async function seleccionarFormulario(conversation){
-
-    mensajeRespuesta = ``;
-    //console.log('req.body.Body en seleccionar form:', req.body.Body);
-
-    try {
-        //switch (req.body.message.content.text) {
-        //switch (req.body.Body){
-        switch(req.body.incomingMessage){
-
-            //selecciona llenar nuevo form
-            case '1':
-
-                consultaExisteEncuesta(conversation);
-
-            break;
-
-            case '2':
-              //crea actualizar datos
-              //crearLlegadaADestino(conversation);
-              consultaExisteLlegadaADestino(conversation);
-
-            break;
-
-            case '3':
-              //crea reporte llegada
-              consultaExisteDatosActualizados(conversation);
-              //crearDatosActualizados(conversation);
-
-            break;
-
-          default:
-
-            mensajeRespuesta = `Gracias 🙂, ten presente que no puedo reconocer imágenes, audios, ni emojis. Nos podemos comunicar por medio de texto o digitando el número de las opciones que te indico en mi pregunta. 
-  
-Por favor respóndeme con el número correspondiente a lo que quieres hacer:\n
-1️⃣ Quieres diligenciar el formulario de registro ✍🏻\n
-2️⃣ Quieres informar de tu llegada a destino ☝🏻\n
-3️⃣ Ya te registraste antes y quieres actualizar tus datos de contacto  🙌🏻 `;
-
-        whatsappMessageController.sendMessageWhatsapp({
-            'to': req.body['message.from'],
-              'conversationId': req.body.conversationId,
-            'type': 'text',
-            'content': {
-                    'text': mensajeRespuesta,
-                  }
-          });
-
-        }
-    } catch (error) {
-      //console.log(error);
-      mensajeRespuesta = `Gracias 🙂, ten presente que no puedo reconocer imágenes, audios, ni emojis. Nos podemos comunicar por medio de texto o digitando el número de las opciones que te indico en mi pregunta. 
-      
-Por favor respóndeme con el número correspondiente a lo que quieres hacer:\n
-1️⃣ Quieres diligenciar el formulario de registro ✍🏻\n
-2️⃣ Quieres informar de tu llegada a destino ☝🏻\n
-3️⃣ Ya te registraste antes y quieres actualizar tus datos de contacto  🙌🏻 `;
-            //console.log('MENSAJE A ENVIAR::', mensajeRespuesta);
-
-            whatsappMessageController.sendMessageWhatsapp({
-              'to': req.body['message.from'],
-                'conversationId': req.body.conversationId,
-              'type': 'text',
-              'content': {
-                      'text': mensajeRespuesta,
-                    }
-            });
-
-    }
-
   }
 
   //crea nueva 'conversacion_chatbot'
@@ -447,217 +245,6 @@ Por favor respóndeme con el número correspondiente a lo que quieres hacer:\n
     });
   }
 
-  //funcion crear encuesta
-  function crearEncuesta($conversation) {
-
-    const sqlnuevaencuesta = 'INSERT INTO encuesta SET ?';
-
-    const params = req.body;
-    //reemplazo de emoticones en el nombre de perfil de whatsapp
-    //var regex = /(?:[\u2700-\u27bf]|(?:\ud83c[\udde6-\uddff]){2}|[\ud800-\udbff][\udc00-\udfff]|[\u0023-\u0039]\ufe0f?\u20e3|\u3299|\u3297|\u303d|\u3030|\u24c2|\ud83c[\udd70-\udd71]|\ud83c[\udd7e-\udd7f]|\ud83c\udd8e|\ud83c[\udd91-\udd9a]|\ud83c[\udde6-\uddff]|\ud83c[\ude01-\ude02]|\ud83c\ude1a|\ud83c\ude2f|\ud83c[\ude32-\ude3a]|\ud83c[\ude50-\ude51]|\u203c|\u2049|[\u25aa-\u25ab]|\u25b6|\u25c0|[\u25fb-\u25fe]|\u00a9|\u00ae|\u2122|\u2139|\ud83c\udc04|[\u2600-\u26FF]|\u2b05|\u2b06|\u2b07|\u2b1b|\u2b1c|\u2b50|\u2b55|\u231a|\u231b|\u2328|\u23cf|[\u23e9-\u23f3]|[\u23f8-\u23fa]|\ud83c\udccf|\u2934|\u2935|[\u2190-\u21ff])/g;
-
-    //var newprofile = params.ProfileName.replace(/[^\ñ\Ñ\ü\Ü\á\Á\é\É\í\Í\ó\Ó\ú\Ú\w\s]/gi, '');//twilio
-    var newprofile = params['contact.firstName'].replace(/[^\ñ\Ñ\ü\Ü\á\Á\é\É\í\Í\ó\Ó\ú\Ú\w\s]/gi, '');
-
-    const nuevaencuesta = {
-      waId: $conversation.waId,
-      //profileName: newprofile,
-      profileName: $conversation.profileName,
-      created_at: new Date(),
-      pregunta: 1,
-      fuente: 1
-    }
-    //console.log('NUEVA CONVERSACION: ', nuevaconversacion);
-
-    //connection.query(sqlnuevaencuesta, nuevaencuesta, (error, results) => {
-    db.query(sqlnuevaencuesta, nuevaencuesta, (error, results) => {
-      if (error){
-        mensajeRespuesta = `Disculpa tuvimos un problema en crear la encuesta. Por favor respóndeme con el número correspondiente a lo que quieres hacer:\n
-1️⃣ Quieres diligenciar el formulario de registro ✍🏻\n
-2️⃣ Quieres informar de tu llegada a destino ☝🏻\n
-3️⃣ Ya te registraste antes y quieres actualizar tus datos de contacto  🙌🏻 `;
-
-
-      }else{
-        $conversation.tipo_formulario = 1;
-        //actualizarConversacion($conversation); //llamado en app.js
-        conversacionController.actualizarConversacion($conversation);
-
-        mensajeRespuesta = `Por favor escribe tu primer nombre. Sólo puedo leer texto, no utilices audio, imágenes o emojis.`;
-
-      }
-
-      whatsappMessageController.sendMessageWhatsapp({
-          'to': req.body['message.from'],
-            'conversationId': req.body.conversationId,
-          'type': 'text',
-          'content': {
-                  'text': mensajeRespuesta,
-                }
-        });
-
-    });
-
-  }
-
-  //funcion registro llegada
-  function crearLlegadaADestino($conversation){
-    const sqlnuevaLlegada = 'INSERT INTO llegadas SET ?';
-
-    const params = req.body;
-    //var newprofile = params.ProfileName.replace(/[^\ñ\Ñ\ü\Ü\á\Á\é\É\í\Í\ó\Ó\ú\Ú\w\s]/gi, ''); //twilio
-    var newprofile = params['contact.firstName'].replace(/[^\ñ\Ñ\ü\Ü\á\Á\é\É\í\Í\ó\Ó\ú\Ú\w\s]/gi, ''); //mmesagebird
-
-   //console.log('REEMPLAZO: ', newprofile);
-
-    const nuevaLlegada = {
-      waId: $conversation.waId,
-      pregunta: 1,
-      created_at: new Date(),
-    }
-
-    //connection.query(sqlnuevaLlegada, nuevaLlegada, (error, results) => {
-    db.query(sqlnuevaLlegada, nuevaLlegada, (error, results) => {
-      if (error){
-        mensajeRespuesta = `Disculpa tuvimos un problema. Por favor respóndeme con el número correspondiente a lo que quieres hacer:\n
-1️⃣ Quieres diligenciar el formulario de registro ✍🏻\n
-2️⃣ Quieres informar de tu llegada a destino ☝🏻\n
-3️⃣ Ya te registraste antes y quieres actualizar tus datos de contacto  🙌🏻 `;
-      } else{
-        $conversation.tipo_formulario = 2;
-        
-        //actualizarConversacion($conversation); //llamada a funcion en app.js
-        conversacionController.actualizarConversacion($conversation); //llamada a conversacionController
-
-        mensajeRespuesta = `A continuación responde a las preguntas para informar de tu llegada a destino como teléfono u otros:
-Tipo de documento 📇 Responde con el número de acuerdo a la opción correspondiente:
-1️⃣ Acta de Nacimiento
-2️⃣ Cédula de Identidad (venezolana)
-3️⃣ Cédula de Ciudadanía (colombiana)
-4️⃣ Pasaporte
-5️⃣ Cédula de Extranjería
-6️⃣ Otro`;
-      }
-
-      whatsappMessageController.sendMessageWhatsapp({
-        'to': req.body['message.from'],
-          'conversationId': req.body.conversationId,
-        'type': 'text',
-        'content': {
-                'text': mensajeRespuesta,
-              }
-      });
-
-    });
-  }
-
-  //funcion actualizar datos
-  function crearDatosActualizados($conversation) {
-
-    const sqlnuevoDatosActualizados = 'INSERT INTO datos_actualizados SET ?';
-
-    const params = req.body;
-    //var newprofile = params.ProfileName.replace(/[^\ñ\Ñ\ü\Ü\á\Á\é\É\í\Í\ó\Ó\ú\Ú\w\s]/gi, '');
-    var newprofile = params['contact.firstName'].replace(/[^\ñ\Ñ\ü\Ü\á\Á\é\É\í\Í\ó\Ó\ú\Ú\w\s]/gi, '');
-   //console.log('REEMPLAZO: ', newprofile);
-
-    const nuevoDatosActualizados = {
-      waId: $conversation.waId,
-      pregunta: 1,
-      created_at: new Date(),
-    }
-
-    //connection.query(sqlnuevoDatosActualizados, nuevoDatosActualizados, (error, results) => {
-    db.query(sqlnuevoDatosActualizados, nuevoDatosActualizados, (error, results) => {
-      if (error){
-        mensajeRespuesta = `Disculpa tuvimos un problema. Por favor respóndeme con el número correspondiente a lo que quieres hacer:\n
-1️⃣ Quieres diligenciar el formulario de registro ✍🏻\n
-2️⃣ Quieres informar de tu llegada a destino ☝🏻\n
-3️⃣ Ya te registraste antes y quieres actualizar tus datos de contacto  🙌🏻 `;
-      } else{
-
-        $conversation.tipo_formulario = 3;
-        
-        //actualizarConversacion($conversation); //llamada a funcion en app.js
-        conversacionController.actualizarConversacion($conversation); //llamada a conversacionController
-
-
-        mensajeRespuesta = `A continuación responde a las preguntas para actualizar tus datos de contacto como teléfono u otros:
-Tipo de documento 📇 Responde con el número de acuerdo a la opción correspondiente:
-1️⃣ Acta de Nacimiento
-2️⃣ Cédula de Identidad (venezolana)
-3️⃣ Cédula de Ciudadanía (colombiana)
-4️⃣ Pasaporte
-5️⃣ Cédula de Extranjería
-6️⃣ Otro`;
-      }
-
-      whatsappMessageController.sendMessageWhatsapp({
-          'to': req.body['message.from'],
-            'conversationId': req.body.conversationId,
-          'type': 'text',
-          'content': {
-                  'text': mensajeRespuesta,
-                }
-        });
-
-    });
-
-  }
-
-
-  function actualizarLlegadaEncuesta($llegadaEncuesta){
-
-    //consulta encuesta con $llegadaEncuesta waId, toma id_encuesta y se lo asigna a llegadas where waid = encuesta.waId;
-    const sqlConsultaEncuesta = `SELECT id FROM encuesta WHERE waId = '${$llegadaEncuesta.waId}' AND tipo_documento = '${$llegadaEncuesta.tipo_documento}' AND numero_documento = '${$llegadaEncuesta.numero_documento}'`;
-
-    //connection.query(sqlConsultaEncuesta, (error, encuesta) => {
-    db.query(sqlConsultaEncuesta, (error, encuesta) => {
-      //mensajeRespuesta = '';
-      if (error) console.log('ERROR EN ACTUALIZAR LLEGADA ENCUESTA:: ', error);
-
-      if (encuesta.length > 0) {
-        //console.log('SI ENCONTRO UNA ENCUESTA CON EL WAID::');
-        $llegadaEncuesta.id_encuesta = encuesta[0]['id'];
-        
-        //actualizarLlegada($llegadaEncuesta); //llama a funcion en app.js
-        llegadasController.actualizarLlegada($llegadaEncuesta); //llama a funcion en llegadas.controller.js
-
-
-      }else{
-        //actualizarLlegada($llegadaEncuesta); //llama a funcion en app.js
-        llegadasController.actualizarLlegada($llegadaEncuesta); //llama a funcion en llegadas.controller.js
-
-      }
-    });
-  }
-
-  function actualizarDatosContactoEncuesta($datosContactoEncuesta){
-
-    //console.log('ENTRA A ACTUALIZAR DATOS CONTACTOENCUESTA!!!');
-    //consulta encuesta con $llegadaEncuesta waId, toma id_encuesta y se lo asigna a llegadas where waid = encuesta.waId;
-    const sqlConsultaEncuesta = `SELECT id FROM encuesta WHERE waId = '${$datosContactoEncuesta.waId}' AND tipo_documento = '${$datosContactoEncuesta.tipo_documento}' AND numero_documento = '${$datosContactoEncuesta.numero_documento}'`;
-
-    //connection.query(sqlConsultaEncuesta, (error, encuesta) => {
-    db.query(sqlConsultaEncuesta, (error, encuesta) => {
-      //mensajeRespuesta = '';
-      if (error) console.log('ERROR EN ACTUALIZAR DATOS CONTACTO ENCUESTA:: ', error);
-
-      if (encuesta.length > 0) {
-        //console.log('SI ENCONTRO UNA ENCUESTA CON EL WAID EN ACTUALIZAR DATOS CONTACTO::');
-        $datosContactoEncuesta.id_encuesta = encuesta[0]['id'];
-        //actualizarDatosContacto($datosContactoEncuesta); //llama a funcion en app.js
-        actualizarDatosContactoController.actualizarDatosContacto($datosContactoEncuesta);//llama a funcion en actualizarDAtosContacto.controller
-
-
-      }else{
-        $datosContactoEncuesta.id_encuesta = null;
-        //actualizarDatosContacto($datosContactoEncuesta); //llama a funcion en app.js
-        actualizarDatosContactoController.actualizarDatosContacto($datosContactoEncuesta);//llama a funcion en actualizarDAtosContacto.controller
-
-      }
-    });
-  }
 
   //Conversacion del chatbot general, valida el estado de la conversacion y entra a cada uno de los formulario o de las preguntas generales del saludo inicial
   async function conversacion(conversation, $formulario) {
@@ -1714,7 +1301,9 @@ Todos nuestros servicios son GRATUITOS, no tenemos intermediarios ni tramitadore
 
                     //consulta encuesta por waId, tipo_documento, numero_documento, entonces toma el id_encuesta y lo asigna a
                     //llegada.
-                    actualizarLlegadaEncuesta($formulario);
+                    //actualizarLlegadaEncuesta($formulario); //llamada a funcion en app.js
+                    llegadasController.actualizarLlegadaEncuesta($formulario); //llama a funcion en llegadasController
+
 
                     mensajeRespuesta = `Escribe el nombre del jefe de hogar`;
                     //mensajeRespuesta = `Escribe tu número de teléfono en números 📞` ;
@@ -2369,7 +1958,8 @@ En cuál otro lugar te encuentras?`;
 
                     //consulta encuesta por waId, tipo_documento, numero_documento, entonces toma el id_encuesta y lo asigna a
                     //llegada.
-                    actualizarDatosContactoEncuesta($formulario);
+                    //actualizarDatosContactoEncuesta($formulario); //llama a funcion en app.js
+                    actualizarDatosContactoController.actualizarDatosContactoEncuesta($formulario);
 
                     mensajeRespuesta = `Escribe tu número de teléfono en números 📞` ;
 
@@ -2515,7 +2105,7 @@ Todos nuestros servicios son GRATUITOS, no tenemos intermediarios ni tramitadore
                   $conversation.tipo_formulario = 1;
                   //actualizarConversacion($conversation);
                   conversacionController.actualizarConversacion($conversation)
-                  crearEncuesta($conversation);
+                  encuestaController.crearEncuesta($conversation, req);
                   mensajeRespuesta = 'Empieza Llenar nuevo formulario';
 
                 } catch (error) {
