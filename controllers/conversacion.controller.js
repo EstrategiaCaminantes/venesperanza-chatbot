@@ -4,6 +4,7 @@ var autorizacionTratamientoDatosController = require('./autorizacionTratamientoD
 var encuestaController = require('./encuesta.controller');
 var llegadasController = require('./llegadas.controller');
 var actualizarDatosContactoController = require('./actualizarDatosContacto.controller');
+var db = require('../db');
 
 function errorLog(title,msg) {
     if(process.env.ENV === 'test') {
@@ -2052,7 +2053,7 @@ Para iniciar este chat 💬 debes autorizar el uso de tus datos. ✅
 Responde:
 1️⃣ Si, para aceptar los términos y condiciones del programa #VenEsperanza
 2️⃣ No, no autorizo`;*/
-        mensajeRespuesta = 'bienvenida_chat';
+        mensajeRespuesta = 'bienvenida_conversacion';
 
       } catch (error) {
         //console.log('ERROR::', error);
@@ -2174,3 +2175,236 @@ Por favor respóndeme con el número correspondiente a lo que quieres hacer:\n
 
 }
 
+
+//nueva conversacion
+
+exports.nuevaConversacion = async function (req) {
+  //const sqlnuevo = 'INSERT INTO encuesta SET ?';
+  const sqlnuevo = 'INSERT INTO conversacion_chatbot SET ?';
+
+  //console.log('PARAMS NUEVA CONVERSA: ', req.body);
+  const params = req.body;
+  //console.log(':::PARAMS:::', params);
+ //var newprofile = params.ProfileName.replace(/[^\ñ\Ñ\ü\Ü\á\Á\é\É\í\Í\ó\Ó\ú\Ú\w\s]/gi, ''); //version twilio
+  //var newprofile = params.conversationContactId.replace(/[^\ñ\Ñ\ü\Ü\á\Á\é\É\í\Í\ó\Ó\ú\Ú\w\s]/gi, ''); //version messagebird
+  var newprofile = params['contact.displayName'].replace(/[^\ñ\Ñ\ü\Ü\á\Á\é\É\í\Í\ó\Ó\ú\Ú\w\s]/gi, ''); //version messagebird
+ //var newprofile = params['contact.firstName'].replace(/[^\ñ\Ñ\ü\Ü\á\Á\é\É\í\Í\ó\Ó\ú\Ú\w\s]/gi, ''); //version messagebird
+
+  const nuevaconversacion = {
+    //waId: params.WaId,
+    //waId: params.contact.msisdn, //messagebird
+    waId: params.contactPhoneNumber,
+    profileName: newprofile,
+    conversation_start: false,
+    autorizacion: false,
+    tipo_formulario: null,
+    created_at: new Date()
+
+  }
+  //console.log('NUEVA CONVERSACION: ', nuevaconversacion);
+
+  //connection.query(sqlnuevo, nuevaconversacion, (error, results) => {
+  db.query(sqlnuevo, nuevaconversacion, (error, results) => {
+  //if (error) {errorLog('dbquery.error',error);throw error;}
+    if(error){
+      mensajeRespuesta = "Su Nombre de perfil de Whatsapp contiene emoticones, por favor quitelos momentaneamente para interactuar con nuestro chat e intente nuevamente";
+
+      sendMessageWhatsapp({
+        'to': req.body['message.from'],
+          'conversationId': req.body.conversationId,
+        'type': 'text',
+        'content': {
+                'text': mensajeRespuesta,
+              }
+      });
+    }else{
+      //console.log('RESULTS QUERY NUEVO: ', results);
+      //consultaConversacion(nuevaconversacion.waId);
+      this.consultaConversacion(nuevaconversacion.waId);
+    }
+
+  });
+}
+
+
+//nuevaconversacion llamada por consultaConversacion
+exports.nuevaConversacion = async function (req) {
+  //const sqlnuevo = 'INSERT INTO encuesta SET ?';
+  const sqlnuevo = 'INSERT INTO conversacion_chatbot SET ?';
+
+  //console.log('PARAMS NUEVA CONVERSA: ', req.body);
+  const params = req.body;
+  //console.log(':::PARAMS:::', params);
+ //var newprofile = params.ProfileName.replace(/[^\ñ\Ñ\ü\Ü\á\Á\é\É\í\Í\ó\Ó\ú\Ú\w\s]/gi, ''); //version twilio
+  //var newprofile = params.conversationContactId.replace(/[^\ñ\Ñ\ü\Ü\á\Á\é\É\í\Í\ó\Ó\ú\Ú\w\s]/gi, ''); //version messagebird
+  var newprofile = params['contact.displayName'].replace(/[^\ñ\Ñ\ü\Ü\á\Á\é\É\í\Í\ó\Ó\ú\Ú\w\s]/gi, ''); //version messagebird
+ //var newprofile = params['contact.firstName'].replace(/[^\ñ\Ñ\ü\Ü\á\Á\é\É\í\Í\ó\Ó\ú\Ú\w\s]/gi, ''); //version messagebird
+
+  const nuevaconversacion = {
+    //waId: params.WaId,
+    //waId: params.contact.msisdn, //messagebird
+    waId: params.contactPhoneNumber,
+    profileName: newprofile,
+    conversation_start: false,
+    autorizacion: false,
+    tipo_formulario: null,
+    created_at: new Date()
+
+  }
+  //console.log('NUEVA CONVERSACION: ', nuevaconversacion);
+
+  //connection.query(sqlnuevo, nuevaconversacion, (error, results) => {
+  db.query(sqlnuevo, nuevaconversacion, (error, results) => {
+  //if (error) {errorLog('dbquery.error',error);throw error;}
+    if(error){
+      mensajeRespuesta = "Su Nombre de perfil de Whatsapp contiene emoticones, por favor quitelos momentaneamente para interactuar con nuestro chat e intente nuevamente";
+
+      sendMessageWhatsapp({
+        'to': req.body['message.from'],
+          'conversationId': req.body.conversationId,
+        'type': 'text',
+        'content': {
+                'text': mensajeRespuesta,
+              }
+      });
+    }else{
+      //console.log('RESULTS QUERY NUEVO: ', results);
+      //consultaConversacion(nuevaconversacion.waId);
+       this.consultaConversacion(nuevaconversacion.waId, req);
+
+    }
+
+  });
+}
+
+//Consulta conversacion para seguir respondiendo o crear una nueva
+
+exports.consultaConversacion = async function (whatsappID, req) {
+  
+  
+
+  const sql = `SELECT conversacion_chatbot.*
+  FROM conversacion_chatbot 
+   WHERE waId = '${whatsappID}'`;
+  //connection.query(sql, (error, results) => {
+    db.query(sql, (error, results) => {
+    if (error) {errorLog('dbquery.error',error);throw error;}
+    if (results.length > 0) {
+      var $conversation = results[0];
+      //console.log('messageBirdRequestId:::::',req.body.messageBirdRequestId);
+      //console.log('MESG:::::',req.body.incomingMessage);
+      const sqlRequest = `SELECT request_id
+        FROM conversacion_request
+        WHERE id_conversacion = '${$conversation.id}' AND request_id = '${req.body.messageBirdRequestId}'`;
+        //connection.query(sqlRequest, (errorResult, resultRequest) => {
+        db.query(sqlRequest, (errorResult, resultRequest) => {
+            if (errorResult) {errorLog('dbquery.error',errorResult);throw errorResult;}
+          if(resultRequest.length > 0){
+
+            //db.end();
+            //console.log('::CIERRO CONEXION DATABASE CUANDO MESSAGEID EXISTE::');
+            //console.log('REQUEST ID YA EXISTE')
+              //Ignorar
+              //return;
+          } else {
+            /*
+            console.log(':::ENTRA A ACTUALIZAR MESSAGEBIRD REQUEST::::', req.body.messageBirdRequestId);
+            const sqlConversacion = `UPDATE conversacion_chatbot SET messageBirdRequestId = '${req.body.messageBirdRequestId}' where id = ${$conversation.id}`;
+            connection.query(sqlConversacion, (error, res) => {
+              if (error) console.log('ERROR: ', error);
+            });*/
+            const sqlRequestInsert = 'INSERT INTO conversacion_request SET ?';
+
+            const nuevoRequest = {
+              id_conversacion: $conversation.id,
+              request_id: req.body.messageBirdRequestId
+            }
+            //console.log('NUEVA CONVERSACION: ', nuevaconversacion);
+
+            //connection.query(sqlRequestInsert, nuevoRequest, (error, results) => {
+            db.query(sqlRequestInsert, nuevoRequest, (error, results) => {
+                if (error) {errorLog('dbquery.error',error);throw error;}
+            });
+
+            if(!$conversation.conversation_start){
+
+              //$conversation.conversation_start = 1;
+              //actualizarConversacion($conversation);
+              //conversacion($conversation); llama a funcion en app.js
+              this.conversacion($conversation, null, req); //llama a funcion en conversacionController
+
+
+            }else if(!$conversation.autorizacion){
+
+              //conversacion($conversation); llama a funcion en app.js
+              this.conversacion($conversation, null, req); //llama a funcion en conversacionController
+
+
+              //$conversation.autorizacion = 1;
+              //actualizarConversacion($conversation);
+              //autorizacionTratamientoDatos($conversation)
+            }else if(!$conversation.tipo_formulario){
+
+              //seleccionarFormulario($conversation); //llamado en app.js
+              this.seleccionarFormulario($conversation, req);
+
+            }else if($conversation.tipo_formulario == 1){
+              const sqlencuesta = `SELECT * FROM encuesta where waId = '${whatsappID}'`;
+
+              //connection.query(sqlencuesta, (error, encuesta) => {
+              db.query(sqlencuesta, (error, encuesta) => {
+                if (error) {errorLog('dbquery.error',error);throw error;}
+
+                if (encuesta.length > 0) {
+
+                  //console.log('ENCUESTA ES: ', encuesta[0]);
+                  //conversacion($conversation,encuesta[0]); //llama a la funcion en app.js
+                  this.conversacion($conversation, encuesta[0], req); //llama a funcion en conversacionController
+
+                }
+
+              });
+            }else if($conversation.tipo_formulario == 2){
+              const sqllegadas = `SELECT * FROM llegadas where waId = '${whatsappID}'`;
+
+              //connection.query(sqllegadas, (error, llegadas) => {
+              db.query(sqllegadas, (error, llegadas) => {
+                if (error) {errorLog('dbquery.error',error);throw error;}
+
+                if (llegadas.length > 0) {
+                  //console.log('LLEGADA ES: ', llegadas[0]);
+                  //conversacion($conversation , llegadas[0]);
+                  this.conversacion($conversation, llegadas[0], req); //llama a funcion en conversacionController
+
+                }
+
+              });
+            }else if($conversation.tipo_formulario == 3){
+
+              const sqlactualizardatos = `SELECT * FROM datos_actualizados where waId = '${whatsappID}'`;
+
+              //connection.query(sqlactualizardatos, (error, actualizardatos) => {
+              db.query(sqlactualizardatos, (error, actualizardatos) => {
+                if (error) {errorLog('dbquery.error',error);throw error;}
+
+                if (actualizardatos.length > 0) {
+                  //console.log('ENCUESTA ES: ', actualizardatos[0]);
+                  //conversacion($conversation , actualizardatos[0]); //llama a la funcion en app.js
+                  this.conversacion($conversation, actualizardatos[0], req); //llama a funcion en conversacionController
+
+                }
+
+              });
+            }
+          }
+        });
+
+    } else {
+
+      //nuevaConversacion(); //llamado a funcion en app.js
+      this.nuevaConversacion(req); //llamado a funcion en app.js
+
+      //conversacionController.nuevaConversacion(req.body); //llamado a conversacion.controller.js
+    }
+  });
+}
