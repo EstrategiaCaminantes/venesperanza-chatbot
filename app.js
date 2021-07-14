@@ -1169,7 +1169,7 @@ Escribe por favor tu número de documento 📇 (no utilices símbolos, solo núm
                                             $formulario.como_llego_al_formulario = "Ví un pendón en un albergue";
                                             //$formulario.donde_encontro_formulario = null;
                                             actualizarEncuesta($formulario);
-                                            mensajeRespuesta = `¿En qué fecha tÚ y tu grupo familiar llegaron al país🇨🇴?. Envía la fecha de esta manera AAAA-MM-DD para (Año-Mes-Día. Ejemplo: 2000-10-26)`;
+                                            mensajeRespuesta = `¿En qué fecha tú y tu grupo familiar llegaron al país🇨🇴?. Envía la fecha de esta manera AAAA-MM-DD para (Año-Mes-Día. Ejemplo: 2000-10-26)`;
 
                                             break;
 
@@ -1178,7 +1178,7 @@ Escribe por favor tu número de documento 📇 (no utilices símbolos, solo núm
                                             $formulario.como_llego_al_formulario = "Recibí un volante en el albergue";
                                             //$formulario.donde_encontro_formulario = null;
                                             actualizarEncuesta($formulario);
-                                            mensajeRespuesta = `¿En qué fecha tÚ y tu grupo familiar llegaron al país🇨🇴?. Envía la fecha de esta manera AAAA-MM-DD para (Año-Mes-Día. Ejemplo: 2000-10-26)`;
+                                            mensajeRespuesta = `¿En qué fecha tú y tu grupo familiar llegaron al país🇨🇴?. Envía la fecha de esta manera AAAA-MM-DD para (Año-Mes-Día. Ejemplo: 2000-10-26)`;
 
                                             break;
 
@@ -1187,7 +1187,7 @@ Escribe por favor tu número de documento 📇 (no utilices símbolos, solo núm
                                             $formulario.como_llego_al_formulario = "Recibí una foto con la información";
                                             //$formulario.donde_encontro_formulario = null;
                                             actualizarEncuesta($formulario);
-                                            mensajeRespuesta = `¿En qué fecha tÚ y tu grupo familiar llegaron al país🇨🇴?. Envía la fecha de esta manera AAAA-MM-DD para (Año-Mes-Día. Ejemplo: 2000-10-26)`;
+                                            mensajeRespuesta = `¿En qué fecha tú y tu grupo familiar llegaron al país🇨🇴?. Envía la fecha de esta manera AAAA-MM-DD para (Año-Mes-Día. Ejemplo: 2000-10-26)`;
 
                                             break;
 
@@ -1196,7 +1196,7 @@ Escribe por favor tu número de documento 📇 (no utilices símbolos, solo núm
                                             $formulario.como_llego_al_formulario = "Recibí el enlache por chat";
                                             //$formulario.donde_encontro_formulario = null;
                                             actualizarEncuesta($formulario);
-                                            mensajeRespuesta = `¿En qué fecha tÚ y tu grupo familiar llegaron al país🇨🇴?. Envía la fecha de esta manera AAAA-MM-DD para (Año-Mes-Día. Ejemplo: 2000-10-26)`;
+                                            mensajeRespuesta = `¿En qué fecha tú y tu grupo familiar llegaron al país🇨🇴?. Envía la fecha de esta manera AAAA-MM-DD para (Año-Mes-Día. Ejemplo: 2000-10-26)`;
 
                                             break;
 
@@ -1205,7 +1205,7 @@ Escribe por favor tu número de documento 📇 (no utilices símbolos, solo núm
                                             $formulario.como_llego_al_formulario = "Encontré el enlace en Facebook";
                                             //$formulario.donde_encontro_formulario = null;
                                             actualizarEncuesta($formulario);
-                                            mensajeRespuesta = `¿En qué fecha tÚ y tu grupo familiar llegaron al país🇨🇴?. Envía la fecha de esta manera AAAA-MM-DD para (Año-Mes-Día. Ejemplo: 2000-10-26)`;
+                                            mensajeRespuesta = `¿En qué fecha tú y tu grupo familiar llegaron al país🇨🇴?. Envía la fecha de esta manera AAAA-MM-DD para (Año-Mes-Día. Ejemplo: 2000-10-26)`;
 
                                             break;
 
@@ -1214,7 +1214,7 @@ Escribe por favor tu número de documento 📇 (no utilices símbolos, solo núm
                                             $formulario.como_llego_al_formulario = "Una persona conocida me lo envió para que lo llenara";
                                             //$formulario.donde_encontro_formulario = null;
                                             actualizarEncuesta($formulario);
-                                            mensajeRespuesta = `¿En qué fecha tÚ y tu grupo familiar llegaron al país🇨🇴?. Envía la fecha de esta manera AAAA-MM-DD para (Año-Mes-Día. Ejemplo: 2000-10-26)`;
+                                            mensajeRespuesta = `¿En qué fecha tú y tu grupo familiar llegaron al país🇨🇴?. Envía la fecha de esta manera AAAA-MM-DD para (Año-Mes-Día. Ejemplo: 2000-10-26)`;
 
                                             break;
 
@@ -1222,14 +1222,14 @@ Escribe por favor tu número de documento 📇 (no utilices símbolos, solo núm
                                             $formulario.pregunta += 1; //va a pregunta 9
                                             $formulario.como_llego_al_formulario = "Recibí una manilla con el número";
                                             actualizarEncuesta($formulario);
-                                            mensajeRespuesta = `¿En qué fecha tÚ y tu grupo familiar llegaron al país🇨🇴?. Envía la fecha de esta manera AAAA-MM-DD para (Año-Mes-Día. Ejemplo: 2000-10-26)`;
+                                            mensajeRespuesta = `¿En qué fecha tú y tu grupo familiar llegaron al país🇨🇴?. Envía la fecha de esta manera AAAA-MM-DD para (Año-Mes-Día. Ejemplo: 2000-10-26)`;
                                             break;
 
                                         case '8':
                                             $formulario.pregunta += 1; //va a pregunta 9
                                             $formulario.como_llego_al_formulario = "Otro";
                                             actualizarEncuesta($formulario);
-                                            mensajeRespuesta = `¿En qué fecha tÚ y tu grupo familiar llegaron al país🇨🇴?. Envía la fecha de esta manera AAAA-MM-DD para (Año-Mes-Día. Ejemplo: 2000-10-26)`;
+                                            mensajeRespuesta = `¿En qué fecha tú y tu grupo familiar llegaron al país🇨🇴?. Envía la fecha de esta manera AAAA-MM-DD para (Año-Mes-Día. Ejemplo: 2000-10-26)`;
                                             break;
 
                                         default:
@@ -1316,7 +1316,7 @@ Escribe por favor tu número de documento 📇 (no utilices símbolos, solo núm
 
                                         } else {
                                             mensajeRespuesta = `Gracias 🙂, ten presente que no puedo reconocer imágenes, audios, ni emojis. Nos podemos comunicar por medio de texto o digitando el número de las opciones que te indico en mi pregunta.\n
-¿En qué fecha tÚ y tu grupo familiar llegaron al país🇨🇴?. Envía la fecha de esta manera AAAA-MM-DD para (Año-Mes-Día. Ejemplo: 2000-10-26)`;
+¿En qué fecha tú y tu grupo familiar llegaron al país🇨🇴?. Envía la fecha de esta manera AAAA-MM-DD para (Año-Mes-Día. Ejemplo: 2000-10-26)`;
 
                                         }
 
@@ -1327,7 +1327,7 @@ Escribe por favor tu número de documento 📇 (no utilices símbolos, solo núm
                                         }*/
                                     } else {
                                         mensajeRespuesta = `Gracias 🙂, ten presente que no puedo reconocer imágenes, audios, ni emojis. Nos podemos comunicar por medio de texto o digitando el número de las opciones que te indico en mi pregunta.\n
-¿En qué fecha tÚ y tu grupo familiar llegaron al país🇨🇴?. Envía la fecha de esta manera AAAA-MM-DD para (Año-Mes-Día. Ejemplo: 2000-10-26)`;
+¿En qué fecha tú y tu grupo familiar llegaron al país🇨🇴?. Envía la fecha de esta manera AAAA-MM-DD para (Año-Mes-Día. Ejemplo: 2000-10-26)`;
 
                                     }
 
@@ -1335,7 +1335,7 @@ Escribe por favor tu número de documento 📇 (no utilices símbolos, solo núm
                                     $formulario.pregunta = 9; //vuelve a 9
                                     actualizarEncuesta($formulario);
                                     mensajeRespuesta = `Gracias 🙂, ten presente que no puedo reconocer imágenes, audios, ni emojis. Nos podemos comunicar por medio de texto o digitando el número de las opciones que te indico en mi pregunta.\n
-¿En qué fecha tÚ y tu grupo familiar llegaron al país🇨🇴?. Envía la fecha de esta manera AAAA-MM-DD para (Año-Mes-Día. Ejemplo: 2000-10-26)`;
+¿En qué fecha tú y tu grupo familiar llegaron al país🇨🇴?. Envía la fecha de esta manera AAAA-MM-DD para (Año-Mes-Día. Ejemplo: 2000-10-26)`;
 
                                 }
                                 break;
