@@ -458,7 +458,7 @@ Escribe por favor tu número de documento 📇 (no utilices símbolos, solo núm
                       //actualizarEncuesta($formulario);
                       encuestaController.actualizarEncuesta($formulario); //llama a funcion en encuestaController
 
-                      mensajeRespuesta = `¿En qué fecha tÚ y tu grupo familiar llegaron al país🇨🇴?. Envía la fecha de esta manera AAAA-MM-DD para (Año-Mes-Día. Ejemplo: 2000-10-26)`;
+                      mensajeRespuesta = `¿En qué fecha tú y tu grupo familiar llegaron al país🇨🇴?. Envía la fecha de esta manera AAAA-MM-DD para (Año-Mes-Día. Ejemplo: 2000-10-26)`;
 
                       break;
 
@@ -469,7 +469,7 @@ Escribe por favor tu número de documento 📇 (no utilices símbolos, solo núm
                       //actualizarEncuesta($formulario);
                       encuestaController.actualizarEncuesta($formulario); //llama a funcion en encuestaController
 
-                      mensajeRespuesta = `¿En qué fecha tÚ y tu grupo familiar llegaron al país🇨🇴?. Envía la fecha de esta manera AAAA-MM-DD para (Año-Mes-Día. Ejemplo: 2000-10-26)`;
+                      mensajeRespuesta = `¿En qué fecha tú y tu grupo familiar llegaron al país🇨🇴?. Envía la fecha de esta manera AAAA-MM-DD para (Año-Mes-Día. Ejemplo: 2000-10-26)`;
 
                       break;
 
@@ -480,7 +480,7 @@ Escribe por favor tu número de documento 📇 (no utilices símbolos, solo núm
                       //actualizarEncuesta($formulario);
                       encuestaController.actualizarEncuesta($formulario); //llama a funcion en encuestaController
 
-                      mensajeRespuesta = `¿En qué fecha tÚ y tu grupo familiar llegaron al país🇨🇴?. Envía la fecha de esta manera AAAA-MM-DD para (Año-Mes-Día. Ejemplo: 2000-10-26)`;
+                      mensajeRespuesta = `¿En qué fecha tú y tu grupo familiar llegaron al país🇨🇴?. Envía la fecha de esta manera AAAA-MM-DD para (Año-Mes-Día. Ejemplo: 2000-10-26)`;
 
                       break;
 
@@ -491,7 +491,7 @@ Escribe por favor tu número de documento 📇 (no utilices símbolos, solo núm
                       //actualizarEncuesta($formulario);
                       encuestaController.actualizarEncuesta($formulario); //llama a funcion en encuestaController
 
-                      mensajeRespuesta = `¿En qué fecha tÚ y tu grupo familiar llegaron al país🇨🇴?. Envía la fecha de esta manera AAAA-MM-DD para (Año-Mes-Día. Ejemplo: 2000-10-26)`;
+                      mensajeRespuesta = `¿En qué fecha tú y tu grupo familiar llegaron al país🇨🇴?. Envía la fecha de esta manera AAAA-MM-DD para (Año-Mes-Día. Ejemplo: 2000-10-26)`;
 
                       break;
 
@@ -502,7 +502,7 @@ Escribe por favor tu número de documento 📇 (no utilices símbolos, solo núm
                       //actualizarEncuesta($formulario);
                       encuestaController.actualizarEncuesta($formulario); //llama a funcion en encuestaController
 
-                      mensajeRespuesta = `¿En qué fecha tÚ y tu grupo familiar llegaron al país🇨🇴?. Envía la fecha de esta manera AAAA-MM-DD para (Año-Mes-Día. Ejemplo: 2000-10-26)`;
+                      mensajeRespuesta = `¿En qué fecha tú y tu grupo familiar llegaron al país🇨🇴?. Envía la fecha de esta manera AAAA-MM-DD para (Año-Mes-Día. Ejemplo: 2000-10-26)`;
 
                       break;
 
@@ -514,7 +514,7 @@ Escribe por favor tu número de documento 📇 (no utilices símbolos, solo núm
 
                       encuestaController.actualizarEncuesta($formulario); //llama a funcion en encuestaController
 
-                      mensajeRespuesta = `¿En qué fecha tÚ y tu grupo familiar llegaron al país🇨🇴?. Envía la fecha de esta manera AAAA-MM-DD para (Año-Mes-Día. Ejemplo: 2000-10-26)`;
+                      mensajeRespuesta = `¿En qué fecha tú y tu grupo familiar llegaron al país🇨🇴?. Envía la fecha de esta manera AAAA-MM-DD para (Año-Mes-Día. Ejemplo: 2000-10-26)`;
 
                       break;
                     
@@ -524,7 +524,7 @@ Escribe por favor tu número de documento 📇 (no utilices símbolos, solo núm
                       //actualizarEncuesta($formulario);
                       encuestaController.actualizarEncuesta($formulario); //llama a funcion en encuestaController
 
-                      mensajeRespuesta = `¿En qué fecha tÚ y tu grupo familiar llegaron al país🇨🇴?. Envía la fecha de esta manera AAAA-MM-DD para (Año-Mes-Día. Ejemplo: 2000-10-26)`;
+                      mensajeRespuesta = `¿En qué fecha tú y tu grupo familiar llegaron al país🇨🇴?. Envía la fecha de esta manera AAAA-MM-DD para (Año-Mes-Día. Ejemplo: 2000-10-26)`;
                       break;
 
                     case '8':
@@ -533,7 +533,7 @@ Escribe por favor tu número de documento 📇 (no utilices símbolos, solo núm
                       //actualizarEncuesta($formulario);
                       encuestaController.actualizarEncuesta($formulario); //llama a funcion en encuestaController
 
-                      mensajeRespuesta = `¿En qué fecha tÚ y tu grupo familiar llegaron al país🇨🇴?. Envía la fecha de esta manera AAAA-MM-DD para (Año-Mes-Día. Ejemplo: 2000-10-26)`;
+                      mensajeRespuesta = `¿En qué fecha tú y tu grupo familiar llegaron al país🇨🇴?. Envía la fecha de esta manera AAAA-MM-DD para (Año-Mes-Día. Ejemplo: 2000-10-26)`;
                       break;
 
                     default:
@@ -625,7 +625,7 @@ Escribe por favor tu número de documento 📇 (no utilices símbolos, solo núm
 
                         } else {
                           mensajeRespuesta = `Gracias 🙂, ten presente que no puedo reconocer imágenes, audios, ni emojis. Nos podemos comunicar por medio de texto o digitando el número de las opciones que te indico en mi pregunta.\n
-¿En qué fecha tÚ y tu grupo familiar llegaron al país🇨🇴?. Envía la fecha de esta manera AAAA-MM-DD para (Año-Mes-Día. Ejemplo: 2000-10-26)`;
+¿En qué fecha tú y tu grupo familiar llegaron al país🇨🇴?. Envía la fecha de esta manera AAAA-MM-DD para (Año-Mes-Día. Ejemplo: 2000-10-26)`;
 
                         }
 
@@ -636,7 +636,7 @@ Escribe por favor tu número de documento 📇 (no utilices símbolos, solo núm
                       }*/
                     }else{
                       mensajeRespuesta = `Gracias 🙂, ten presente que no puedo reconocer imágenes, audios, ni emojis. Nos podemos comunicar por medio de texto o digitando el número de las opciones que te indico en mi pregunta.\n
-¿En qué fecha tÚ y tu grupo familiar llegaron al país🇨🇴?. Envía la fecha de esta manera AAAA-MM-DD para (Año-Mes-Día. Ejemplo: 2000-10-26)`;
+¿En qué fecha tú y tu grupo familiar llegaron al país🇨🇴?. Envía la fecha de esta manera AAAA-MM-DD para (Año-Mes-Día. Ejemplo: 2000-10-26)`;
 
                     }
 
