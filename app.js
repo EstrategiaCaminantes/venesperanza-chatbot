@@ -38,7 +38,9 @@ function errorLog(title, msg) {
 
 function sendMessageWhatsapp(params) {
     errorLog('sendMessageWhatsapp-Params', params);
-    params.reportUrl = process.env.WP_REPORT_URL;
+    if (process.env.ENV === 'test' or process.env.ENV === 'prodr') {
+        params.reportUrl = process.env.WP_REPORT_URL;
+    }
     messagebird.conversations.reply(params.conversationId, params, function (err, response) {
         if (err) {
             errorLog('sendMessageWhatsapp-err', err);
