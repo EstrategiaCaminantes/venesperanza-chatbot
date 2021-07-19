@@ -2057,7 +2057,12 @@ Responde:
 
       } catch (error) {
         //console.log('ERROR::', error);
-        mensajeRespuesta = `Disculpe tenemos problemas con el sistema. Intente nuevamente!`;
+        if(conversation.conversation_start == true){
+          mensajeRespuesta = 'problema_sistema';
+        }else{
+          mensajeRespuesta = `Disculpe tenemos problemas con el sistema. Intente nuevamente!`;
+
+        }
       }
 
     }
