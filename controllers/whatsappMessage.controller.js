@@ -9,7 +9,10 @@ function errorLog(title,msg) {
 exports.sendMessageWhatsapp = async function(params, res, next){
     errorLog('sendMessageWhatsapp-Params',params);
       //params.from = '9673e34a-1c1e-4a61-be4d-0432abd4a98f';
-
+      if (process.env.ENV === 'test' || process.env.ENV === 'prodr') {
+        params.reportUrl = process.env.WP_REPORT_URL;
+        }
+        
       try {
         messagebird.conversations.reply(params.conversationId, params, function (err, response) {
             if (err) {
