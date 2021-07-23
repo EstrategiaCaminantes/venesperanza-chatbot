@@ -12,46 +12,6 @@ function errorLog(title,msg) {
     }
 }
 
-
-exports.nuevaConversacion = async function(req, res, next){
-  
-    try {
-        const sqlnuevo = 'INSERT INTO conversacion_chatbot SET ?';
-
-        //console.log('PARAMS NUEVA CONVERSA: ', req.body);
-        const params = req;
-        //console.log(':::PARAMS:::', params);
-    //var newprofile = params.ProfileName.replace(/[^\ñ\Ñ\ü\Ü\á\Á\é\É\í\Í\ó\Ó\ú\Ú\w\s]/gi, ''); //version twilio
-        //var newprofile = params.conversationContactId.replace(/[^\ñ\Ñ\ü\Ü\á\Á\é\É\í\Í\ó\Ó\ú\Ú\w\s]/gi, ''); //version messagebird
-        var newprofile = params['contact.displayName'].replace(/[^\ñ\Ñ\ü\Ü\á\Á\é\É\í\Í\ó\Ó\ú\Ú\w\s]/gi, ''); //version messagebird
-    //var newprofile = params['contact.firstName'].replace(/[^\ñ\Ñ\ü\Ü\á\Á\é\É\í\Í\ó\Ó\ú\Ú\w\s]/gi, ''); //version messagebird
-
-        const nuevaconversacion = {
-        //waId: params.WaId,
-        //waId: params.contact.msisdn, //messagebird
-        waId: params.contactPhoneNumber,
-        profileName: newprofile,
-        conversation_start: false,
-        autorizacion: false,
-        tipo_formulario: null,
-        created_at: new Date()
-
-        }
-
-        var conversacion = await ConversacionService.crearConversacion(sqlnuevo, nuevaconversacion);
-        //errorLog('::creaConversacion::',res.status(200).json({ status: 200, data: conversacion, message: 'Creo bien' }));
-        //consultaConversacion(nuevaconversacion.waId);
-        errorLog('::creaConversacion::'/*,conversacion*/);
-
-
-    } catch (error) {
-        //errorLog(':::Error en crearConversacion::', res.status(400).json({ status: 400, message: e.message }));
-        errorLog(':::Error en crearConversacion::', error);
-    }
-  
-}
-
-
 exports.actualizarConversacion = async function($conversa){
 
     try {
@@ -2180,106 +2140,60 @@ Por favor respóndeme con el número correspondiente a lo que quieres hacer:\n
 
 }
 
-
-//nueva conversacion
-
-exports.nuevaConversacion = async function (req) {
-  //const sqlnuevo = 'INSERT INTO encuesta SET ?';
-  const sqlnuevo = 'INSERT INTO conversacion_chatbot SET ?';
-
-  //console.log('PARAMS NUEVA CONVERSA: ', req.body);
-  const params = req.body;
-  //console.log(':::PARAMS:::', params);
- //var newprofile = params.ProfileName.replace(/[^\ñ\Ñ\ü\Ü\á\Á\é\É\í\Í\ó\Ó\ú\Ú\w\s]/gi, ''); //version twilio
-  //var newprofile = params.conversationContactId.replace(/[^\ñ\Ñ\ü\Ü\á\Á\é\É\í\Í\ó\Ó\ú\Ú\w\s]/gi, ''); //version messagebird
-  var newprofile = params['contact.displayName'].replace(/[^\ñ\Ñ\ü\Ü\á\Á\é\É\í\Í\ó\Ó\ú\Ú\w\s]/gi, ''); //version messagebird
- //var newprofile = params['contact.firstName'].replace(/[^\ñ\Ñ\ü\Ü\á\Á\é\É\í\Í\ó\Ó\ú\Ú\w\s]/gi, ''); //version messagebird
-
-  const nuevaconversacion = {
-    //waId: params.WaId,
-    //waId: params.contact.msisdn, //messagebird
-    waId: params.contactPhoneNumber,
-    profileName: newprofile,
-    conversation_start: false,
-    autorizacion: false,
-    tipo_formulario: null,
-    created_at: new Date()
-
-  }
-  //console.log('NUEVA CONVERSACION: ', nuevaconversacion);
-
-  //connection.query(sqlnuevo, nuevaconversacion, (error, results) => {
-  db.query(sqlnuevo, nuevaconversacion, (error, results) => {
-  //if (error) {errorLog('dbquery.error',error);throw error;}
-    if(error){
-      mensajeRespuesta = "Su Nombre de perfil de Whatsapp contiene emoticones, por favor quitelos momentaneamente para interactuar con nuestro chat e intente nuevamente";
-
-      sendMessageWhatsapp({
-        'to': req.body['message.from'],
-          'conversationId': req.body.conversationId,
-        'type': 'text',
-        'content': {
-                'text': mensajeRespuesta,
-              }
-      });
-    }else{
-      //console.log('RESULTS QUERY NUEVO: ', results);
-      //consultaConversacion(nuevaconversacion.waId);
-      this.consultaConversacion(nuevaconversacion.waId);
-    }
-
-  });
-}
-
-
 //nuevaconversacion llamada por consultaConversacion
 exports.nuevaConversacion = async function (req) {
-  //const sqlnuevo = 'INSERT INTO encuesta SET ?';
-  const sqlnuevo = 'INSERT INTO conversacion_chatbot SET ?';
 
-  //console.log('PARAMS NUEVA CONVERSA: ', req.body);
-  const params = req.body;
-  //console.log(':::PARAMS:::', params);
- //var newprofile = params.ProfileName.replace(/[^\ñ\Ñ\ü\Ü\á\Á\é\É\í\Í\ó\Ó\ú\Ú\w\s]/gi, ''); //version twilio
-  //var newprofile = params.conversationContactId.replace(/[^\ñ\Ñ\ü\Ü\á\Á\é\É\í\Í\ó\Ó\ú\Ú\w\s]/gi, ''); //version messagebird
-  var newprofile = params['contact.displayName'].replace(/[^\ñ\Ñ\ü\Ü\á\Á\é\É\í\Í\ó\Ó\ú\Ú\w\s]/gi, ''); //version messagebird
- //var newprofile = params['contact.firstName'].replace(/[^\ñ\Ñ\ü\Ü\á\Á\é\É\í\Í\ó\Ó\ú\Ú\w\s]/gi, ''); //version messagebird
+  try {
+    
+      //const sqlnuevo = 'INSERT INTO encuesta SET ?';
+      const sqlnuevo = 'INSERT INTO conversacion_chatbot SET ?';
 
-  const nuevaconversacion = {
-    //waId: params.WaId,
-    //waId: params.contact.msisdn, //messagebird
-    waId: params.contactPhoneNumber,
-    profileName: newprofile,
-    conversation_start: false,
-    autorizacion: false,
-    tipo_formulario: null,
-    created_at: new Date()
+      //console.log('PARAMS NUEVA CONVERSA: ', req.body);
+      const params = req.body;
+      //console.log(':::PARAMS:::', params);
+    //var newprofile = params.ProfileName.replace(/[^\ñ\Ñ\ü\Ü\á\Á\é\É\í\Í\ó\Ó\ú\Ú\w\s]/gi, ''); //version twilio
+      //var newprofile = params.conversationContactId.replace(/[^\ñ\Ñ\ü\Ü\á\Á\é\É\í\Í\ó\Ó\ú\Ú\w\s]/gi, ''); //version messagebird
+      var newprofile = params['contact.displayName'].replace(/[^\ñ\Ñ\ü\Ü\á\Á\é\É\í\Í\ó\Ó\ú\Ú\w\s]/gi, ''); //version messagebird
+    //var newprofile = params['contact.firstName'].replace(/[^\ñ\Ñ\ü\Ü\á\Á\é\É\í\Í\ó\Ó\ú\Ú\w\s]/gi, ''); //version messagebird
 
-  }
-  //console.log('NUEVA CONVERSACION: ', nuevaconversacion);
+      const nuevaconversacion = {
+        //waId: params.WaId,
+        //waId: params.contact.msisdn, //messagebird
+        waId: params.contactPhoneNumber,
+        profileName: newprofile,
+        conversation_start: false,
+        autorizacion: false,
+        tipo_formulario: null,
+        created_at: new Date()
 
-  //connection.query(sqlnuevo, nuevaconversacion, (error, results) => {
-  db.query(sqlnuevo, nuevaconversacion, (error, results) => {
-  //if (error) {errorLog('dbquery.error',error);throw error;}
-    if(error){
-      mensajeRespuesta = "Su Nombre de perfil de Whatsapp contiene emoticones, por favor quitelos momentaneamente para interactuar con nuestro chat e intente nuevamente";
+      }
+      //console.log('NUEVA CONVERSACION: ', nuevaconversacion);
 
-      sendMessageWhatsapp({
-        'to': req.body['message.from'],
-          'conversationId': req.body.conversationId,
-        'type': 'text',
-        'content': {
-                'text': mensajeRespuesta,
-              }
+      //connection.query(sqlnuevo, nuevaconversacion, (error, results) => {
+      db.query(sqlnuevo, nuevaconversacion, (error, results) => {
+      //if (error) {errorLog('dbquery.error',error);throw error;}
+        if(error){
+          mensajeRespuesta = "Su Nombre de perfil de Whatsapp contiene emoticones, por favor quitelos momentaneamente para interactuar con nuestro chat e intente nuevamente";
+
+          sendMessageWhatsapp({
+            'to': req.body['message.from'],
+              'conversationId': req.body.conversationId,
+            'type': 'text',
+            'content': {
+                    'text': mensajeRespuesta,
+                  }
+          });
+        }else{
+          //console.log('RESULTS QUERY NUEVO: ', results);
+          //consultaConversacion(nuevaconversacion.waId);
+          this.consultaConversacion(nuevaconversacion.waId, req);
+
+        }
+
       });
-    }else{
-      //console.log('RESULTS QUERY NUEVO: ', results);
-      //consultaConversacion(nuevaconversacion.waId);
-       this.consultaConversacion(nuevaconversacion.waId, req);
-
-    }
-
-  });
+  } catch (error) {
+    errorLog(':::Error en crearConversacion::', error);
+  }
 }
 
 //Consulta conversacion para seguir respondiendo o crear una nueva
