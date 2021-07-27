@@ -1973,6 +1973,21 @@ Todos nuestros servicios son GRATUITOS, no tenemos intermediarios ni tramitadore
               mensajeRespuesta = 'no_autoriza';
             break;
 
+            case 'No, en camino': //Respuesta cuando llega por la notificacion de reporte de llegada y selecciona No en camino
+            //La conversacion_chatbot no existia, se creo con todo null
+              mensajeRespuesta = 'no_autoriza'; // plantilla notificacion_llegada_no
+            break;
+
+            case 'Si, ya llegué':
+
+                conversation.autorizacion = true;
+                conversation.tipo_formulario = 2;
+                this.actualizarConversacion(conversation);
+                llegadasController.consultaExisteLlegadaADestino(conversation,req);
+                mensajeRespuesta = '';
+
+            break;
+
             default:
              /* mensajeRespuesta = `Gracias 🙂, ten presente que no puedo reconocer imágenes, audios, ni emojis. Nos podemos comunicar por medio de texto o digitando el número de las opciones que te indico en mi pregunta.
 Para iniciar este chat 💬 debes autorizar el uso de tus datos. ✅ 
@@ -2028,7 +2043,8 @@ Responde:
     }
 
     //Envia plantillas en mensaje inicial y seleccion de formulario
-    if(conversation.conversation_start == true && !conversation.tipo_formulario ){
+    if(conversation.conversation_start == true && !conversation.tipo_formulario && req.body.incomingMessage !== 'Si, ya llegué' ){
+      console.log('::!SI YA LLEGUE ENTRA A PLANTILLA::');
         whatsappMessageController.sendMessageWhatsapp({
           'to': req.body['message.from'],
             'conversationId': req.body.conversationId,
@@ -2048,8 +2064,9 @@ Responde:
             'reportUrl': 'https://webhook.site/681229d0-1961-4b03-b9f7-113b37636538'
         });
 
-    }else{
-        
+    }else if( req.body.incomingMessage !== 'Si, ya llegué' ){
+      console.log('::!SI YA LLEGUE ENTRA A TEXTO::', req.body);
+
         whatsappMessageController.sendMessageWhatsapp({
           'to': req.body['message.from'],
             'conversationId': req.body.conversationId,
