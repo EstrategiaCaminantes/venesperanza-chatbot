@@ -1975,7 +1975,7 @@ Todos nuestros servicios son GRATUITOS, no tenemos intermediarios ni tramitadore
 
             case 'No, en camino': //Respuesta cuando llega por la notificacion de reporte de llegada y selecciona No en camino
             //La conversacion_chatbot no existia, se creo con todo null
-              mensajeRespuesta = 'no_autoriza'; // plantilla notificacion_llegada_no
+              mensajeRespuesta = 'notificacion_llegada_no'; // plantilla notificacion_llegada_no
             break;
 
             case 'Si, ya llegué':
@@ -2173,7 +2173,20 @@ exports.nuevaConversacion = async function (req) {
       var newprofile = params['contact.displayName'].replace(/[^\ñ\Ñ\ü\Ü\á\Á\é\É\í\Í\ó\Ó\ú\Ú\w\s]/gi, ''); //version messagebird
     //var newprofile = params['contact.firstName'].replace(/[^\ñ\Ñ\ü\Ü\á\Á\é\É\í\Í\ó\Ó\ú\Ú\w\s]/gi, ''); //version messagebird
 
-      const nuevaconversacion = {
+    if(req.body.incomingMessage === 'Si, ya llegué' || req.body.incomingMessage === 'No, en camino'){
+       nuevaconversacion = {
+        //waId: params.WaId,
+        //waId: params.contact.msisdn, //messagebird
+        waId: params.contactPhoneNumber,
+        profileName: newprofile,
+        conversation_start: true,
+        autorizacion: true,
+        tipo_formulario: null,
+        created_at: new Date()
+
+      }
+    }else{
+       nuevaconversacion = {
         //waId: params.WaId,
         //waId: params.contact.msisdn, //messagebird
         waId: params.contactPhoneNumber,
@@ -2184,6 +2197,8 @@ exports.nuevaConversacion = async function (req) {
         created_at: new Date()
 
       }
+    }
+      
       //console.log('NUEVA CONVERSACION: ', nuevaconversacion);
 
       //connection.query(sqlnuevo, nuevaconversacion, (error, results) => {
@@ -2200,6 +2215,7 @@ exports.nuevaConversacion = async function (req) {
                     'text': mensajeRespuesta,
                   }
           });
+        
         }else{
           //console.log('RESULTS QUERY NUEVO: ', results);
           //consultaConversacion(nuevaconversacion.waId);
@@ -2242,6 +2258,8 @@ exports.consultaConversacion = async function (whatsappID, req) {
             //console.log('REQUEST ID YA EXISTE')
               //Ignorar
               //return;
+              
+
           } else {
             /*
             console.log(':::ENTRA A ACTUALIZAR MESSAGEBIRD REQUEST::::', req.body.messageBirdRequestId);
@@ -2281,8 +2299,40 @@ exports.consultaConversacion = async function (whatsappID, req) {
               //autorizacionTratamientoDatos($conversation)
             }else if(!$conversation.tipo_formulario){
 
-              //seleccionarFormulario($conversation); //llamado en app.js
-              this.seleccionarFormulario($conversation, req);
+              if(req.body.incomingMessage == 'Si, ya llegué'){
+
+                //ac
+                $conversation.tipo_formulario = 2;
+                this.actualizarConversacion($conversation);
+                llegadasController.consultaExisteLlegadaADestino($conversation,req);
+
+              }else if(req.body.incomingMessage == 'No, en camino'){
+
+                mensajeRespuesta = 'notificacion_llegada_no';
+
+                whatsappMessageController.sendMessageWhatsapp({
+                  'to': req.body['message.from'],
+                    'conversationId': req.body.conversationId,
+                    'type': 'hsm',
+                    'content': {
+                      'hsm': {
+                        'namespace': 'e3e14847_97d6_4731_a155_2a089c961b5d',
+                        //'templateName': 'welcome',
+                        'templateName': mensajeRespuesta,
+                        'language': {
+                          'policy': 'deterministic',
+                          'code': 'es',
+                        },
+                        //params: [{ default: 'Bob' }, { default: 'tomorrow!' }],
+                      }
+                        },
+                    'reportUrl': 'https://webhook.site/681229d0-1961-4b03-b9f7-113b37636538'
+                });
+              }else{
+                //seleccionarFormulario($conversation); //llamado en app.js
+                this.seleccionarFormulario($conversation, req);
+              }
+              
 
             }else if($conversation.tipo_formulario == 1){
               const sqlencuesta = `SELECT * FROM encuesta where waId = '${whatsappID}'`;
