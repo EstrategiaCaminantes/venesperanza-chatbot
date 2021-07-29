@@ -4,6 +4,8 @@ var autorizacionTratamientoDatosController = require('./autorizacionTratamientoD
 var encuestaController = require('./encuesta.controller');
 var llegadasController = require('./llegadas.controller');
 var actualizarDatosContactoController = require('./actualizarDatosContacto.controller');
+var notificacionReporteLlegadaController = require('./notificacionReporteLlegada.controller');
+
 var db = require('../db');
 
 function errorLog(title,msg) {
@@ -1975,6 +1977,14 @@ Todos nuestros servicios son GRATUITOS, no tenemos intermediarios ni tramitadore
 
             case 'No, en camino': //Respuesta cuando llega por la notificacion de reporte de llegada y selecciona No en camino
             //La conversacion_chatbot no existia, se creo con todo null
+
+              //actualiza registro en 'notificacion_reporte_llegada' 
+              respuesta = {
+                waId: req.body.contactPhoneNumber,
+                respuesta: 'No, en camino',
+                reenviar: 1
+              }
+              notificacionReporteLlegadaController.actualizarNotificacionLlegada(respuesta);
               mensajeRespuesta = 'notificacion_llegada_no'; // plantilla notificacion_llegada_no
             break;
 
@@ -1984,6 +1994,14 @@ Todos nuestros servicios son GRATUITOS, no tenemos intermediarios ni tramitadore
                 conversation.tipo_formulario = 2;
                 this.actualizarConversacion(conversation);
                 llegadasController.consultaExisteLlegadaADestino(conversation,req);
+
+                respuesta = {
+                  waId: req.body.contactPhoneNumber,
+                  respuesta: 'Si, ya llegué',
+                  reenviar: 0
+                }
+                notificacionReporteLlegadaController.actualizarNotificacionLlegada(respuesta);
+
                 mensajeRespuesta = '';
 
             break;
@@ -2252,7 +2270,7 @@ exports.consultaConversacion = async function (whatsappID, req) {
         db.query(sqlRequest, (errorResult, resultRequest) => {
             if (errorResult) {errorLog('dbquery.error',errorResult);throw errorResult;}
           if(resultRequest.length > 0){
-
+            // To do: validar = 0
             //db.end();
             //console.log('::CIERRO CONEXION DATABASE CUANDO MESSAGEID EXISTE::');
             //console.log('REQUEST ID YA EXISTE')
@@ -2305,8 +2323,21 @@ exports.consultaConversacion = async function (whatsappID, req) {
                 $conversation.tipo_formulario = 2;
                 this.actualizarConversacion($conversation);
                 llegadasController.consultaExisteLlegadaADestino($conversation,req);
+                respuesta = {
+                  waId: req.body.contactPhoneNumber,
+                  respuesta: 'Si, ya llegué',
+                  reenviar: 0
+                }
+                notificacionReporteLlegadaController.actualizarNotificacionLlegada(respuesta );
 
               }else if(req.body.incomingMessage == 'No, en camino'){
+
+                respuesta = {
+                  waId: req.body.contactPhoneNumber,
+                  respuesta: 'No, en camino',
+                  reenviar: 1
+                }
+                notificacionReporteLlegadaController.actualizarNotificacionLlegada(respuesta );
 
                 mensajeRespuesta = 'notificacion_llegada_no';
 
@@ -2367,20 +2398,67 @@ exports.consultaConversacion = async function (whatsappID, req) {
               });
             }else if($conversation.tipo_formulario == 3){
 
-              const sqlactualizardatos = `SELECT * FROM datos_actualizados where waId = '${whatsappID}'`;
+              if(req.body.incomingMessage == 'Si, ya llegué'){
 
-              //connection.query(sqlactualizardatos, (error, actualizardatos) => {
-              db.query(sqlactualizardatos, (error, actualizardatos) => {
-                if (error) {errorLog('dbquery.error',error);throw error;}
-
-                if (actualizardatos.length > 0) {
-                  //console.log('ENCUESTA ES: ', actualizardatos[0]);
-                  //conversacion($conversation , actualizardatos[0]); //llama a la funcion en app.js
-                  this.conversacion($conversation, actualizardatos[0], req); //llama a funcion en conversacionController
-
+                //ac
+                $conversation.tipo_formulario = 2;
+                this.actualizarConversacion($conversation);
+                llegadasController.consultaExisteLlegadaADestino($conversation,req);
+                respuesta = {
+                  waId: req.body.contactPhoneNumber,
+                  respuesta: 'Si, ya llegué',
+                  reenviar: 0
                 }
+                notificacionReporteLlegadaController.actualizarNotificacionLlegada(respuesta );
 
-              });
+              }else if(req.body.incomingMessage == 'No, en camino'){
+
+                respuesta = {
+                  waId: req.body.contactPhoneNumber,
+                  respuesta: 'No, en camino',
+                  reenviar: 1
+                }
+                notificacionReporteLlegadaController.actualizarNotificacionLlegada(respuesta );
+
+                mensajeRespuesta = 'notificacion_llegada_no';
+
+                whatsappMessageController.sendMessageWhatsapp({
+                  'to': req.body['message.from'],
+                    'conversationId': req.body.conversationId,
+                    'type': 'hsm',
+                    'content': {
+                      'hsm': {
+                        'namespace': 'e3e14847_97d6_4731_a155_2a089c961b5d',
+                        //'templateName': 'welcome',
+                        'templateName': mensajeRespuesta,
+                        'language': {
+                          'policy': 'deterministic',
+                          'code': 'es',
+                        },
+                        //params: [{ default: 'Bob' }, { default: 'tomorrow!' }],
+                      }
+                        },
+                    'reportUrl': 'https://webhook.site/681229d0-1961-4b03-b9f7-113b37636538'
+                });
+              }else{
+
+                const sqlactualizardatos = `SELECT * FROM datos_actualizados where waId = '${whatsappID}'`;
+
+                //connection.query(sqlactualizardatos, (error, actualizardatos) => {
+                db.query(sqlactualizardatos, (error, actualizardatos) => {
+                  if (error) {errorLog('dbquery.error',error);throw error;}
+
+                  if (actualizardatos.length > 0) {
+                    //console.log('ENCUESTA ES: ', actualizardatos[0]);
+                    //conversacion($conversation , actualizardatos[0]); //llama a la funcion en app.js
+                    this.conversacion($conversation, actualizardatos[0], req); //llama a funcion en conversacionController
+
+                  }
+
+                });
+              }
+
+              
             }
           }
         });
