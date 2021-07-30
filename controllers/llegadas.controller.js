@@ -99,8 +99,8 @@ exports.actualizarLlegadaEncuesta = async function($llegadaEncuesta){
 
     try {
         //consulta encuesta con $llegadaEncuesta waId, toma id_encuesta y se lo asigna a llegadas where waid = encuesta.waId;
-    //const sqlConsultaEncuesta = `SELECT id FROM encuesta WHERE waId = '${$llegadaEncuesta.waId}' AND tipo_documento = '${$llegadaEncuesta.tipo_documento}' AND numero_documento = '${$llegadaEncuesta.numero_documento}'`;
-    const sqlConsultaEncuesta = `SELECT id FROM encuesta WHERE tipo_documento = '${$llegadaEncuesta.tipo_documento}' AND numero_documento = '${$llegadaEncuesta.numero_documento}'`;
+    const sqlConsultaEncuesta = `SELECT id FROM encuesta WHERE waId = '${$llegadaEncuesta.waId}' AND tipo_documento = '${$llegadaEncuesta.tipo_documento}' AND numero_documento = '${$llegadaEncuesta.numero_documento}'`;
+    //const sqlConsultaEncuesta = `SELECT id FROM encuesta WHERE tipo_documento = '${$llegadaEncuesta.tipo_documento}' AND numero_documento = '${$llegadaEncuesta.numero_documento}'`;
 
     //connection.query(sqlConsultaEncuesta, (error, encuesta) => {
     db.query(sqlConsultaEncuesta, (error, encuesta) => {
