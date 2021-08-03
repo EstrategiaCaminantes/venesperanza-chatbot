@@ -1924,8 +1924,7 @@ Escribe tu número de teléfono en números 📞` ;
                 },
                 //params: [{ default: 'Bob' }, { default: 'tomorrow!' }],
               }
-                },
-            'reportUrl': 'https://webhook.site/681229d0-1961-4b03-b9f7-113b37636538'
+                }
         });
 
     }else {
@@ -1936,8 +1935,7 @@ Escribe tu número de teléfono en números 📞` ;
           'type': 'text',
           'content': {
                   'text': mensajeRespuesta,
-                },
-          'reportUrl': 'https://webhook.site/681229d0-1961-4b03-b9f7-113b37636538'
+                }
         });
       }
 
@@ -2162,8 +2160,7 @@ exports.consultaConversacion = async function (whatsappID, req) {
                         },
                         //params: [{ default: 'Bob' }, { default: 'tomorrow!' }],
                       }
-                        },
-                    'reportUrl': 'https://webhook.site/681229d0-1961-4b03-b9f7-113b37636538'
+                        }
                 });
               }else{
                 //seleccionarFormulario($conversation); //llamado en app.js
@@ -2246,8 +2243,7 @@ exports.consultaConversacion = async function (whatsappID, req) {
                         },
                         //params: [{ default: 'Bob' }, { default: 'tomorrow!' }],
                       }
-                        },
-                    'reportUrl': 'https://webhook.site/681229d0-1961-4b03-b9f7-113b37636538'
+                        }
                 });
               }else{
                 const sqlactualizardatos = `SELECT * FROM datos_actualizados where waId = '${whatsappID}'`;
