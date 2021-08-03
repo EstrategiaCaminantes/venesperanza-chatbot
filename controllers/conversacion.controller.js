@@ -1574,7 +1574,7 @@ En cuál otro lugar te encuentras?`;
 
           }else if(conversation.tipo_formulario == 3){
             //$formulario es actualizar datos
-            console.log('ENTRA EN CONVERSA A TIPO FORMULARI == 3', $formulario.pregunta);
+            //console.log('ENTRA EN CONVERSA A TIPO FORMULARI == 3', $formulario.pregunta);
 
             switch ($formulario.pregunta) {
               //selecciona actualizar datos
