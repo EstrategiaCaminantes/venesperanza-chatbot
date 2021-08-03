@@ -2130,7 +2130,8 @@ exports.consultaConversacion = async function (whatsappID, req) {
                 respuesta = {
                   waId: req.body.contactPhoneNumber,
                   respuesta: 'Si, ya llegué',
-                  reenviar: 0
+                  reenviar: 0,
+                  updated_at: new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '')
                 }
                 notificacionReporteLlegadaController.actualizarNotificacionLlegada(respuesta );
 
@@ -2139,7 +2140,8 @@ exports.consultaConversacion = async function (whatsappID, req) {
                 respuesta = {
                   waId: req.body.contactPhoneNumber,
                   respuesta: 'No, en camino',
-                  reenviar: 1
+                  reenviar: 1,
+                  updated_at: new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '')
                 }
                 notificacionReporteLlegadaController.actualizarNotificacionLlegada(respuesta );
 
@@ -2201,7 +2203,7 @@ exports.consultaConversacion = async function (whatsappID, req) {
 
               });
             }else if($conversation.tipo_formulario == 3){
-              console.log('::ENTRO A TIPO FORMULARIO 3');
+              //console.log('::ENTRO A TIPO FORMULARIO 3');
 
               if(req.body.incomingMessage == 'Si, ya llegué'){
 
@@ -2212,7 +2214,8 @@ exports.consultaConversacion = async function (whatsappID, req) {
                 respuesta = {
                   waId: req.body.contactPhoneNumber,
                   respuesta: 'Si, ya llegué',
-                  reenviar: 0
+                  reenviar: 0,
+                  updated_at: new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '')
                 }
                 notificacionReporteLlegadaController.actualizarNotificacionLlegada(respuesta );
 
@@ -2221,7 +2224,8 @@ exports.consultaConversacion = async function (whatsappID, req) {
                 respuesta = {
                   waId: req.body.contactPhoneNumber,
                   respuesta: 'No, en camino',
-                  reenviar: 1
+                  reenviar: 1,
+                  updated_at: new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '')
                 }
                 notificacionReporteLlegadaController.actualizarNotificacionLlegada(respuesta );
 
