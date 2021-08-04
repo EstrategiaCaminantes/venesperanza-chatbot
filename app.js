@@ -5,7 +5,7 @@ const nodemon = require('nodemon');
 const app = express();
 
 var conversacionController = require('./controllers/conversacion.controller');
-var notificacionesController = require('./controllers/notificaciones.controller');
+var notificacionReporteLlegadaController = require('./controllers/notificacionReporteLlegada.controller');
 var whatsappMessageController = require('./controllers/whatsappMessage.controller');
 var messagebird = require('messagebird')(process.env.MB_KEY, 50000);
 
@@ -27,10 +27,20 @@ function errorLog(title, msg) {
     }
 }
 
+//api conversacion chatbot whatsapp
 app.post('/whatsapp', async (req, res) => {
 
     errorLog('::::API-req.body:::::',req.body);
     conversacionController.consultaConversacion(req.body.contactPhoneNumber,req);
+
+});
+
+//api estado de notificaciones de reporte de llegada no enviados
+app.post('/estado_whatsapp', async (req, res) => {
+
+    errorLog('::::API Notificaciones reporte llegada No enviados :::::',req);
+    notificacionReporteLlegadaController.crearEstadoNotificaciones(req);
+
 
 });
 

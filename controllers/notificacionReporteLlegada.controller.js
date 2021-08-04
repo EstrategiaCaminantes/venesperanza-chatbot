@@ -36,3 +36,20 @@ exports.actualizarNotificacionLlegada = async function ($respuestaDatos) {
     }
 
 }
+
+exports.crearEstadoNotificaciones = async (req) => {
+    try {
+        if(req.body.error){
+            nuevo_error = req.body.error;
+
+            console.log('SI HAY ERROR!!:: ', nuevo_error.code);
+            console.log('Description!!:: ', nuevo_error.description);
+
+            
+            mensaje = req.body.message;
+            console.log('MENSAJE identificador:: ', mensaje.id);
+        }
+    } catch (error) {
+        errorLog(':::Error en crear estado Notificaciones no enviadas::', error);
+    }
+}
