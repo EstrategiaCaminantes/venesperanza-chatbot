@@ -2075,7 +2075,7 @@ Responde:
             'type': 'hsm',
             'content': {
               'hsm': {
-                'namespace': 'e3e14847_97d6_4731_a155_2a089c961b5d',
+                'namespace': '88fc3eef_c424_4998_bdc3_eddfb12c1283',
                 //'templateName': 'welcome',
                 'templateName': mensajeRespuesta,
                 'language': {
@@ -2084,20 +2084,17 @@ Responde:
                 },
                 //params: [{ default: 'Bob' }, { default: 'tomorrow!' }],
               }
-                },
-            'reportUrl': 'https://webhook.site/681229d0-1961-4b03-b9f7-113b37636538'
+                }
         });
 
     }else{
-        
         whatsappMessageController.sendMessageWhatsapp({
           'to': req.body['message.from'],
             'conversationId': req.body.conversationId,
           'type': 'text',
           'content': {
                   'text': mensajeRespuesta,
-                },
-          'reportUrl': 'https://webhook.site/681229d0-1961-4b03-b9f7-113b37636538'
+                }
         });
       }
 
