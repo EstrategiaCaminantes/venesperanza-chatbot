@@ -1915,7 +1915,8 @@ Escribe tu número de teléfono en números 📞` ;
             'type': 'hsm',
             'content': {
               'hsm': {
-                'namespace': 'e3e14847_97d6_4731_a155_2a089c961b5d',
+                //'namespace': '88fc3eef_c424_4998_bdc3_eddfb12c1283',
+                'namespace': process.env.WHATSAPP_NAMESPACE,
                 //'templateName': 'welcome',
                 'templateName': mensajeRespuesta,
                 'language': {
@@ -1927,8 +1928,7 @@ Escribe tu número de teléfono en números 📞` ;
                 }
         });
 
-    }else {
-
+    }else{
         whatsappMessageController.sendMessageWhatsapp({
           'to': req.body['message.from'],
             'conversationId': req.body.conversationId,
@@ -2151,7 +2151,8 @@ exports.consultaConversacion = async function (whatsappID, req) {
                     'type': 'hsm',
                     'content': {
                       'hsm': {
-                        'namespace': 'e3e14847_97d6_4731_a155_2a089c961b5d',
+                        //'namespace': '88fc3eef_c424_4998_bdc3_eddfb12c1283',
+                        'namespace': process.env.WHATSAPP_NAMESPACE,
                         //'templateName': 'welcome',
                         'templateName': mensajeRespuesta,
                         'language': {
@@ -2234,7 +2235,8 @@ exports.consultaConversacion = async function (whatsappID, req) {
                     'type': 'hsm',
                     'content': {
                       'hsm': {
-                        'namespace': 'e3e14847_97d6_4731_a155_2a089c961b5d',
+                        //'namespace': '88fc3eef_c424_4998_bdc3_eddfb12c1283',
+                        'namespace': process.env.WHATSAPP_NAMESPACE,
                         //'templateName': 'welcome',
                         'templateName': mensajeRespuesta,
                         'language': {

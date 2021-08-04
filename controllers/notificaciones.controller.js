@@ -22,7 +22,8 @@ exports.notificacionReportarLlegada = async function (req,res) {
                 'type': 'hsm',
                   'content': {
                     'hsm': {
-                      'namespace': 'e3e14847_97d6_4731_a155_2a089c961b5d',
+                      //'namespace': 'e3e14847_97d6_4731_a155_2a089c961b5d',
+                      'namespace': process.env.WHATSAPP_NAMESPACE,
                       //'templateName': 'welcome',
                       'templateName': 'arrival_report',
                       'language': {
