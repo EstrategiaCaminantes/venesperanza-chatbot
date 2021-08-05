@@ -1910,8 +1910,10 @@ Escribe tu número de teléfono en números 📞` ;
     if(conversation.conversation_start == true && !conversation.tipo_formulario ){
   
         whatsappMessageController.sendMessageWhatsapp({
-          'to': req.body['message.from'],
+            'to': req.body['message.from'],
             'conversationId': req.body.conversationId,
+            //'to': '573885049604',
+            //'conversationId': '2335435432432423458096840935802849023890834508884584423483294',
             'type': 'hsm',
             'content': {
               'hsm': {
@@ -1925,17 +1927,21 @@ Escribe tu número de teléfono en números 📞` ;
                 },
                 //params: [{ default: 'Bob' }, { default: 'tomorrow!' }],
               }
-                }
+                },
+                //'reportUrl': process.env.reportUrl_CHATBOT
         });
 
     }else{
         whatsappMessageController.sendMessageWhatsapp({
+          //'to': '573885049604',
           'to': req.body['message.from'],
-            'conversationId': req.body.conversationId,
+          'conversationId': req.body.conversationId,
+          //'conversationId': '2335435432432423458096840935802849023890834508884584423483294',
           'type': 'text',
           'content': {
                   'text': mensajeRespuesta,
-                }
+                },
+          //'reportUrl': process.env.reportUrl_CHATBOT
         });
       }
 
@@ -1991,7 +1997,8 @@ Por favor respóndeme con el número correspondiente a lo que quieres hacer:\n
             'type': 'text',
             'content': {
                     'text': mensajeRespuesta,
-                  }
+                  },
+            //'reportUrl': process.env.reportUrl_CHATBOT
           });
 
         }
@@ -2011,7 +2018,8 @@ Por favor respóndeme con el número correspondiente a lo que quieres hacer:\n
               'type': 'text',
               'content': {
                       'text': mensajeRespuesta,
-                    }
+                    },
+              //'reportUrl': process.env.reportUrl_CHATBOT
             });
 
     }
@@ -2055,7 +2063,8 @@ exports.nuevaConversacion = async function (req) {
             'type': 'text',
             'content': {
                     'text': mensajeRespuesta,
-                  }
+                  },
+            //'reportUrl': process.env.reportUrl_CHATBOT
           });
         
         }else{
@@ -2161,7 +2170,8 @@ exports.consultaConversacion = async function (whatsappID, req) {
                         },
                         //params: [{ default: 'Bob' }, { default: 'tomorrow!' }],
                       }
-                        }
+                        },
+                    //'reportUrl': process.env.reportUrl_CHATBOT
                 });
               }else{
                 //seleccionarFormulario($conversation); //llamado en app.js
@@ -2245,7 +2255,8 @@ exports.consultaConversacion = async function (whatsappID, req) {
                         },
                         //params: [{ default: 'Bob' }, { default: 'tomorrow!' }],
                       }
-                        }
+                        },
+                        //'reportUrl': process.env.reportUrl_CHATBOT
                 });
               }else{
                 const sqlactualizardatos = `SELECT * FROM datos_actualizados where waId = '${whatsappID}'`;

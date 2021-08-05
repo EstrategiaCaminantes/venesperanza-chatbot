@@ -38,7 +38,7 @@ app.post('/whatsapp', async (req, res) => {
 //api estado de notificaciones de reporte de llegada no enviados
 app.post('/estado_whatsapp', async (req, res) => {
 
-    errorLog('::::API Notificaciones reporte llegada No enviados :::::',req);
+    //errorLog('::::API Notificaciones reporte llegada No enviados :::::',req.body);
     notificacionReporteLlegadaController.crearEstadoNotificaciones(req);
 
 
