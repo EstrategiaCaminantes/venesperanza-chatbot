@@ -30,7 +30,8 @@ whatsappMessageController.sendMessageWhatsapp({
             'type': 'text',
             'content': {
                     'text': mensajeRespuesta,
-                  }
+                  },
+                  'reportUrl': process.env.reportUrl_CHATBOT
           });
       }else{
 
@@ -85,7 +86,8 @@ exports.crearEncuesta = async function($conversation, req) {
           'type': 'text',
           'content': {
                   'text': mensajeRespuesta,
-                }
+                },
+          'reportUrl': process.env.WP_REPORT_URL
         });
 
     });

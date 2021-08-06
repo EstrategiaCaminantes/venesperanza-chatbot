@@ -1909,15 +1909,14 @@ Escribe tu número de teléfono en números 📞` ;
     //if(conversation.conversation_start == true && !conversation.tipo_formulario && req.body.incomingMessage !== 'Si, ya llegué' ){
     if(conversation.conversation_start == true && !conversation.tipo_formulario ){
   
+      
         whatsappMessageController.sendMessageWhatsapp({
             'to': req.body['message.from'],
             'conversationId': req.body.conversationId,
-            //'to': '573885049604',
-            //'conversationId': '2335435432432423458096840935802849023890834508884584423483294',
             'type': 'hsm',
             'content': {
               'hsm': {
-                //'namespace': '88fc3eef_c424_4998_bdc3_eddfb12c1283',
+                //'namespace': 'asfasdfwe23',
                 'namespace': process.env.WHATSAPP_NAMESPACE,
                 //'templateName': 'welcome',
                 'templateName': mensajeRespuesta,
@@ -1928,21 +1927,82 @@ Escribe tu número de teléfono en números 📞` ;
                 //params: [{ default: 'Bob' }, { default: 'tomorrow!' }],
               }
                 },
-                //'reportUrl': process.env.reportUrl_CHATBOT
+                'reportUrl': process.env.WP_REPORT_URL
         });
 
+
+        //para send()
+        /*
+        whatsappMessageController.sendMessageWhatsapp({
+          //'to': req.body['message.from'],
+          //'conversationId': req.body.conversationId,
+          'to': '573885049604',
+          //'from': '2335435432432423458096840935802849023890834508884584423483294',
+          'from': process.env.MB_CHANEL_ID,
+          //'channelId': process.env.MB_CHANEL_ID,
+          'type': 'hsm',
+          'content': {
+            'hsm': {
+              //'namespace': '88fc3eef_c424_4998_bdc3_eddfb12c1283',
+              'namespace': process.env.WHATSAPP_NAMESPACE,
+              //'templateName': 'welcome',
+              'templateName': mensajeRespuesta,
+              'language': {
+                'policy': 'deterministic',
+                'code': 'es',
+              },
+              //params: [{ default: 'Bob' }, { default: 'tomorrow!' }],
+            }
+              },
+              'reportUrl': process.env.WP_REPORT_URL
+      });*/
+
     }else{
+      
         whatsappMessageController.sendMessageWhatsapp({
           //'to': '573885049604',
           'to': req.body['message.from'],
           'conversationId': req.body.conversationId,
+          'namespace': process.env.WHATSAPP_NAMESPACE,
           //'conversationId': '2335435432432423458096840935802849023890834508884584423483294',
           'type': 'text',
           'content': {
                   'text': mensajeRespuesta,
                 },
-          //'reportUrl': process.env.reportUrl_CHATBOT
+          'reportUrl': process.env.WP_REPORT_URL
         });
+        
+
+        
+
+        //para send()
+        /*
+        whatsappMessageController.sendMessageWhatsapp({
+          //'to': req.body['message.from'],
+          //'conversationId': req.body.conversationId,
+          'to': '573885049604',
+          //'from': '2335435432432423458096840935802849023890834508884584423483294',
+          'from': process.env.MB_CHANEL_ID,
+
+          'channelId': process.env.MB_CHANEL_ID,
+          'type': 'hsm',
+          'content': {
+            'hsm': {
+              //'namespace': '88fc3eef_c424_4998_bdc3_eddfb12c1283',
+              'namespace': process.env.WHATSAPP_NAMESPACE,
+              //'templateName': 'welcome',
+              'templateName': mensajeRespuesta,
+              'language': {
+                'policy': 'deterministic',
+                'code': 'es',
+              },
+              //params: [{ default: 'Bob' }, { default: 'tomorrow!' }],
+            }
+              },
+              'reportUrl': process.env.reportUrl_CHATBOT
+        });
+        */
+        
       }
 
   }
@@ -1998,7 +2058,7 @@ Por favor respóndeme con el número correspondiente a lo que quieres hacer:\n
             'content': {
                     'text': mensajeRespuesta,
                   },
-            //'reportUrl': process.env.reportUrl_CHATBOT
+            'reportUrl': process.env.WP_REPORT_URL
           });
 
         }
@@ -2019,7 +2079,7 @@ Por favor respóndeme con el número correspondiente a lo que quieres hacer:\n
               'content': {
                       'text': mensajeRespuesta,
                     },
-              //'reportUrl': process.env.reportUrl_CHATBOT
+              'reportUrl': process.env.WP_REPORT_URL
             });
 
     }
@@ -2057,14 +2117,14 @@ exports.nuevaConversacion = async function (req) {
         if(error){
           mensajeRespuesta = "Su Nombre de perfil de Whatsapp contiene emoticones, por favor quitelos momentaneamente para interactuar con nuestro chat e intente nuevamente";
 
-          sendMessageWhatsapp({
+          whatsappMessageController.sendMessageWhatsapp({
             'to': req.body['message.from'],
               'conversationId': req.body.conversationId,
             'type': 'text',
             'content': {
                     'text': mensajeRespuesta,
                   },
-            //'reportUrl': process.env.reportUrl_CHATBOT
+            'reportUrl': process.env.WP_REPORT_URL
           });
         
         }else{
@@ -2171,7 +2231,7 @@ exports.consultaConversacion = async function (whatsappID, req) {
                         //params: [{ default: 'Bob' }, { default: 'tomorrow!' }],
                       }
                         },
-                    //'reportUrl': process.env.reportUrl_CHATBOT
+                    'reportUrl': process.env.WP_REPORT_URL
                 });
               }else{
                 //seleccionarFormulario($conversation); //llamado en app.js
@@ -2256,7 +2316,7 @@ exports.consultaConversacion = async function (whatsappID, req) {
                         //params: [{ default: 'Bob' }, { default: 'tomorrow!' }],
                       }
                         },
-                        //'reportUrl': process.env.reportUrl_CHATBOT
+                        'reportUrl': process.env.WP_REPORT_URL
                 });
               }else{
                 const sqlactualizardatos = `SELECT * FROM datos_actualizados where waId = '${whatsappID}'`;

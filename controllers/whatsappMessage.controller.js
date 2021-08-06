@@ -14,6 +14,7 @@ exports.sendMessageWhatsapp = async function(params, res, next){
         }
 
       try {
+          
         messagebird.conversations.reply(params.conversationId, params, function (err, response) {
             if (err) {
                 errorLog('sendMessageWhatsapp-err',err);
@@ -23,6 +24,13 @@ exports.sendMessageWhatsapp = async function(params, res, next){
             //console.log('::CIERRO CONEXION DB EN SENDMESSAGEWHATSAPP:::');
             
         });
+        /*
+        messagebird.conversations.send(params, function (err, response) {
+            if (err) {
+            return console.log(err);
+            }
+            console.log(response);
+          });*/
     } catch (e) {
         errorLog('sendMessageWhatsapp-err',e);
     }
