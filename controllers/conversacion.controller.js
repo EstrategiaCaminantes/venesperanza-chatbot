@@ -1926,8 +1926,7 @@ Escribe tu número de teléfono en números 📞` ;
                 },
                 //params: [{ default: 'Bob' }, { default: 'tomorrow!' }],
               }
-                },
-                'reportUrl': process.env.WP_REPORT_URL
+                }
         });
 
 
@@ -1953,8 +1952,7 @@ Escribe tu número de teléfono en números 📞` ;
               },
               //params: [{ default: 'Bob' }, { default: 'tomorrow!' }],
             }
-              },
-              'reportUrl': process.env.WP_REPORT_URL
+              }
       });*/
 
     }else{
@@ -1968,8 +1966,7 @@ Escribe tu número de teléfono en números 📞` ;
           'type': 'text',
           'content': {
                   'text': mensajeRespuesta,
-                },
-          'reportUrl': process.env.WP_REPORT_URL
+                }
         });
         
 
@@ -2057,8 +2054,7 @@ Por favor respóndeme con el número correspondiente a lo que quieres hacer:\n
             'type': 'text',
             'content': {
                     'text': mensajeRespuesta,
-                  },
-            'reportUrl': process.env.WP_REPORT_URL
+                  }
           });
 
         }
@@ -2078,8 +2074,7 @@ Por favor respóndeme con el número correspondiente a lo que quieres hacer:\n
               'type': 'text',
               'content': {
                       'text': mensajeRespuesta,
-                    },
-              'reportUrl': process.env.WP_REPORT_URL
+                    }
             });
 
     }
@@ -2123,8 +2118,7 @@ exports.nuevaConversacion = async function (req) {
             'type': 'text',
             'content': {
                     'text': mensajeRespuesta,
-                  },
-            'reportUrl': process.env.WP_REPORT_URL
+                  }
           });
         
         }else{
@@ -2230,8 +2224,7 @@ exports.consultaConversacion = async function (whatsappID, req) {
                         },
                         //params: [{ default: 'Bob' }, { default: 'tomorrow!' }],
                       }
-                        },
-                    'reportUrl': process.env.WP_REPORT_URL
+                    }
                 });
               }else{
                 //seleccionarFormulario($conversation); //llamado en app.js
@@ -2315,8 +2308,7 @@ exports.consultaConversacion = async function (whatsappID, req) {
                         },
                         //params: [{ default: 'Bob' }, { default: 'tomorrow!' }],
                       }
-                        },
-                        'reportUrl': process.env.WP_REPORT_URL
+                        }
                 });
               }else{
                 const sqlactualizardatos = `SELECT * FROM datos_actualizados where waId = '${whatsappID}'`;

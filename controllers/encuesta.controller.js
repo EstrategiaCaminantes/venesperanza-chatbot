@@ -86,8 +86,7 @@ exports.crearEncuesta = async function($conversation, req) {
           'type': 'text',
           'content': {
                   'text': mensajeRespuesta,
-                },
-          'reportUrl': process.env.WP_REPORT_URL
+                }
         });
 
     });

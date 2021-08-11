@@ -124,8 +124,7 @@ exports.actualizarDatosContactoEncuesta = async function($datosContactoEncuesta)
             'type': 'text',
             'content': {
                     'text': mensajeRespuesta,
-                    },
-             'reportUrl': process.env.WP_REPORT_URL
+                    }
             });
 
         });
@@ -174,8 +173,7 @@ Tipo de documento 📇 Responde con el número de acuerdo a la opción correspon
           'type': 'text',
           'content': {
                   'text': mensajeRespuesta,
-                },
-            'reportUrl': process.env.WP_REPORT_URL
+                }
         });
 
       }else{
