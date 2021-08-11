@@ -40,13 +40,12 @@ exports.actualizarNotificacionLlegada = async function ($respuestaDatos) {
 exports.crearEstadoNotificaciones = async (req) => {
     try {
         //console.log('::REPORT URL ENTRA AL TRY::',req.body);
-        if(req.body.error && req.body.message.status === 'rejected'){
-            nuevo_error = req.body.error;
+        //if(req.body.error && req.body.message.status === 'rejected'){
             mensaje = req.body.message;
 
             const sqlEstadoWhatsapp = `SELECT *
                 FROM estado_whatsapp
-                WHERE message_id = '${mensaje.id}'`;
+                WHERE message_id = '${mensaje.id}' AND message_status = '${mensaje.status}'`;
 
                 db.query(sqlEstadoWhatsapp, (errorEstadoWhatsapp, resultEstadoWhatsapp) => {
                 if (errorEstadoWhatsapp) {errorLog('dbquery.error',errorEstadoWhatsapp);throw errorEstadoWhatsapp;}
@@ -54,13 +53,17 @@ exports.crearEstadoNotificaciones = async (req) => {
                     //console.log('::estadoWhatsapp NO EXISTE, VOY A CREARLO::');
                     const sqlEstadoWhatsappInsert = 'INSERT INTO estado_whatsapp SET ?';
 
-                    const nuevoEstadoWhatsapp = {
+                    let nuevoEstadoWhatsapp = {
                         message_id: mensaje.id,
                         message_status: mensaje.status,
-                        error_code: nuevo_error.code,
-                        error_description: nuevo_error.description,
                         created_at: new Date(),
                         updated_at: new Date()
+                    }
+
+                    if(req.body.error){
+                        nuevo_error = req.body.error;
+                        nuevoEstadoWhatsapp.error_code = nuevo_error.code;
+                        nuevoEstadoWhatsapp.error_description = nuevo_error.description;
                     }
                     //console.log('::NUEVO ESTADO WHATSAPP QUE VOY A CREAR::', nuevoEstadoWhatsapp);
                     //console.log('NUEVA CONVERSACION: ', nuevaconversacion);
@@ -74,7 +77,7 @@ exports.crearEstadoNotificaciones = async (req) => {
                     
                 }
             });
-        }   
+        //}   
     } catch (error) {
         errorLog(':::Error en crear estado Notificaciones no enviadas::', error);
     }
