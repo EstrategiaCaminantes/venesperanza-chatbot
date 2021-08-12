@@ -95,6 +95,8 @@ exports.actualizarLlegada = async function ($llegada) {
 
 }
 
+/*
+//Anterior
 exports.actualizarLlegadaEncuesta = async function($llegadaEncuesta){
 
     try {
@@ -122,6 +124,53 @@ exports.actualizarLlegadaEncuesta = async function($llegadaEncuesta){
 
       }
     });
+        
+    } catch (error) {
+        errorLog(':::Error en actualizarLlegadaEncuesta::', error);
+
+    }
+
+    
+  }
+  */
+
+  exports.actualizarLlegadaEncuesta = async function($llegadaEncuesta){
+
+    try {
+      //console.log('::entra a actualizarLlegada::',$llegadaEncuesta);
+      if($llegadaEncuesta.pregunta == 3){
+        //console.log('::VA A BUSCAR POR tipo y numero documento::');
+         sqlConsultaEncuesta = `SELECT id FROM encuesta WHERE tipo_documento = '${$llegadaEncuesta.tipo_documento}' 
+         AND numero_documento = '${$llegadaEncuesta.numero_documento}'`;
+
+      }else if($llegadaEncuesta.pregunta == 5 && !$llegadaEncuesta.id_encuesta){
+        //console.log('::VA A BUSCAR POR numero_contacto=numero_conto o =whatsapp o waid=waid::');
+        $whatsappLlegada = $llegadaEncuesta.waId.substring(2,12); //quita prefijos de whatsapp
+         sqlConsultaEncuesta = `SELECT id FROM encuesta WHERE numero_contacto = '${$llegadaEncuesta.numero_contacto}' 
+         OR numero_contacto = '${$whatsappLlegada}' OR waId = '${$llegadaEncuesta.waId}'`;
+
+      }
+
+      if(sqlConsultaEncuesta){
+        //console.log('::EXISTE SQLCONSULTA??:::');
+        db.query(sqlConsultaEncuesta, (error, encuesta) => {
+          if (error) console.log('ERROR EN ACTUALIZAR LLEGADA ENCUESTA:: ', error);
+
+          if (encuesta.length > 0) {
+            $llegadaEncuesta.id_encuesta = encuesta[0]['id'];
+            this.actualizarLlegada($llegadaEncuesta);
+
+          }else{
+           
+            this.actualizarLlegada($llegadaEncuesta);
+
+          }
+        });
+      }else{
+        console.log('::NO HAY SQLQUERY::');
+        this.actualizarLlegada($llegadaEncuesta);
+      }
+    
         
     } catch (error) {
         errorLog(':::Error en actualizarLlegadaEncuesta::', error);

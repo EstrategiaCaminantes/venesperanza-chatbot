@@ -31,7 +31,7 @@ whatsappMessageController.sendMessageWhatsapp({
             'content': {
                     'text': mensajeRespuesta,
                   },
-                  'reportUrl': process.env.reportUrl_CHATBOT
+                  //'reportUrl': process.env.reportUrl_CHATBOT
           });
       }else{
 

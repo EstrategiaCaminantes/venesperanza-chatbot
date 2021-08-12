@@ -1159,15 +1159,16 @@ Escribe el nombre del jefe de hogar`;
 
                       //if(pattern.test(req.body.Body)){
                       if(pattern.test(req.body.incomingMessage)){
-
+                        //console.log('::CUMPLE CON PATTERN::');
                         //$formulario.telefono = req.body.Body;
                         $formulario.numero_contacto = req.body.incomingMessage;
                             $formulario.pregunta += 1; //va a pregunta 5
 
                             
                             //actualizarLlegada($formulario); //llama a funcion en app.js
-                        llegadasController.actualizarLlegada($formulario); //llama a funcion en llegadas.controller.js
-
+                        ///llegadasController.actualizarLlegada($formulario); //llama a funcion en llegadas.controller.js
+                        llegadasController.actualizarLlegadaEncuesta($formulario);
+                        
                             mensajeRespuesta = `¿Esta línea de contacto está asociada a WhatsApp? Responde con el número de acuerdo a la opción correspondiente:
 1️⃣ Sí
 2️⃣ No`;
