@@ -907,32 +907,37 @@ Escribe tu número de contacto en números 📞` ;
 
                     //if(req.body.incomingMessage === 'NO'){
                     if(newVariableIncomingMessage === 'no'){
-                      $formulario.pregunta += 1;
+                      $formulario.pregunta += 1; // va a 16
                       //actualizarEncuesta($formulario);
                       encuestaController.actualizarEncuesta($formulario); //llama a funcion en encuestaController
 
-                      conversation.tipo_formulario = null;
-                      //conversacionController.actualizarConversacion(conversation); //llama a funcion en conversacionController
-                      this.actualizarConversacion(conversation);
-                      mensajeRespuesta = 'final_form_registro';
+                      //version anterior terminaba formulario
+                      //conversation.tipo_formulario = null;
+                      //this.actualizarConversacion(conversation);
+                      //mensajeRespuesta = 'final_form_registro';
+
+                      //nueva version:
+                      mensajeRespuesta = `¿Puedes darme el número de teléfono de un familiar o alguien que conozcas y con quien estés en contacto que viva en tu destino? \n
+– Si es posible avísales que podremos contactarlos y preguntar por ti, en caso de que no logremos un contacto directo contigo. (Envía el número de teléfono ó la palabra NO).`;
+
+
 
                     //}else if(emailregex.test(req.body.Body)) {
                     }else if(emailregex.test(req.body.incomingMessage)){
                       //console.log('TEST SI');
-                      $formulario.pregunta += 1;
+                      $formulario.pregunta += 1; //va a 16
                       //$formulario.correo_electronico = req.body.Body;
                       $formulario.correo_electronico = req.body.incomingMessage;
                       //actualizarEncuesta($formulario);
                       encuestaController.actualizarEncuesta($formulario); //llama a funcion en encuestaController
 
-                      conversation.tipo_formulario = null;
-                      //console.log('CONVERSACION ACTUALIZAR:: ', conversation);
+                      //anterior version:
+                      //conversation.tipo_formulario = null;
+                      //this.actualizarConversacion(conversation);
+                      //mensajeRespuesta = 'final_form_registro'
+                      mensajeRespuesta = `¿Puedes darme el número de teléfono de un familiar o alguien que conozcas y con quien estés en contacto que viva en tu destino? \n
+– Si es posible avísales que podremos contactarlos y preguntar por ti, en caso de que no logremos un contacto directo contigo. (Envía el número de teléfono ó la palabra NO).`;
 
-                      //actualizarConversacion(conversation); //llamado a funcion en app.js
-                      //conversacionController.actualizarConversacion(conversation);
-                      this.actualizarConversacion(conversation);
-
-                      mensajeRespuesta = 'final_form_registro'
 
                     }else{
                       mensajeRespuesta = `Gracias 🙂, ten presente que no puedo reconocer imágenes, audios, ni emojis. Nos podemos comunicar por medio de texto o digitando el número de las opciones que te indico en mi pregunta.
@@ -953,7 +958,193 @@ Escribe tu número de contacto en números 📞` ;
                 break;
 
                 case 16:
-                  mensajeRespuesta = `Ya has respondido el formulario. Gracias`
+                  try {
+                    variableIncomingMessage = req.body.incomingMessage.toLowerCase();
+                    const pattern = new RegExp('^[0-9]+$', 'i');
+                    //si la respuesta es NO-No-nO-no finaliza la encuesta
+                    if(variableIncomingMessage === 'no'){
+
+                      $formulario.pregunta = 19; //va a respuesta ya has respondido el formulario
+                      //actualizarEncuesta($formulario);
+                      encuestaController.actualizarEncuesta($formulario); //llama a funcion en encuestaController
+
+                      conversation.tipo_formulario = null;
+                      this.actualizarConversacion(conversation);
+                      mensajeRespuesta = 'final_form_registro';
+
+                    }else if(pattern.test(req.body.incomingMessage)){
+
+                      $formulario.telefono_conocido_destino = req.body.incomingMessage;
+                      $formulario.pregunta += 1; //va a 17
+                      //actualizarEncuesta($formulario);
+                      encuestaController.actualizarEncuesta($formulario); //llama a funcion en encuestaController
+
+                      mensajeRespuesta = `¿Cuál es tu parentesco con esta persona?. Envía el número de la opción correspondiente:\n
+1️⃣ Cónyuge
+2️⃣ Hijo/a
+3️⃣ Padre/madre
+4️⃣ Amigo
+5️⃣ Conocido
+6️⃣ Otro`;
+
+                    }else{
+                      mensajeRespuesta = `Gracias 🙂, ten presente que no puedo reconocer imágenes, audios, ni emojis. Nos podemos comunicar por medio de texto o digitando el número de las opciones que te indico en mi pregunta.\n
+¿Puedes darme el número de teléfono de un familiar o alguien que conozcas y con quien estés en contacto que viva en tu destino? \n
+– Si es posible avísales que podremos contactarlos y preguntar por ti, en caso de que no logremos un contacto directo contigo. (Envía el número de teléfono ó la palabra NO).` ;
+
+                    }
+                  } catch (error) {
+                    $formulario.pregunta = 16; //vuelve a 16
+
+                    encuestaController.actualizarEncuesta($formulario); //llama a funcion en encuestaController
+
+                    mensajeRespuesta = `Gracias 🙂, ten presente que no puedo reconocer imágenes, audios, ni emojis. Nos podemos comunicar por medio de texto o digitando el número de las opciones que te indico en mi pregunta.\n
+¿Puedes darme el número de teléfono de un familiar o alguien que conozcas y con quien estés en contacto que viva en tu destino? \n
+– Si es posible avísales que podremos contactarlos y preguntar por ti, en caso de que no logremos un contacto directo contigo. (Envía el número de teléfono ó la palabra NO).` ;
+
+                  }
+                break;
+
+                case 17:
+                  try {
+                    switch (req.body.incomingMessage) {
+
+                      case '1':
+                        $formulario.pregunta += 2; //finaliza queda en pregunta 19
+                        $formulario.parentesco_conocido_destino = 'Cónyuge';
+                        
+                        encuestaController.actualizarEncuesta($formulario);
+
+                        conversation.tipo_formulario = null;
+                        this.actualizarConversacion(conversation);
+                        mensajeRespuesta = 'final_form_registro';
+
+                      break;
+
+                      case '2':
+                        $formulario.pregunta += 2; //finaliza queda en pregunta 19
+                        $formulario.parentesco_conocido_destino = 'Hijo/a';
+
+                        encuestaController.actualizarEncuesta($formulario);
+
+                        conversation.tipo_formulario = null;
+                        this.actualizarConversacion(conversation);
+                        mensajeRespuesta = 'final_form_registro';
+                      break;
+
+                      case '3':
+                        $formulario.pregunta += 2; //finaliza queda en pregunta 19
+                        $formulario.parentesco_conocido_destino = 'Padre/madre';
+
+                        encuestaController.actualizarEncuesta($formulario);
+
+                        conversation.tipo_formulario = null;
+                        this.actualizarConversacion(conversation);
+                        mensajeRespuesta = 'final_form_registro';
+
+                      break;
+
+                      case '4':
+                        $formulario.pregunta += 2; //finaliza queda en pregunta 19
+                        $formulario.parentesco_conocido_destino = 'Amigo';
+
+                        encuestaController.actualizarEncuesta($formulario);
+
+                        conversation.tipo_formulario = null;
+                        this.actualizarConversacion(conversation);
+                        mensajeRespuesta = 'final_form_registro';
+
+                      break;
+
+                      case '5':
+                        $formulario.pregunta += 2; //finaliza queda en pregunta 19
+                        $formulario.parentesco_conocido_destino = 'Conocido';
+
+                        encuestaController.actualizarEncuesta($formulario);
+
+                        conversation.tipo_formulario = null;
+                        this.actualizarConversacion(conversation);
+                        mensajeRespuesta = 'final_form_registro';
+
+                      break;
+
+                      case '6':
+                        $formulario.pregunta += 1; //va a pregunta 19
+                        $formulario.parentesco_conocido_destino = 'Otro';
+
+                        encuestaController.actualizarEncuesta($formulario);
+
+                        mensajeRespuesta = `Cuál otro parentesco?`;
+
+                      break;
+
+
+
+                      default:
+                        mensajeRespuesta = `Gracias 🙂, ten presente que no puedo reconocer imágenes, audios, ni emojis. Nos podemos comunicar por medio de texto o digitando el número de las opciones que te indico en mi pregunta.\n
+¿Cuál es tu parentesco con esta persona?. Envía el número de la opción correspondiente:\n
+1️⃣ Cónyuge
+2️⃣ Hijo/a
+3️⃣ Padre/madre
+4️⃣ Amigo
+5️⃣ Conocido
+6️⃣ Otro`;
+                      break;
+                    }
+                    
+                  } catch (error) {
+                    $formulario.pregunta = 17; //vuelve a 17
+                    encuestaController.actualizarEncuesta($formulario); 
+                    mensajeRespuesta = `Gracias 🙂, ten presente que no puedo reconocer imágenes, audios, ni emojis. Nos podemos comunicar por medio de texto o digitando el número de las opciones que te indico en mi pregunta.\n
+¿Cuál es tu parentesco con esta persona?. Envía el número de la opción correspondiente:\n
+1️⃣ Cónyuge
+2️⃣ Hijo/a
+3️⃣ Padre/madre
+4️⃣ Amigo
+5️⃣ Conocido
+6️⃣ Otro`;
+                  }
+                break;
+
+
+                case 18:
+                  try {
+                    $formulario.otro_parentesco_conocido_destino = req.body.incomingMessage;
+                    const pattern = new RegExp('^[aA-zZñÑüÜáÁéÉíÍóÓúÚ ]+$', 'i');
+
+                    if(pattern.test($formulario.otro_parentesco_conocido_destino)){
+                      //if(pattern.test(req.body.Body)){
+
+                      //$formulario.nombre_jefe_hogar = req.body.Body;
+                      $formulario.pregunta += 1; //finaliza encuesta pregunta=19
+                      //actualizarEncuesta($formulario);
+                      encuestaController.actualizarEncuesta($formulario);
+
+                      conversation.tipo_formulario = null;
+                      this.actualizarConversacion(conversation);
+                      mensajeRespuesta = 'final_form_registro';
+
+                    }else{
+mensajeRespuesta = `Gracias 🙂, ten presente que no puedo reconocer imágenes, audios, ni emojis. Nos podemos comunicar por medio de texto o digitando el número de las opciones que te indico en mi pregunta.\n
+Cuál otro parentesco?`;
+                    }
+                    
+                  } catch (error) {
+                    $formulario.pregunta = 18; //vuelve a 18
+                    encuestaController.actualizarEncuesta($formulario); 
+                    mensajeRespuesta = `Gracias 🙂, ten presente que no puedo reconocer imágenes, audios, ni emojis. Nos podemos comunicar por medio de texto o digitando el número de las opciones que te indico en mi pregunta.\n
+Cuál otro parentesco?`;
+
+                  }
+                break;
+
+                case 19:
+                  try {
+                    mensajeRespuesta = `Ya has respondido el formulario. Gracias`
+
+                  } catch (error) {
+                    
+                  }
                 break;
 
                 default:

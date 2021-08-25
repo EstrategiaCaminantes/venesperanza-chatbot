@@ -109,6 +109,9 @@ exports.actualizarEncuesta = async function ($encuesta) {
         numero_contacto = '${$encuesta.numero_contacto}', linea_contacto_propia = ${$encuesta.linea_contacto_propia},
         linea_asociada_whatsapp = ${$encuesta.linea_asociada_whatsapp},
         correo_electronico = '${$encuesta.correo_electronico}',
+        telefono_conocido_destino = '${$encuesta.telefono_conocido_destino}',
+        parentesco_conocido_destino = '${$encuesta.parentesco_conocido_destino}',
+        otro_parentesco_conocido_destino = '${$encuesta.otro_parentesco_conocido_destino}',
         updated_at = '${$encuesta.updated_at}'
         WHERE id = ${$encuesta.id}`;
 
