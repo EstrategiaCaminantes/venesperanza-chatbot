@@ -21,9 +21,8 @@ exports.consultaExisteEncuesta = async function(conversacion, req){
 
         mensajeRespuesta = `Ya has respondido el formulario. Gracias!
 Ahora por favor respóndeme con el número correspondiente a lo que quieres hacer:\n
-1️⃣ Quieres diligenciar el formulario de registro ✍🏻\n
-2️⃣ Quieres informar de tu llegada a destino ☝🏻\n
-3️⃣ Ya te registraste antes y quieres actualizar tus datos de contacto  🙌🏻 `;
+1️⃣ Quieres informar de tu llegada a destino ☝🏻\n
+2️⃣ Ya te registraste antes y quieres actualizar tus datos de contacto  🙌🏻 `;
 whatsappMessageController.sendMessageWhatsapp({
             'to': req.body['message.from'],
             'conversationId': req.body.conversationId,
@@ -66,9 +65,8 @@ exports.crearEncuesta = async function($conversation, req) {
     db.query(sqlnuevaencuesta, nuevaencuesta, (error, results) => {
       if (error){
         mensajeRespuesta = `Disculpa tuvimos un problema en crear la encuesta. Por favor respóndeme con el número correspondiente a lo que quieres hacer:\n
-1️⃣ Quieres diligenciar el formulario de registro ✍🏻\n
-2️⃣ Quieres informar de tu llegada a destino ☝🏻\n
-3️⃣ Ya te registraste antes y quieres actualizar tus datos de contacto  🙌🏻 `;
+1️⃣ Quieres informar de tu llegada a destino ☝🏻\n
+2️⃣ Ya te registraste antes y quieres actualizar tus datos de contacto  🙌🏻 `;
 
 
       }else{

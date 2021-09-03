@@ -2037,7 +2037,7 @@ Escribe tu número de teléfono en números 📞` ;
 
             default:
              
-              mensajeRespuesta = 'seleccionar_formulario';
+              mensajeRespuesta = 'seleccionar_formulario_actualizado';
 
             break;
           }
@@ -2056,7 +2056,7 @@ Escribe tu número de teléfono en números 📞` ;
               //autorizacionTratamientoDatos(conversation); //llama a funcion de app.js
               autorizacionTratamientoDatosController.autorizacionTratamientoDatos(conversation); //llamado a autorizacionTratamientoDatos.controller.js
 
-              mensajeRespuesta = 'seleccionar_formulario';
+              mensajeRespuesta = 'seleccionar_formulario_actualizado';
             break;
 
             case '2':
@@ -2206,7 +2206,16 @@ exports.seleccionarFormulario = async function (conversation, req){
     try {
         //switch (req.body.message.content.text) {
         //switch (req.body.Body){
-        switch(req.body.incomingMessage){
+        
+        if(req.body.incomingMessage === "1"){
+          option = "2";
+        }else if(req.body.incomingMessage === "2"){
+          option = "3";
+        }else {
+          option = "0";
+        }
+        //switch(req.body.incomingMessage){
+          switch(option){
 
             //selecciona llenar nuevo form
             case '1':
@@ -2236,9 +2245,8 @@ exports.seleccionarFormulario = async function (conversation, req){
             mensajeRespuesta = `Gracias 🙂, ten presente que no puedo reconocer imágenes, audios, ni emojis. Nos podemos comunicar por medio de texto o digitando el número de las opciones que te indico en mi pregunta. 
   
 Por favor respóndeme con el número correspondiente a lo que quieres hacer:\n
-1️⃣ Quieres diligenciar el formulario de registro ✍🏻\n
-2️⃣ Quieres informar de tu llegada a destino ☝🏻\n
-3️⃣ Ya te registraste antes y quieres actualizar tus datos de contacto  🙌🏻 `;
+1️⃣ Quieres informar de tu llegada a destino ☝🏻\n
+2️⃣ Ya te registraste antes y quieres actualizar tus datos de contacto  🙌🏻 `;
 
         whatsappMessageController.sendMessageWhatsapp({
             'to': req.body['message.from'],
@@ -2255,9 +2263,8 @@ Por favor respóndeme con el número correspondiente a lo que quieres hacer:\n
       mensajeRespuesta = `Gracias 🙂, ten presente que no puedo reconocer imágenes, audios, ni emojis. Nos podemos comunicar por medio de texto o digitando el número de las opciones que te indico en mi pregunta. 
       
 Por favor respóndeme con el número correspondiente a lo que quieres hacer:\n
-1️⃣ Quieres diligenciar el formulario de registro ✍🏻\n
-2️⃣ Quieres informar de tu llegada a destino ☝🏻\n
-3️⃣ Ya te registraste antes y quieres actualizar tus datos de contacto  🙌🏻 `;
+1️⃣ Quieres informar de tu llegada a destino ☝🏻\n
+2️⃣ Ya te registraste antes y quieres actualizar tus datos de contacto  🙌🏻 `;
             //console.log('MENSAJE A ENVIAR::', mensajeRespuesta);
 
             whatsappMessageController.sendMessageWhatsapp({

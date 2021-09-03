@@ -97,9 +97,8 @@ exports.actualizarDatosContactoEncuesta = async function($datosContactoEncuesta)
         db.query(sqlnuevoDatosActualizados, nuevoDatosActualizados, (error, results) => {
         if (error){
             mensajeRespuesta = `Disculpa tuvimos un problema. Por favor respóndeme con el número correspondiente a lo que quieres hacer:\n
-    1️⃣ Quieres diligenciar el formulario de registro ✍🏻\n
-    2️⃣ Quieres informar de tu llegada a destino ☝🏻\n
-    3️⃣ Ya te registraste antes y quieres actualizar tus datos de contacto  🙌🏻 `;
+    1️⃣ Quieres informar de tu llegada a destino ☝🏻\n
+    2️⃣ Ya te registraste antes y quieres actualizar tus datos de contacto  🙌🏻 `;
         } else{
 
             $conversation.tipo_formulario = 3;
