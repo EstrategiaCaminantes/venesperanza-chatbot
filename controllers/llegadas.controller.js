@@ -10,13 +10,13 @@ function errorLog(title, msg) {
     }
 }
 
-exports.crearLlegadaADestino = async function ($conversation, req) {
+exports.crearLlegadaADestino = async function (conversation, req) {
 
     try {
         const sqlnuevaLlegada = 'INSERT INTO llegadas SET ?';
 
         const nuevaLlegada = {
-            waId: $conversation.waId,
+            waId: conversation.waId,
             pregunta: 1,
             created_at: new Date(),
         }
@@ -28,10 +28,10 @@ exports.crearLlegadaADestino = async function ($conversation, req) {
 1️⃣ Quieres informar de tu llegada a destino ☝🏻\n
 2️⃣ Ya te registraste antes y quieres actualizar tus datos de contacto  🙌🏻 `;
             } else {
-                $conversation.tipo_formulario = 2;
+                conversation.tipo_formulario = 2;
 
                 //actualizarConversacion($conversation); //llamada a funcion en app.js
-                conversacionController.actualizarConversacion($conversation); //llamada a conversacionController
+                conversacionController.actualizarConversacion(conversation); //llamada a conversacionController
 
                 mensajeRespuesta = `A continuación responde a las preguntas para informar de tu llegada a destino como teléfono u otros:
 Tipo de documento 📇 Responde con el número de acuerdo a la opción correspondiente:
@@ -61,29 +61,37 @@ Tipo de documento 📇 Responde con el número de acuerdo a la opción correspon
 
 }
 
-exports.actualizarLlegada = async function ($llegada) {
+exports.actualizarLlegada = async function (llegada) {
 
     try {
-        $llegada.updated_at = new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '');
+        llegada.updated_at = new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '');
 
-        let sqlLlegada = `UPDATE llegadas SET pregunta = ${$llegada.pregunta},
-        tipo_documento = '${$llegada.tipo_documento}',
-        numero_contacto = ${$llegada.numero_contacto}, 
-        id_encuesta = ${$llegada.id_encuesta},
-        numero_contacto_asociado_whatsapp = ${$llegada.numero_contacto_asociado_whatsapp},
-        donde_te_encuentras = '${$llegada.donde_te_encuentras}', 
-        otro_donde_te_encuentras = '${$llegada.otro_donde_te_encuentras}'
-        WHERE waId = ${$llegada.waId}`;
+        let sqlLlegada = `UPDATE llegadas SET pregunta = ${llegada.pregunta},
+        numero_contacto = ${llegada.numero_contacto}, 
+        id_encuesta = ${llegada.id_encuesta},
+        numero_contacto_asociado_whatsapp = ${llegada.numero_contacto_asociado_whatsapp}`;
 
-        if ($llegada.numero_documento) {
-            sqlLlegada += ` numero_documento = '${$llegada.numero_documento}',`;
+        if (llegada.tipo_documento){
+          sqlLlegada += `, tipo_documento = '${llegada.tipo_documento}'`;
         }
 
-        if ($llegada.nombre_jefe_hogar) {
-            sqlLlegada += ` nombre_jefe_hogar = '${$llegada.nombre_jefe_hogar}',`;
+        if (llegada.numero_documento) {
+            sqlLlegada += `, numero_documento = '${llegada.numero_documento}'`;
         }
 
-        sqlLlegada += ` updated_at = '${$llegada.updated_at}' WHERE waId = ${$llegada.waId}`;
+        if (llegada.nombre_jefe_hogar) {
+            sqlLlegada += `, nombre_jefe_hogar = '${llegada.nombre_jefe_hogar}'`;
+        }
+
+        if (llegada.donde_te_encuentras) {
+            sqlLlegada += `, donde_te_encuentras = '${llegada.donde_te_encuentras}'`;
+        }
+
+        if (llegada.otro_donde_te_encuentras) {
+          sqlLlegada += `, otro_donde_te_encuentras = '${llegada.otro_donde_te_encuentras}'`;
+        }
+
+        sqlLlegada += `, updated_at = '${llegada.updated_at}' WHERE waId = ${llegada.waId}`;
 
         /*
         db.query(sqlLlegada, (error, res) => {
@@ -144,20 +152,20 @@ exports.actualizarLlegadaEncuesta = async function($llegadaEncuesta){
   }
   */
 
-exports.actualizarLlegadaEncuesta = async function ($llegadaEncuesta) {
+exports.actualizarLlegadaEncuesta = async function (llegadaEncuesta) {
 
     try {
         //console.log('::entra a actualizarLlegada::',$llegadaEncuesta);
-        if ($llegadaEncuesta.pregunta == 3) {
+        if (llegadaEncuesta.pregunta == 3) {
             //console.log('::VA A BUSCAR POR tipo y numero documento::');
-            sqlConsultaEncuesta = `SELECT id FROM encuesta WHERE tipo_documento = '${$llegadaEncuesta.tipo_documento}' 
-         AND numero_documento = '${$llegadaEncuesta.numero_documento}'`;
+            sqlConsultaEncuesta = `SELECT id FROM encuesta WHERE tipo_documento = '${llegadaEncuesta.tipo_documento}' 
+         AND numero_documento = '${llegadaEncuesta.numero_documento}'`;
 
-        } else if ($llegadaEncuesta.pregunta == 5 && !$llegadaEncuesta.id_encuesta) {
+        } else if (llegadaEncuesta.pregunta == 5 && !llegadaEncuesta.id_encuesta) {
             //console.log('::VA A BUSCAR POR numero_contacto=numero_conto o =whatsapp o waid=waid::');
-            $whatsappLlegada = $llegadaEncuesta.waId.substring(2, 12); //quita prefijos de whatsapp
-            sqlConsultaEncuesta = `SELECT id FROM encuesta WHERE numero_contacto = '${$llegadaEncuesta.numero_contacto}' 
-         OR numero_contacto = '${$whatsappLlegada}' OR waId = '${$llegadaEncuesta.waId}'`;
+            whatsappLlegada = llegadaEncuesta.waId.substring(2, 12); //quita prefijos de whatsapp
+            sqlConsultaEncuesta = `SELECT id FROM encuesta WHERE numero_contacto = '${llegadaEncuesta.numero_contacto}' 
+         OR numero_contacto = '${whatsappLlegada}' OR waId = '${llegadaEncuesta.waId}'`;
 
         }
 
@@ -167,18 +175,18 @@ exports.actualizarLlegadaEncuesta = async function ($llegadaEncuesta) {
                 if (error) console.log('ERROR EN ACTUALIZAR LLEGADA ENCUESTA:: ', error);
 
                 if (encuesta.length > 0) {
-                    $llegadaEncuesta.id_encuesta = encuesta[0]['id'];
-                    this.actualizarLlegada($llegadaEncuesta);
+                    llegadaEncuesta.id_encuesta = encuesta[0]['id'];
+                    this.actualizarLlegada(llegadaEncuesta);
 
                 } else {
 
-                    this.actualizarLlegada($llegadaEncuesta);
+                    this.actualizarLlegada(llegadaEncuesta);
 
                 }
             });
         } else {
-            console.log('::NO HAY SQLQUERY::');
-            this.actualizarLlegada($llegadaEncuesta);
+            //console.log('::NO HAY SQLQUERY::');
+            this.actualizarLlegada(llegadaEncuesta);
         }
 
 

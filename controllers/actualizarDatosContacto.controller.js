@@ -16,11 +16,25 @@ exports.actualizarDatosContacto = async function($datosContactoActualizados){
     try {
         $datosContactoActualizados.updated_at = new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '') ;
 
-    const sqlActualizarDatos = `UPDATE datos_actualizados SET pregunta = ${$datosContactoActualizados.pregunta},
-    tipo_documento = '${$datosContactoActualizados.tipo_documento}', numero_documento = '${$datosContactoActualizados.numero_documento}',
-    telefono = ${$datosContactoActualizados.telefono}, correo_electronico = '${$datosContactoActualizados.correo_electronico}',
-     id_encuesta = ${$datosContactoActualizados.id_encuesta},  updated_at = '${$datosContactoActualizados.updated_at}'
-     WHERE waId = ${$datosContactoActualizados.waId}`;
+    let sqlActualizarDatos = `UPDATE datos_actualizados SET pregunta = ${$datosContactoActualizados.pregunta},
+        telefono = ${$datosContactoActualizados.telefono}, 
+        id_encuesta = ${$datosContactoActualizados.id_encuesta} `;
+
+    if ($datosContactoActualizados.tipo_documento) {
+        sqlActualizarDatos += `, tipo_documento = '${$datosContactoActualizados.tipo_documento}'`;
+    }
+    
+    if ($datosContactoActualizados.numero_documento) {
+        sqlActualizarDatos += `, numero_documento = '${$datosContactoActualizados.numero_documento}'`;
+    }
+
+    if ($datosContactoActualizados.correo_electronico) {
+        sqlActualizarDatos += `, correo_electronico = '${$datosContactoActualizados.correo_electronico}'`;
+    }
+
+    sqlActualizarDatos += `, updated_at = '${$datosContactoActualizados.updated_at}' WHERE waId = ${$datosContactoActualizados.waId}`;
+
+
 
      /*
     //connection.query(sqlActualizarDatos, (error, res) => {
@@ -43,32 +57,51 @@ exports.actualizarDatosContacto = async function($datosContactoActualizados){
 
 }
 
-exports.actualizarDatosContactoEncuesta = async function($datosContactoEncuesta){
+exports.actualizarDatosContactoEncuesta = async function(datosContactoEncuesta){
 
     try {
         //console.log('ENTRA A ACTUALIZAR DATOS CONTACTOENCUESTA!!!');
-        //consulta encuesta con $llegadaEncuesta waId, toma id_encuesta y se lo asigna a llegadas where waid = encuesta.waId;
-        const sqlConsultaEncuesta = `SELECT id FROM encuesta WHERE waId = '${$datosContactoEncuesta.waId}' AND tipo_documento = '${$datosContactoEncuesta.tipo_documento}' AND numero_documento = '${$datosContactoEncuesta.numero_documento}'`;
+
+        if (datosContactoEncuesta.pregunta == 3) {
+            console.log('SI ENTRA A PREGUNTA 3!!');
+            sqlConsultaEncuesta = `SELECT id FROM encuesta WHERE tipo_documento = '${datosContactoEncuesta.tipo_documento}' AND numero_documento = '${datosContactoEncuesta.numero_documento}'`;
+
+        } else if (datosContactoEncuesta.pregunta == 4 && !datosContactoEncuesta.id_encuesta) {
+            //console.log('::VA A BUSCAR POR numero_contacto=numero_conto o =whatsapp o waid=waid::');
+            whatsappActualizar = datosContactoEncuesta.waId.substring(2, 12); //quita prefijos de whatsapp
+            sqlConsultaEncuesta = `SELECT id FROM encuesta WHERE numero_contacto = '${datosContactoEncuesta.telefono}' 
+         OR numero_contacto = '${whatsappActualizar}'`;
+
+        }
+        //const sqlConsultaEncuesta = `SELECT id FROM encuesta WHERE waId = '${$datosContactoEncuesta.waId}' AND tipo_documento = '${$datosContactoEncuesta.tipo_documento}' AND numero_documento = '${$datosContactoEncuesta.numero_documento}'`;
 
         //connection.query(sqlConsultaEncuesta, (error, encuesta) => {
-        db.query(sqlConsultaEncuesta, (error, encuesta) => {
-            //mensajeRespuesta = '';
-            if (error) console.log('ERROR EN ACTUALIZAR DATOS CONTACTO ENCUESTA:: ', error);
 
-            if (encuesta.length > 0) {
-                //console.log('SI ENCONTRO UNA ENCUESTA CON EL WAID EN ACTUALIZAR DATOS CONTACTO::');
-                $datosContactoEncuesta.id_encuesta = encuesta[0]['id'];
-                //actualizarDatosContacto($datosContactoEncuesta); //llama a funcion en app.js
-                //actualizarDatosContactoController.actualizarDatosContacto($datosContactoEncuesta);//llama a funcion en actualizarDAtosContacto.controller
-                this.actualizarDatosContacto($datosContactoEncuesta);
+        if (sqlConsultaEncuesta) {
+            //console.log('::EL SQCONSULTA ENCUESTA ES:: ', sqlConsultaEncuesta);
+            db.query(sqlConsultaEncuesta, (error, encuesta) => {
+                //mensajeRespuesta = '';
+                if (error) console.log('ERROR EN ACTUALIZAR DATOS CONTACTO ENCUESTA:: ', error);
+    
+                if (encuesta.length > 0) {
+                    //console.log('SI ENCONTRO UNA ENCUESTA CON EL WAID EN ACTUALIZAR DATOS CONTACTO::');
+                    datosContactoEncuesta.id_encuesta = encuesta[0]['id'];
+                    //actualizarDatosContacto($datosContactoEncuesta); //llama a funcion en app.js
+                    //actualizarDatosContactoController.actualizarDatosContacto($datosContactoEncuesta);//llama a funcion en actualizarDAtosContacto.controller
+                    this.actualizarDatosContacto(datosContactoEncuesta);
+    
+                }else{
+                    datosContactoEncuesta.id_encuesta = null;
+                    //actualizarDatosContacto($datosContactoEncuesta); //llama a funcion en app.js
+                    //actualizarDatosContactoController.actualizarDatosContacto($datosContactoEncuesta);//llama a funcion en actualizarDAtosContacto.controller
+                    this.actualizarDatosContacto(datosContactoEncuesta);
+                }
+            });
+        }else{
+            this.actualizarDatosContacto(datosContactoEncuesta);
 
-            }else{
-                $datosContactoEncuesta.id_encuesta = null;
-                //actualizarDatosContacto($datosContactoEncuesta); //llama a funcion en app.js
-                //actualizarDatosContactoController.actualizarDatosContacto($datosContactoEncuesta);//llama a funcion en actualizarDAtosContacto.controller
-                this.actualizarDatosContacto($datosContactoEncuesta);
-            }
-        });
+        }
+       
         
     } catch (error) {
         errorLog(':::Error en actualizarDatosContactoEncuesta::', error);

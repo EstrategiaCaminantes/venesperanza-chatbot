@@ -1909,7 +1909,9 @@ Escribe por favor tu número de documento 📇 (no utilices símbolos, solo núm
                     $formulario.telefono = req.body.incomingMessage;
                     $formulario.pregunta += 1; //va a 4
                     //actualizarDatosContacto($formulario);//llama a funcion en app.js
-                    actualizarDatosContactoController.actualizarDatosContacto($formulario);//llama a funcion en actualizarDAtosContacto.controller
+                    actualizarDatosContactoController.actualizarDatosContactoEncuesta($formulario);
+
+                    //actualizarDatosContactoController.actualizarDatosContacto($formulario);//llama a funcion en actualizarDAtosContacto.controller
 
 
                     mensajeRespuesta = `¿Podrías compartirme un correo electrónico 📧 en el que te podamos contactar? Si no ❌ tienes, ¡no te preocupes! escribe NO`;
