@@ -238,7 +238,7 @@ Por favor escribe tu segundo apellido, si no tienes segundo apellido escribe NO`
 
                           break;
                         case '2':
-                          $formulario.tipo_documento = "Cédula de Identidad (venezonala)";
+                          $formulario.tipo_documento = "Cédula de Identidad (venezolana)";
 
                           $formulario.pregunta += 2;// pregunta 7
                           //actualizarEncuesta($formulario);
@@ -1174,7 +1174,7 @@ Cuál otro parentesco?`;
 
                         break;
                       case '2':
-                        $formulario.tipo_documento = "Cédula de Identidad (venezonala)";
+                        $formulario.tipo_documento = "Cédula de Identidad (venezolana)";
 
                         $formulario.pregunta += 1;// pregunta 2
 
@@ -1786,7 +1786,7 @@ En cuál otro lugar te encuentras?`;
 
                         break;
                       case '2':
-                        $formulario.tipo_documento = "Cédula de Identidad (venezonala)";
+                        $formulario.tipo_documento = "Cédula de Identidad (venezolana)";
 
                         $formulario.pregunta += 1;// pregunta 2
                         //actualizarDatosContacto($formulario);//llama a funcion en app.js
