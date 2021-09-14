@@ -1,4 +1,5 @@
 var NotificacionRespuestaLlegadaService = require('../services/notificacionRespuestaLlegada.services')  
+var logsMensajesAutomatizadosController = require('./logsMensajesAutomatizados.controller');
 
 var db = require('../db');
 
@@ -8,30 +9,33 @@ function errorLog(title,msg) {
     }
 }
 
-exports.actualizarNotificacionLlegada = async function ($respuestaDatos) {
+exports.actualizarNotificacionLlegada = async function (respuestaDatos) {
 
     try {
-        $respuestaDatos.updated_at = new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '') ;
+        respuestaDatos.updated_at = new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '') ;
 
-        const sqlNotificacionReporteLlegada = `UPDATE notificacion_reporte_llegada SET respuesta = '${$respuestaDatos.respuesta}',
-        reenviar = ${$respuestaDatos.reenviar}, updated_at = '${$respuestaDatos.updated_at}' 
-        WHERE waId = ${$respuestaDatos.waId} AND activo = 1`;
-    
-        /*
-        db.query(sqlLlegada, (error, res) => {
-          if (error) console.log('ERRROR ACTUALIZAR LLEGADA', error);
-    
-          //return callback(true);
-    
-        });*/
+        const sqlNotificacionReporteLlegada = `UPDATE notificacion_reporte_llegada SET respuesta = '${respuestaDatos.respuesta}',
+        reenviar = ${respuestaDatos.reenviar}, updated_at = '${respuestaDatos.updated_at}' 
+        WHERE waId = ${respuestaDatos.waId} AND activo = 1`;
 
-        var notificacionRespuesta = await NotificacionRespuestaLlegadaService.actualizarNotificacion(sqlNotificacionReporteLlegada);
-        //errorLog('::creaConversacion::',res.status(200).json({ status: 200, data: conversacion, message: 'Creo bien' }));
-        //consultaConversacion(nuevaconversacion.waId);
-        errorLog('::actualizaLlegada::'/*,llegada*/);
+        //ya no llama al servicio, actualiza directamente en el controlador
+        db.query(sqlNotificacionReporteLlegada, (error, notificacionReporteLlegada) => {
+            if (error) {errorLog('dbquery.error',error);throw error;}
+
+            //console.log('::NOTIFICA REPORTE CREADA:: ', notificacionReporteLlegada);
+            //console.log('::RESPUESTA DATOS A LOG:: ', respuestaDatos)
+            errorLog('::actualizaLlegada::');
+            logsMensajesAutomatizadosController.crearLogMensajesAutomatizados(respuestaDatos);
+
+        });
+
+        //ya no llama al servicio
+        //var notificacionRespuesta = await NotificacionRespuestaLlegadaService.actualizarNotificacion(sqlNotificacionReporteLlegada);
+        //errorLog('::actualizaLlegada::');
+
         
     } catch (error) {
-        errorLog(':::Error en actualizaLlegada::', error);
+        errorLog(':::Error en actualizarNotificacionLlegada::', error);
 
     }
 
