@@ -27,14 +27,14 @@ exports.crearLogMensajesAutomatizados = async function (datosNotificacionReporte
 
         }
 
-        const sqlLogMensajeAutomatizado = 'INSERT INTO logs_mensajes_automatizados SET ?';
+        const sqlLogMensajeAutomatizado = 'INSERT INTO log_mensajes SET ?';
 
         if(sqlLogMensajeAutomatizado && nuevoLogMensajeAutomatizado.mensaje){
             
             db.query(sqlLogMensajeAutomatizado, nuevoLogMensajeAutomatizado, (error, resultadoLog) => {
                 if (error) {errorLog('dbquery.error-crear log mensaje automatizado::',error);throw error;}
                 
-                console.log('::LOG MENSAJE AUTOMATIZADO CREADO:: ', resultadoLog);
+                //console.log('::LOG MENSAJE AUTOMATIZADO CREADO:: ', resultadoLog);
             });
         }
         

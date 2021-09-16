@@ -5,6 +5,7 @@ var encuestaController = require('./encuesta.controller');
 var llegadasController = require('./llegadas.controller');
 var actualizarDatosContactoController = require('./actualizarDatosContacto.controller');
 var notificacionReporteLlegadaController = require('./notificacionReporteLlegada.controller');
+var preguntaQuejaSugerenciaController = require('./preguntaQuejaSugerencia.controller');
 
 var db = require('../db');
 
@@ -1309,7 +1310,7 @@ Escribe por favor tu número de documento 📇 (no utilices símbolos, solo núm
                   $formulario.nombre_jefe_hogar = req.body.incomingMessage;
                   const pattern = new RegExp('^[aA-zZñÑüÜáÁéÉíÍóÓúÚ ]+$', 'i');
 
-                  if(pattern.test($formulario.nombre_jefe_hogar)){
+                  if($formulario.nombre_jefe_hogar && pattern.test($formulario.nombre_jefe_hogar)){
                   //if(pattern.test(req.body.Body)){
 
                     //$formulario.nombre_jefe_hogar = req.body.Body;
@@ -1723,7 +1724,9 @@ Escribe tu número de teléfono en números 📞`;
 
                 }
               break;
-
+              
+              /*
+              //PASO 7 ANTERIOR
               case 7:
 
                 try{
@@ -1756,12 +1759,52 @@ En cuál otro lugar te encuentras?`;
 En cuál otro lugar te encuentras?`;
               break;
 
+              */
+
+
+              //PASO 7 AJUSTE
+              case 7:
+
+                try{
+
+                      $formulario.otro_donde_te_encuentras = req.body.incomingMessage;
+                          
+                      const pattern = new RegExp('^[aA-zZñÑüÜáÁéÉíÍóÓúÚ ]+$', 'i');
+        
+                      if($formulario.otro_donde_te_encuentras && pattern.test($formulario.otro_donde_te_encuentras)){
+
+                        $formulario.pregunta += 1;// pregunta 8.
+                              //actualizarEncuesta($formulario);
+                        llegadasController.actualizarLlegada($formulario);
+                              
+                        conversation.tipo_formulario = null;
+                        this.actualizarConversacion(conversation);
+                        mensajeRespuesta = 'final_form_llegada';
+        
+                      }else{
+                        mensajeRespuesta = `Gracias 🙂, ten presente que no puedo reconocer imágenes, audios, ni emojis. Nos podemos comunicar por medio de texto o digitando el número de las opciones que te indico en mi pregunta.\n
+En cuál otro lugar te encuentras?`;
+                      }    
+
+                }catch (error){
+                  $formulario.pregunta = 7; //vuelve a entrar a paso 7
+                  llegadasController.actualizarLlegada($formulario);
+                  mensajeRespuesta = `Gracias 🙂, ten presente que no puedo reconocer imágenes, audios, ni emojis. Nos podemos comunicar por medio de texto o digitando el número de las opciones que te indico en mi pregunta.\n
+En cuál otro lugar te encuentras?`;
+                }
+              break;
+
+
               case 8:
                 try{
                   mensajeRespuesta = `Ya reportaste tu llegada a destino gracias!`;
                 }catch{
 
                 }
+
+              default:
+              break;
+
             }
 
           }else if(conversation.tipo_formulario == 3){
@@ -1991,9 +2034,292 @@ Escribe tu número de teléfono en números 📞` ;
                 break;
               }
 
+          }else if(conversation.tipo_formulario == 4){
+            //FORMULARIO PQR 
+
+            switch ($formulario.pregunta) {
+              //selecciona actualizar datos
+              case 1: //guardo respuesta pregunta 1
+                  try {
+
+                    //switch (req.body.Body) {
+                    switch (req.body.incomingMessage){
+                      case '1':
+                        $formulario.tipo_documento = "Acta de Nacimiento";
+                        $formulario.pregunta += 1;// pregunta 2
+
+                        preguntaQuejaSugerenciaController.actualizarPQS($formulario);//llama a funcion en preguntaQuejaSugerenciaController.controller
+
+                        mensajeRespuesta = `Escribe por favor tu número de documento 📇 (no utilices símbolos, solo números) Ejemplo: 123456789`;
+
+
+                        break;
+                      case '2':
+                        $formulario.tipo_documento = "Cédula de Identidad (venezolana)";
+
+                        $formulario.pregunta += 1;// pregunta 2
+
+                        preguntaQuejaSugerenciaController.actualizarPQS($formulario);//llama a funcion en preguntaQuejaSugerenciaController.controller
+
+                        mensajeRespuesta = `Escribe por favor tu número de documento 📇 (no utilices símbolos, solo números) Ejemplo: 123456789`;
+                        break;
+
+                      case '3':
+                        $formulario.tipo_documento = "Cédula de ciudadania (colombiana)";
+
+                        $formulario.pregunta += 1;// pregunta 2
+                        
+                        preguntaQuejaSugerenciaController.actualizarPQS($formulario);//llama a funcion en preguntaQuejaSugerenciaController.controller
+
+                        mensajeRespuesta = `Escribe por favor tu número de documento 📇 (no utilices símbolos, solo números) Ejemplo: 123456789`;
+                        break;
+
+                      case '4':
+                        $formulario.tipo_documento = "Pasaporte";
+
+                        $formulario.pregunta += 1;// pregunta 2
+                        
+                        preguntaQuejaSugerenciaController.actualizarPQS($formulario);//llama a funcion en preguntaQuejaSugerenciaController.controller
+
+                        mensajeRespuesta = `Escribe por favor tu número de documento 📇 (no utilices símbolos, solo números) Ejemplo: 123456789`;
+                        break;
+
+                      case '5':
+                        $formulario.tipo_documento = "Cédula de Extranjería";
+
+                        $formulario.pregunta += 1;// pregunta 2
+                        
+                        preguntaQuejaSugerenciaController.actualizarPQS($formulario);//llama a funcion en preguntaQuejaSugerenciaController.controller
+
+                        mensajeRespuesta = `Escribe por favor tu número de documento 📇 (no utilices símbolos, solo números) Ejemplo: 123456789`;
+                        break;
+
+                      case '6':
+                        $formulario.tipo_documento = "Otro";
+                        $formulario.pregunta += 1;// pregunta 2
+                        
+                        preguntaQuejaSugerenciaController.actualizarPQS($formulario);//llama a funcion en preguntaQuejaSugerenciaController.controller
+
+                        mensajeRespuesta = `Escribe por favor tu número de documento 📇 (no utilices símbolos, solo números) Ejemplo: 123456789`;
+                      break;
+
+                      default:
+                        mensajeRespuesta = `Gracias 🙂, ten presente que no puedo reconocer imágenes, audios, ni emojis. Nos podemos comunicar por medio de texto o digitando el número de las opciones que te indico en mi pregunta.\n
+¿Cuál es tu tipo de documento? 📇 Responde con el número de acuerdo a la opción correspondiente:
+1️⃣ Acta de Nacimiento
+2️⃣ Cédula de Identidad (venezolana)
+3️⃣ Cédula de Ciudadanía (colombiana)
+4️⃣ Pasaporte
+5️⃣ Cédula de Extranjería
+6️⃣ Otro`;
+                        break;
+                      }
+
+                  } catch (error) {
+                    $formulario.pregunta = 1; //vuelve a entrar a pregunta 1
+                    
+                    preguntaQuejaSugerenciaController.actualizarPQS($formulario);//llama a funcion en preguntaQuejaSugerenciaController.controller
+
+                    mensajeRespuesta = `Gracias 🙂, ten presente que no puedo reconocer imágenes, audios, ni emojis. Nos podemos comunicar por medio de texto o digitando el número de las opciones que te indico en mi pregunta.\n
+¿Cuál es tu tipo de documento? 📇 Responde con el número de acuerdo a la opción correspondiente:
+1️⃣ Acta de Nacimiento
+2️⃣ Cédula de Identidad (venezolana)
+3️⃣ Cédula de Ciudadanía (colombiana)
+4️⃣ Pasaporte
+5️⃣ Cédula de Extranjería
+6️⃣ Otro`;
+                  }
+              break;
+
+              case 2: //guardo respuesta pregunta 2
+
+                try {
+                  //$formulario.numero_documento = req.body.Body;//.replace(/[^\ñ\Ñ\ü\Ü\á\Á\é\É\í\Í\ó\Ó\ú\Ú\-\w]/gi, '');
+                  $formulario.numero_documento = req.body.incomingMessage;
+
+                  const pattern = new RegExp('^[0-9]+$', 'i');
+
+                  if(pattern.test($formulario.numero_documento)){
+                    //console.log('CUMPLE CON PATTERN EN REPORTELLEGADA');
+                  //if($formulario.numero_documento.length>0){
+
+                    $formulario.pregunta += 1;// pregunta 3.
+
+                    //actualizarDatosContactoController.actualizarDatosContactoEncuesta($formulario);
+                    preguntaQuejaSugerenciaController.actualizarPQS($formulario);//llama a funcion en preguntaQuejaSugerenciaController.controller
+
+                    mensajeRespuesta = `Por favor escribe tu nombre. Sólo puedo leer texto, no utilices audio, imágenes o emojis.` ;
+
+                    }else{
+                      mensajeRespuesta = `Gracias 🙂, ten presente que no puedo reconocer imágenes, audios, ni emojis. Nos podemos comunicar por medio de texto o digitando el número de las opciones que te indico en mi pregunta.\n
+Escribe por favor tu número de documento 📇 (no utilices símbolos, solo números) Ejemplo: 123456789`;
+
+                    }
+
+                } catch (error) {
+                  //console.log('EL ERROR EN PASO 2 REPORTE LLEGADA: : ', error);
+                    $formulario.pregunta = 2; //vuelve a entrar a paso 2
+                    //actualizarDatosContacto($formulario);//llama a funcion en app.js
+                    preguntaQuejaSugerenciaController.actualizarPQS($formulario);//llama a funcion en preguntaQuejaSugerenciaController.controller
+
+                    mensajeRespuesta = `Gracias 🙂, ten presente que no puedo reconocer imágenes, audios, ni emojis. Nos podemos comunicar por medio de texto o digitando el número de las opciones que te indico en mi pregunta.\n
+Escribe por favor tu número de documento 📇 (no utilices símbolos, solo números) Ejemplo: 123456789`;
+                }
+
+              break;
+
+              case 3:
+
+                try {
+                  //console.log('ENTRO A PREGUNTA 1 de nuevo formulario::', req.body.Body);
+                  //console.log('body primer nombre:: ', req.body.Body);
+                  //$formulario.primer_nombre = req.body.Body;//.replace(/[^\aA-zZ\ñ\Ñ\ü\Ü\á\Á\é\É\í\Í\ó\Ó\ú\Ú]/gi, '');
+                  $formulario.nombre = req.body.incomingMessage;
+                  //console.log('::AL ENVIAR FOTO::---', req.body.incomingMessage);
+                  
+                  const pattern = new RegExp('^[aA-zZñÑüÜáÁéÉíÍóÓúÚ]+$', 'i');
+
+                  if($formulario.nombre && pattern.test($formulario.nombre)){
+                    //console.log('::FORMULARIO _ NOMBRE::', $formulario.nombre);
+                  //console.log('primer nombre:: ', $formulario.primer_nombre);
+                  //if($formulario.primer_nombre.length>0){
+                    $formulario.pregunta += 1; //pregunta 4
+
+                    
+                    preguntaQuejaSugerenciaController.actualizarPQS($formulario);//llama a funcion en preguntaQuejaSugerenciaController.controller
+                    
+                    mensajeRespuesta = `Por favor escribe tu apellido. Sólo puedo leer texto, no utilices audio, imágenes o emojis.`
+
+                  }else{
+                    //mensajeRespuesta = "*Primer Nombre:* (Ingrese solamente letras, sin emoticones ni caracteres especiales)"
+                    mensajeRespuesta = `Gracias 🙂, ten presente que no puedo reconocer imágenes, audios, ni emojis. Nos podemos comunicar por medio de texto o digitando el número de las opciones que te indico en mi pregunta.\n
+
+Por favor escribe tu nombre. Sólo puedo leer texto, no utilices audio, imágenes o emojis.`;
+
+                  }
+
+                } catch (error) {
+                  //console.log(error);
+                  $formulario.pregunta = 3;
+
+                  preguntaQuejaSugerenciaController.actualizarPQS($formulario);//llama a funcion en preguntaQuejaSugerenciaController.controller
+
+                  mensajeRespuesta = `Gracias 🙂, ten presente que no puedo reconocer imágenes, audios, ni emojis. Nos podemos comunicar por medio de texto o digitando el número de las opciones que te indico en mi pregunta.\n
+
+Por favor escribe tu nombre. Sólo puedo leer texto, no utilices audio, imágenes o emojis.`;
+
+                }
+
+              break;
+
+              case 4:
+                try {
+                  //console.log('ENTRO A PREGUNTA 1 de nuevo formulario::', req.body.Body);
+                  //console.log('body primer nombre:: ', req.body.Body);
+                  //$formulario.primer_nombre = req.body.Body;//.replace(/[^\aA-zZ\ñ\Ñ\ü\Ü\á\Á\é\É\í\Í\ó\Ó\ú\Ú]/gi, '');
+                  $formulario.apellido = req.body.incomingMessage;
+
+                  const pattern = new RegExp('^[aA-zZñÑüÜáÁéÉíÍóÓúÚ]+$', 'i');
+
+                  if($formulario.apellido && pattern.test($formulario.apellido)){
+              
+                    $formulario.pregunta += 1; //pregunta 5
+
+                    
+                    preguntaQuejaSugerenciaController.actualizarPQS($formulario);//llama a funcion en preguntaQuejaSugerenciaController.controller
+                    
+                    mensajeRespuesta = `Envía tu pregunta, queja ó sugerencia. Sólo puedo leer texto, no utilices audio, imágenes o emojis.`
+
+                  }else{
+                    //mensajeRespuesta = "*Primer Nombre:* (Ingrese solamente letras, sin emoticones ni caracteres especiales)"
+                    mensajeRespuesta = `Gracias 🙂, ten presente que no puedo reconocer imágenes, audios, ni emojis. Nos podemos comunicar por medio de texto o digitando el número de las opciones que te indico en mi pregunta.\n
+
+Por favor escribe tu apellido. Sólo puedo leer texto, no utilices audio, imágenes o emojis.`;
+
+                  }
+
+                } catch (error) {
+                  //console.log(error);
+                  $formulario.pregunta = 4;
+
+                  preguntaQuejaSugerenciaController.actualizarPQS($formulario);//llama a funcion en preguntaQuejaSugerenciaController.controller
+
+                  mensajeRespuesta = `Gracias 🙂, ten presente que no puedo reconocer imágenes, audios, ni emojis. Nos podemos comunicar por medio de texto o digitando el número de las opciones que te indico en mi pregunta.\n
+
+Por favor escribe tu apellido. Sólo puedo leer texto, no utilices audio, imágenes o emojis.`;
+
+                }
+              break;
+
+              case 5:
+              
+                try {
+                  
+                  $formulario.mensaje = req.body.incomingMessage;
+
+                  
+                  //const pattern = new RegExp('^[aA-zZñÑüÜáÁéÉíÍóÓúÚ]+$', 'i'); //letras y espacios
+                  
+                  //const pattern = new RegExp('^[aA-zZñÑüÜáÁéÉíÍóÓúÚ0-9 \-\:\_\,\;\.\¿\?\¡\!\@\$\%\&\(\)\s]+$', 'i'); //letras y espacios
+                  const pattern = new RegExp('^[aA-zZñÑüÜáÁéÉíÍóÓúÚ0-9 \-\:\_\,\;\.\¿\?\¡\!\@\$\%\(\)\n]+$', 'i'); //letras y espacios
+
+                  
+                  //admite letras, numeros, espacios y simbolos puntos comas pregunta admiracion
+                  //'^[aA-zZñÑüÜáÁéÉíÍóÓúÚ0-9 \-\:\_\,\;\.\¿\?\¡\!\@\(\)]+$', 'i'
+                  //console.log(':::MENSAJE PQS::--:: ', $formulario.mensaje);
+
+                  if($formulario.mensaje && pattern.test($formulario.mensaje)){
+              
+                    $formulario.pregunta += 1; //pregunta 6
+
+                    
+                    preguntaQuejaSugerenciaController.actualizarPQS($formulario);//llama a funcion en preguntaQuejaSugerenciaController.controller
+                    
+                    conversation.tipo_formulario = null;
+                    this.actualizarConversacion(conversation);
+                    //mensajeRespuesta = 'final_form_pqs';
+                    mensajeRespuesta = 'final_form_pqs';
+
+                  }else{
+                    //mensajeRespuesta = "*Primer Nombre:* (Ingrese solamente letras, sin emoticones ni caracteres especiales)"
+                    mensajeRespuesta = `Gracias 🙂, ten presente que no puedo reconocer imágenes, audios, ni emojis. Nos podemos comunicar por medio de texto o digitando el número de las opciones que te indico en mi pregunta.\n
+                    
+Envía tu pregunta, queja ó sugerencia. Sólo puedo leer texto, no utilices audio, imágenes o emojis.`;
+
+                  }
+
+                } catch (error) {
+                  //console.log(error);
+                  $formulario.pregunta = 5;
+
+                  preguntaQuejaSugerenciaController.actualizarPQS($formulario);//llama a funcion en preguntaQuejaSugerenciaController.controller
+
+                  mensajeRespuesta = `Gracias 🙂, ten presente que no puedo reconocer imágenes, audios, ni emojis. Nos podemos comunicar por medio de texto o digitando el número de las opciones que te indico en mi pregunta.\n
+
+Envía tu pregunta, queja ó sugerencia. Sólo puedo leer texto, no utilices audio, imágenes o emojis.`;
+
+                }
+
+              break;
+
+              /*
+              case 6:
+                try{
+                  mensajeRespuesta = `Ya enviaste PQS!`;
+                }catch{
+
+                }
+              break*/
+
+              default:
+                break;
+              } //fin formulario pqr
+
           }
 
         }else{
+          //SIN TIPO FORMULARIO
+
           //switch (req.body.Body) {
           switch(req.body.incomingMessage){
 
@@ -2037,9 +2363,20 @@ Escribe tu número de teléfono en números 📞` ;
                   mensajeRespuesta = 'Empieza Actualizar Datos';
               break;
 
+              case '4':
+                //crea reporte llegada
+                  $conversation.tipo_formulario = 4;
+                  
+                  //conversacionController.actualizarConversacion($conversation)//llama a funcion en conversacion.controller.js
+                  this.actualizarConversacion($conversation);
+
+                  //crearReporteLlegada($conversation);
+                  mensajeRespuesta = 'Empieza Envio PQR';
+              break;
+
             default:
              
-              mensajeRespuesta = 'seleccionar_formulario_actualizado';
+              mensajeRespuesta = 'seleccionar_formulario_actualizado_dos';
 
             break;
           }
@@ -2058,7 +2395,7 @@ Escribe tu número de teléfono en números 📞` ;
               //autorizacionTratamientoDatos(conversation); //llama a funcion de app.js
               autorizacionTratamientoDatosController.autorizacionTratamientoDatos(conversation); //llamado a autorizacionTratamientoDatos.controller.js
 
-              mensajeRespuesta = 'seleccionar_formulario_actualizado';
+              mensajeRespuesta = 'seleccionar_formulario_actualizado_dos';
             break;
 
             case '2':
@@ -2085,7 +2422,7 @@ Escribe tu número de teléfono en números 📞` ;
       
         this.actualizarConversacion(conversation);
        
-        mensajeRespuesta = 'bienvenida_conversacion';
+        mensajeRespuesta = 'bienvenida_conversacion_actualizado';
 
       } catch (error) {
         //console.log('ERROR::', error);
@@ -2213,6 +2550,8 @@ exports.seleccionarFormulario = async function (conversation, req){
           option = "2";
         }else if(req.body.incomingMessage === "2"){
           option = "3";
+        }else if(req.body.incomingMessage === "3"){
+          option = "4";
         }else {
           option = "0";
         }
@@ -2229,7 +2568,6 @@ exports.seleccionarFormulario = async function (conversation, req){
 
             case '2':
               //crea actualizar datos
-              //consultaExisteLlegadaADestino(conversation); //llamo a funcion en app.js
               llegadasController.consultaExisteLlegadaADestino(conversation,req); //envio converation y req a la funcion en llegadasController
 
             break;
@@ -2242,13 +2580,21 @@ exports.seleccionarFormulario = async function (conversation, req){
 
             break;
 
+            case '4':
+              //crea pqr
+              //preguntaQuejaSugerenciaController.consultaExistePQRS(conversation,req);
+              preguntaQuejaSugerenciaController.crearPQS(conversation,req); 
+              
+            break;
+
           default:
 
             mensajeRespuesta = `Gracias 🙂, ten presente que no puedo reconocer imágenes, audios, ni emojis. Nos podemos comunicar por medio de texto o digitando el número de las opciones que te indico en mi pregunta. 
   
 Por favor respóndeme con el número correspondiente a lo que quieres hacer:\n
 1️⃣ Quieres informar de tu llegada a destino ☝🏻\n
-2️⃣ Ya te registraste antes y quieres actualizar tus datos de contacto  🙌🏻 `;
+2️⃣ Ya te registraste antes y quieres actualizar tus datos de contacto  🙌🏻 \n
+3️⃣ Quieres hacer una pregunta, queja ó sugerencia 💬`;
 
         whatsappMessageController.sendMessageWhatsapp({
             'to': req.body['message.from'],
@@ -2266,7 +2612,8 @@ Por favor respóndeme con el número correspondiente a lo que quieres hacer:\n
       
 Por favor respóndeme con el número correspondiente a lo que quieres hacer:\n
 1️⃣ Quieres informar de tu llegada a destino ☝🏻\n
-2️⃣ Ya te registraste antes y quieres actualizar tus datos de contacto  🙌🏻 `;
+2️⃣ Ya te registraste antes y quieres actualizar tus datos de contacto  🙌🏻 \n
+3️⃣ Quieres hacer una pregunta, queja ó sugerencia 💬`;
             //console.log('MENSAJE A ENVIAR::', mensajeRespuesta);
 
             whatsappMessageController.sendMessageWhatsapp({
@@ -2529,6 +2876,79 @@ exports.consultaConversacion = async function (whatsappID, req) {
               }
 
               
+            }else if($conversation.tipo_formulario == 4){
+            //console.log('::ENTRO A TIPO FORMULARIO 3');
+
+              if(req.body.incomingMessage == 'Si, ya llegué'){
+
+                //ac
+                $conversation.tipo_formulario = 2;
+                this.actualizarConversacion($conversation);
+                llegadasController.consultaExisteLlegadaADestino($conversation,req);
+                respuesta = {
+                  waId: req.body.contactPhoneNumber,
+                  respuesta: 'Si, ya llegué',
+                  reenviar: 0,
+                  updated_at: new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '')
+                }
+                notificacionReporteLlegadaController.actualizarNotificacionLlegada(respuesta );
+
+              }else if(req.body.incomingMessage == 'No, en camino'){
+
+                respuesta = {
+                  waId: req.body.contactPhoneNumber,
+                  respuesta: 'No, en camino',
+                  reenviar: 1,
+                  updated_at: new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '')
+                }
+                notificacionReporteLlegadaController.actualizarNotificacionLlegada(respuesta );
+
+                mensajeRespuesta = 'notificacion_llegada_no';
+
+                whatsappMessageController.sendMessageWhatsapp({
+                  'to': req.body['message.from'],
+                    'conversationId': req.body.conversationId,
+                    'type': 'hsm',
+                    'content': {
+                      'hsm': {
+                        //'namespace': '88fc3eef_c424_4998_bdc3_eddfb12c1283',
+                        'namespace': process.env.WHATSAPP_NAMESPACE,
+                        //'templateName': 'welcome',
+                        'templateName': mensajeRespuesta,
+                        'language': {
+                          'policy': 'deterministic',
+                          'code': 'es',
+                        },
+                        //params: [{ default: 'Bob' }, { default: 'tomorrow!' }],
+                      }
+                        }
+                });
+              }else{
+
+                //console.log('::SELECCIONO OPCION 4--Consulto PRQ para enviarlo a la conversacion ');
+                
+                //para seguir el flujo de enviar PQR, consulta la PQR por waId y que el campo 'pregunta'
+                //sea menor a 6(ultima pregunta); ordena las PQR descendentemente por updated_at y 
+                //toma el primer registro. Es decir sigue respondiendo la PQR actualizada mas recientemente.
+                const sqlpqrs = `SELECT * FROM pqs where waId = '${whatsappID}'
+                AND pregunta < 6 ORDER BY updated_at DESC
+                LIMIT 1`;
+
+                //connection.query(sqlactualizardatos, (error, actualizardatos) => {
+                db.query(sqlpqrs, (error, pqrs) => {
+                  if (error) {errorLog('dbquery.error',error);throw error;}
+
+                  if (pqrs.length > 0) {
+
+                    //console.log('::PQR QUE SIGUE RESPONDIENDO::', pqrs[0]);
+                    //console.log('ENCUESTA ES: ', actualizardatos[0]);
+                    //conversacion($conversation , actualizardatos[0]); //llama a la funcion en app.js
+                    this.conversacion($conversation, pqrs[0], req); //llama a funcion en conversacion
+
+                  }
+
+                });
+              }
             }
           }
         });

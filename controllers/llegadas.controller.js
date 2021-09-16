@@ -167,6 +167,8 @@ exports.actualizarLlegadaEncuesta = async function (llegadaEncuesta) {
             sqlConsultaEncuesta = `SELECT id FROM encuesta WHERE numero_contacto = '${llegadaEncuesta.numero_contacto}' 
          OR numero_contacto = '${whatsappLlegada}' OR waId = '${llegadaEncuesta.waId}'`;
 
+        }else{
+            sqlConsultaEncuesta = null;
         }
 
         if (sqlConsultaEncuesta) {
@@ -214,7 +216,9 @@ exports.consultaExisteLlegadaADestino = async function (conversacion, req) {
             if (existeLlegadaADestino.length > 0) {
 
                 conversacion.tipo_formulario = 2;
-                //actualizarConversacion(conversacion); //llama a funcion en app.js
+
+                conversacionController.conversacion(conversacion,existeLlegadaADestino[0],req);
+                /*
                 conversacionController.actualizarConversacion(conversacion)//llama a funcion en conversacion.controller.js
 
                 existeLlegadaADestino[0].pregunta = 1;
@@ -239,7 +243,7 @@ Tipo de documento 📇 Responde con el número de acuerdo a la opción correspon
                     'content': {
                         'text': mensajeRespuesta,
                     }
-                });
+                });*/
 
             } else {
                 //conversacion.tipo_formulario = 1;

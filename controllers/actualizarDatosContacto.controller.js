@@ -11,28 +11,28 @@ function errorLog(title,msg) {
     }
 }
 
-exports.actualizarDatosContacto = async function($datosContactoActualizados){
+exports.actualizarDatosContacto = async function(datosContactoActualizados){
 
     try {
-        $datosContactoActualizados.updated_at = new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '') ;
+        datosContactoActualizados.updated_at = new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '') ;
 
-    let sqlActualizarDatos = `UPDATE datos_actualizados SET pregunta = ${$datosContactoActualizados.pregunta},
-        telefono = ${$datosContactoActualizados.telefono}, 
-        id_encuesta = ${$datosContactoActualizados.id_encuesta} `;
+    let sqlActualizarDatos = `UPDATE datos_actualizados SET pregunta = ${datosContactoActualizados.pregunta},
+        telefono = ${datosContactoActualizados.telefono}, 
+        id_encuesta = ${datosContactoActualizados.id_encuesta} `;
 
-    if ($datosContactoActualizados.tipo_documento) {
-        sqlActualizarDatos += `, tipo_documento = '${$datosContactoActualizados.tipo_documento}'`;
+    if (datosContactoActualizados.tipo_documento) {
+        sqlActualizarDatos += `, tipo_documento = '${datosContactoActualizados.tipo_documento}'`;
     }
     
-    if ($datosContactoActualizados.numero_documento) {
-        sqlActualizarDatos += `, numero_documento = '${$datosContactoActualizados.numero_documento}'`;
+    if (datosContactoActualizados.numero_documento) {
+        sqlActualizarDatos += `, numero_documento = '${datosContactoActualizados.numero_documento}'`;
     }
 
-    if ($datosContactoActualizados.correo_electronico) {
-        sqlActualizarDatos += `, correo_electronico = '${$datosContactoActualizados.correo_electronico}'`;
+    if (datosContactoActualizados.correo_electronico) {
+        sqlActualizarDatos += `, correo_electronico = '${datosContactoActualizados.correo_electronico}'`;
     }
 
-    sqlActualizarDatos += `, updated_at = '${$datosContactoActualizados.updated_at}' WHERE waId = ${$datosContactoActualizados.waId}`;
+    sqlActualizarDatos += `, updated_at = '${datosContactoActualizados.updated_at}' WHERE waId = ${datosContactoActualizados.waId}`;
 
 
 
