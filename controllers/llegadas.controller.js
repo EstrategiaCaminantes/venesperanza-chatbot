@@ -91,7 +91,8 @@ exports.actualizarLlegada = async function (llegada) {
           sqlLlegada += `, otro_donde_te_encuentras = '${llegada.otro_donde_te_encuentras}'`;
         }
 
-        sqlLlegada += `, updated_at = '${llegada.updated_at}' WHERE waId = ${llegada.waId}`;
+        sqlLlegada += `, updated_at = '${llegada.updated_at}' WHERE waId = ${llegada.waId} 
+        AND id = ${llegada.id}`; //ahora actualiza por waId y id del registro
 
         /*
         db.query(sqlLlegada, (error, res) => {

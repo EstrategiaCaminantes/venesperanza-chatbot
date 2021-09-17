@@ -2568,13 +2568,17 @@ exports.seleccionarFormulario = async function (conversation, req){
             break;
 
             case '2':
-              //crea actualizar datos
-              llegadasController.consultaExisteLlegadaADestino(conversation,req); //envio converation y req a la funcion en llegadasController
+              //consulta reporte llegada
+              //llegadasController.consultaExisteLlegadaADestino(conversation,req); //envio converation y req a la funcion en llegadasController
+
+              //crea reporte llegada
+              llegadasController.crearLlegadaADestino(conversation,req); //envio converation y req a la funcion en llegadasController
+
 
             break;
 
             case '3':
-              //crea reporte llegada
+              //crea actualizar datos
               //consultaExisteDatosActualizados(conversation);//llama a funcion en app.js
               actualizarDatosContactoController.consultaExisteDatosActualizados(conversation,req); //llama a funcion en actualizarDatosContacto.controller
               //crearDatosActualizados(conversation);
@@ -2842,7 +2846,14 @@ exports.consultaConversacion = async function (whatsappID, req) {
 
               });
             }else if($conversation.tipo_formulario == 2){
-              const sqllegadas = `SELECT * FROM llegadas where waId = '${whatsappID}'`;
+              
+              //Anterior SQL que consulta llegada por solamente waId
+              //const sqllegadas = `SELECT * FROM llegadas where waId = '${whatsappID}'`;
+
+              //nuevo SQL que consulta llegada por waId y id del registro
+              const sqllegadas = `SELECT * FROM llegadas where waId = '${whatsappID}' AND 
+              pregunta < 8 ORDER BY updated_at DESC
+                LIMIT 1`;
 
               //connection.query(sqllegadas, (error, llegadas) => {
               db.query(sqllegadas, (error, llegadas) => {
