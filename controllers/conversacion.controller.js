@@ -2278,7 +2278,7 @@ Por favor escribe tu apellido. Sólo puedo leer texto, no utilices audio, imáge
                     conversation.tipo_formulario = null;
                     this.actualizarConversacion(conversation);
                     //mensajeRespuesta = 'final_form_pqs';
-                    mensajeRespuesta = 'final_form_pqs';
+                    mensajeRespuesta = 'final_pqs';
 
                   }else{
                     //mensajeRespuesta = "*Primer Nombre:* (Ingrese solamente letras, sin emoticones ni caracteres especiales)"
@@ -2422,7 +2422,8 @@ Envía tu pregunta, queja ó sugerencia. Sólo puedo leer texto, no utilices aud
       
         this.actualizarConversacion(conversation);
        
-        mensajeRespuesta = 'bienvenida_conversacion_actualizado';
+        mensajeRespuesta = 'bienvenida_conversacion';
+        //local 'bienvenida_conversacion_actualizado';
 
       } catch (error) {
         //console.log('ERROR::', error);
@@ -2589,6 +2590,8 @@ exports.seleccionarFormulario = async function (conversation, req){
 
           default:
 
+            /*
+            //ANTERIOR MENSAJE POR DEFECTO CUANDO FINALIZA FORMULARIO Y ESCRIBE MENSAJE
             mensajeRespuesta = `Gracias 🙂, ten presente que no puedo reconocer imágenes, audios, ni emojis. Nos podemos comunicar por medio de texto o digitando el número de las opciones que te indico en mi pregunta. 
   
 Por favor respóndeme con el número correspondiente a lo que quieres hacer:\n
@@ -2603,26 +2606,68 @@ Por favor respóndeme con el número correspondiente a lo que quieres hacer:\n
             'content': {
                     'text': mensajeRespuesta,
                   }
-          });
+          });*/
+
+          //NUEVO: envia plantilla de seleccionar_formulario_actualizado_dos
+          whatsappMessageController.sendMessageWhatsapp({
+            'to': req.body['message.from'],
+            'conversationId': req.body.conversationId,
+            'type': 'hsm',
+            'content': {
+              'hsm': {
+                //'namespace': 'asfasdfwe23',
+                'namespace': process.env.WHATSAPP_NAMESPACE,
+                //'templateName': 'welcome',
+                'templateName': 'seleccionar_formulario_actualizado_dos',
+                'language': {
+                  'policy': 'deterministic',
+                  'code': 'es',
+                },
+                //params: [{ default: 'Bob' }, { default: 'tomorrow!' }],
+              }
+                }
+            });
 
         }
     } catch (error) {
       //console.log(error);
-      mensajeRespuesta = `Gracias 🙂, ten presente que no puedo reconocer imágenes, audios, ni emojis. Nos podemos comunicar por medio de texto o digitando el número de las opciones que te indico en mi pregunta. 
-      
+    
+            /*
+            //ANTERIOR MENSAJE POR DEFECTO CUANDO FINALIZA FORMULARIO Y ESCRIBE MENSAJE
+            mensajeRespuesta = `Gracias 🙂, ten presente que no puedo reconocer imágenes, audios, ni emojis. Nos podemos comunicar por medio de texto o digitando el número de las opciones que te indico en mi pregunta. 
+  
 Por favor respóndeme con el número correspondiente a lo que quieres hacer:\n
 1️⃣ Quieres informar de tu llegada a destino ☝🏻\n
 2️⃣ Ya te registraste antes y quieres actualizar tus datos de contacto  🙌🏻 \n
 3️⃣ Quieres hacer una pregunta, queja ó sugerencia 💬`;
-            //console.log('MENSAJE A ENVIAR::', mensajeRespuesta);
 
-            whatsappMessageController.sendMessageWhatsapp({
-              'to': req.body['message.from'],
-                'conversationId': req.body.conversationId,
-              'type': 'text',
-              'content': {
-                      'text': mensajeRespuesta,
-                    }
+        whatsappMessageController.sendMessageWhatsapp({
+            'to': req.body['message.from'],
+              'conversationId': req.body.conversationId,
+            'type': 'text',
+            'content': {
+                    'text': mensajeRespuesta,
+                  }
+          });*/
+
+          //NUEVO: envia plantilla de seleccionar_formulario_actualizado_dos
+          whatsappMessageController.sendMessageWhatsapp({
+            'to': req.body['message.from'],
+            'conversationId': req.body.conversationId,
+            'type': 'hsm',
+            'content': {
+              'hsm': {
+                //'namespace': 'asfasdfwe23',
+                'namespace': process.env.WHATSAPP_NAMESPACE,
+                //'templateName': 'welcome',
+                'templateName': 'seleccionar_formulario_actualizado_dos',
+                'language': {
+                  'policy': 'deterministic',
+                  'code': 'es',
+                },
+                //params: [{ default: 'Bob' }, { default: 'tomorrow!' }],
+              }
+                }
             });
 
     }
