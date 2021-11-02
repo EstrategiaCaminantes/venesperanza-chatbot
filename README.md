@@ -1,10 +1,13 @@
-Chatbot Whatsapp con twilio y NodeJS.
 
+## Run Prod
 
-- “app2.js” : ejecuta la aplicación. 
-- “env-example.env” : configuration variables globales, puerto de la app y base de datos.
-- “package.json” : dependencias de la aplicación.
-- “ngrok”: para desplegar servidor local conectando a una url que se agrega en twilio configuración de sandbox whatsapp.
+Run `node app.js` to run the project.
 
+## Run Prod with PM2 Daemon
 
-En Sandbox de Twilio, en https se debe indicar la URL del servidor seguido de “/whatsapp” que es la api con la cual se conecta a la aplicación.
+Run `pm2 reload ecosystem.config.js --env=production` to run the project with PM2 daemon.
+
+## Windows server location
+C:\Web\VenEsperanza\caminantes\venesperanza-chatbot
+C:\Web\VenEsperanza\caminantes\venesperanza-back\venesperanza-back
+C:\Web\VenEsperanza\caminantes\venesperanza-form\venEsperanzaForm
